@@ -294,21 +294,8 @@
     protected override async Task OnParametersSetAsync()
     {
         _filtersOpen = _filtersOpen || ActiveFilterCount > 0;
-        var customerId = string.IsNullOrEmpty(Client) ? null : _customers.FirstOrDefault(c => string.Equals(c.Code, Client, StringComparison.OrdinalIgnoreCase))?.Id;
-        _request = new PartSearchRequest
+        _request = PartFilterQuery.Parse(new Uri(Navigation.Uri).Query, _customers) with
         {
-            Query = Q,
-            CustomerId = customerId ?? (string.IsNullOrEmpty(Client) ? null : Guid.Empty),
-            FamilyId = Famille,
-            MaterialId = Matiere,
-            Statuses = Statuses.ToList(),
-            TagIds = TagIds.ToList(),
-            MachineId = Machine,
-            HasDrawing = Plan switch { "avec" => true, "sans" => false, _ => null },
-            IncludeArchived = IncludeArchived,
-            Quality = Quality,
-            Sort = Sort,
-            Descending = Descending,
             PageIndex = PageNumber - 1,
             PageSize = PageSize,
         };

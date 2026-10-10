@@ -45,4 +45,16 @@
   <data name="LinkExists" xml:space="preserve"><value>Ce lien existe déjà.</value></data>
   <data name="LinkNotFound" xml:space="preserve"><value>Lien introuvable.</value></data>
   <data name="QuantityInvalid" xml:space="preserve"><value>La quantité doit être positive.</value></data>
+  <data name="ImportNoSheet" xml:space="preserve"><value>Le fichier ne contient aucune feuille ni aucune ligne.</value></data>
+  <data name="ImportMissingColumns" xml:space="preserve"><value>Colonnes obligatoires manquantes : {0}.</value></data>
+  <data name="ImportUnreadable" xml:space="preserve"><value>Fichier illisible : {0}</value></data>
+  <data name="ImportUnsupported" xml:space="preserve"><value>Format non pris en charge : utilisez un fichier Excel (.xlsx) ou CSV.</value></data>
+  <data name="ImportCustomerUnknown" xml:space="preserve"><value>Client « {0} » inconnu.</value></data>
+  <data name="ImportMaterialUnknown" xml:space="preserve"><value>Matière « {0} » inconnue.</value></data>
+  <data name="ImportFamilyUnknown" xml:space="preserve"><value>Famille « {0} » inconnue.</value></data>
+  <data name="ImportStatusUnknown" xml:space="preserve"><value>Statut « {0} » inconnu (valeurs possibles : Prototype, Active, En sommeil, Obsolète).</value></data>
+  <data name="ImportBlankShapeUnknown" xml:space="preserve"><value>Forme du brut « {0} » inconnue.</value></data>
+  <data name="ImportDuplicateInFile" xml:space="preserve"><value>Référence en double dans le fichier (ligne {0}).</value></data>
+  <data name="ImportIndexIgnored" xml:space="preserve"><value>Indice « {0} » ignoré : la pièce existe déjà (les indices se gèrent depuis la fiche).</value></data>
+  <data name="ImportNothing" xml:space="preserve"><value>Aucune ligne valide à importer.</value></data>
 </root>

@@ -47,6 +47,7 @@ public sealed class CatalogModule : IModule
     {
         services.AddCatalogCore();
         services.AddScoped<IGlobalSearchProvider, PartGlobalSearchProvider>();
+        services.AddScoped<PartQrCodes>();
 
         // Section « Pièces du client » de la fiche client (module Référentiel).
         services.AddUiExtension(new UiExtension(UiSlots.CustomerDetails, typeof(CustomerPartsSection), CatalogTexts.CustomerPartsTitle, 10));

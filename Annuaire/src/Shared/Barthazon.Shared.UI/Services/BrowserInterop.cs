@@ -9,6 +9,14 @@ public sealed class BrowserInterop(IJSRuntime js)
 
     public ValueTask RegisterShortcutsAsync() => SafeAsync("barthazon.registerShortcuts");
 
+    /// <summary>Fait télécharger un fichier produit par le serveur (export, modèle).</summary>
+    public async ValueTask DownloadAsync(string fileName, byte[] content)
+    {
+        using var stream = new MemoryStream(content);
+        using var reference = new DotNetStreamReference(stream);
+        await SafeAsync("barthazon.downloadFromStream", fileName, reference);
+    }
+
     public ValueTask PrintAsync() => SafeAsync("barthazon.print");
 
     public ValueTask FocusAsync(string elementId) => SafeAsync("barthazon.focus", elementId);

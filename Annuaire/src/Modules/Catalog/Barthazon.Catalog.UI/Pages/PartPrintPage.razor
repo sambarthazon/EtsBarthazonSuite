@@ -1,0 +1,169 @@
+@page "/pieces/{Reference}/impression"
+@layout Barthazon.Shared.UI.Layout.PrintLayout
+@inject IPartService Parts
+@inject BrowserInterop Browser
+@inject Barthazon.Catalog.UI.Services.PartQrCodes QrCodes
+@inject TimeProvider Time
+@inject Microsoft.Extensions.Options.IOptions<BrandingOptions> Branding
+
+<PageTitle>@string.Format(CultureInfo.CurrentCulture, CatalogTexts.PrintTitle, Reference)</PageTitle>
+<HeadContent><style>@@page { size: A4 portrait; margin: 12mm 12mm 16mm; }</style></HeadContent>
+
+<div class="bz-print-toolbar">
+    <MudButton Href="@BackHref" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack">@SharedTexts.Back</MudButton>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="() => Browser.PrintAsync()">@CatalogTexts.PrintButton</MudButton>
+</div>
+
+@if (_part is not null && _revision is not null)
+{
+    var displayed = _part.Revisions.First(r => r.Id == _revision.Id);
+    <article class="bz-sheet">
+        <header class="bz-sheet-header">
+            <div>
+                <div class="d-flex align-center gap-2 mb-2">
+                    <img src="@Branding.Value.LogoUrl" alt="" style="height:10mm" />
+                    <span style="font-weight:700">@Branding.Value.CompanyName</span>
+                </div>
+                <h1>@_part.InternalReference</h1>
+                <div style="font-size:13pt;font-weight:600">@_part.Designation</div>
+                <div>@CatalogTexts.Customer : <b>@_part.CustomerCode — @_part.CustomerName</b></div>
+                @if (_part.CustomerReference is not null)
+                {
+                    <div>@CatalogTexts.CustomerReference : <b>@_part.CustomerReference</b></div>
+                }
+                <div class="bz-sheet-index">@CatalogTexts.FirstIndex @_revision.Index — @_revision.Status.Label()</div>
+            </div>
+            <div class="bz-sheet-qr">@((MarkupString)(_qrSvg ?? string.Empty))</div>
+        </header>
+
+        <div class="bz-sheet-notice">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.PrintFooter, Time.GetLocalNow().ToString("dd/MM/yyyy", CultureInfo.CurrentCulture), displayed.Index)</div>
+
+        @if (_revision.Status != RevisionStatus.InForce)
+        {
+            <div class="bz-sheet-warning">
+                @(_part.InForceRevision is { } inForce ? string.Format(CultureInfo.CurrentCulture, CatalogTexts.PrintNotInForce, inForce.Index) : CatalogTexts.PrintNoInForce)
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(_revision.WorkshopNotes))
+        {
+            <h2>@CatalogTexts.SectionWorkshop</h2>
+            <div class="bz-sheet-box">@_revision.WorkshopNotes</div>
+        }
+
+        <h2>@CatalogTexts.SectionMaterial</h2>
+        <div class="bz-sheet-grid">
+            <FieldView Label="@CatalogTexts.Material" Value="@_revision.MaterialDisplay" />
+            <FieldView Label="@CatalogTexts.MaterialNote" Value="@_revision.MaterialNote" />
+            <FieldView Label="@CatalogTexts.BlankShape" Value="@($"{_revision.BlankShape?.Label()} {_revision.BlankDimensions}".Trim())" />
+        </div>
+
+        <h2>@CatalogTexts.TabSpecifications</h2>
+        <div class="bz-sheet-grid">
+            <FieldView Label="@CatalogLabels.FieldLabel("LengthMm")" Value="@CatalogLabels.Number(_revision.LengthMm)" />
+            <FieldView Label="@CatalogLabels.FieldLabel("DiameterMm")" Value="@CatalogLabels.Number(_revision.DiameterMm)" />
+            <FieldView Label="@CatalogLabels.FieldLabel("MassKg")" Value="@CatalogLabels.Number(_revision.MassKg)" />
+            <FieldView Label="@CatalogLabels.FieldLabel("WidthMm")" Value="@CatalogLabels.Number(_revision.WidthMm)" />
+            <FieldView Label="@CatalogLabels.FieldLabel("HeightMm")" Value="@CatalogLabels.Number(_revision.HeightMm)" />
+            <FieldView Label="@CatalogLabels.FieldLabel("GeneralTolerance")" Value="@_revision.GeneralTolerance" />
+            <FieldView Label="@CatalogLabels.FieldLabel("SurfaceRoughness")" Value="@_revision.SurfaceRoughness" />
+            <FieldView Label="@CatalogLabels.FieldLabel("HeatTreatment")" Value="@_revision.HeatTreatment" />
+            <FieldView Label="@CatalogLabels.FieldLabel("SurfaceTreatment")" Value="@_revision.SurfaceTreatment" />
+            <FieldView Label="@CatalogLabels.FieldLabel("Hardness")" Value="@_revision.Hardness" />
+        </div>
+        @if (_revision.Characteristics.Count > 0)
+        {
+            <table class="mt-2">
+                <tbody>
+                    @foreach (var c in _revision.Characteristics)
+                    {
+                        <tr><th style="width:40%">@c.Name</th><td>@c.Value @c.Unit</td></tr>
+                    }
+                </tbody>
+            </table>
+        }
+        @if (!string.IsNullOrWhiteSpace(_revision.Tooling) || !string.IsNullOrWhiteSpace(_revision.InspectionNotes))
+        {
+            <div class="bz-sheet-grid mt-2" style="grid-template-columns:1fr 1fr">
+                <FieldView Label="@CatalogLabels.FieldLabel("Tooling")" Value="@_revision.Tooling" />
+                <FieldView Label="@CatalogLabels.FieldLabel("InspectionNotes")" Value="@_revision.InspectionNotes" />
+            </div>
+        }
+
+        @if (_revision.Operations.Count > 0)
+        {
+            <h2>@CatalogTexts.TabRouting</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>@CatalogTexts.OperationNumber</th><th>@CatalogTexts.OperationType</th><th>@CatalogTexts.Machine</th>
+                        <th>@CatalogTexts.OperationDescription</th><th>@CatalogTexts.OperationProgramField</th>
+                        <th>@CatalogTexts.OperationSetup</th><th>@CatalogTexts.OperationCycle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var op in _revision.Operations)
+                    {
+                        <tr>
+                            <td><b>@op.Number</b></td><td>@op.Type.Label()</td><td>@(op.MachineName ?? op.Subcontractor)</td>
+                            <td style="white-space:pre-line">@op.Description @(op.Tooling is null ? null : $"\n{op.Tooling}")</td>
+                            <td>@op.NcProgramReference</td><td>@CatalogLabels.Number(op.SetupTimeMin)</td><td>@CatalogLabels.Number(op.CycleTimeMin)</td>
+                        </tr>
+                    }
+                    <tr>
+                        <th colspan="5" style="text-align:right">@CatalogTexts.PrintTotals</th>
+                        <th>@CatalogLabels.Number(_revision.TotalSetupTimeMin)</th><th>@CatalogLabels.Number(_revision.TotalCycleTimeMin)</th>
+                    </tr>
+                </tbody>
+            </table>
+        }
+
+        @if (_revision.Documents.Count > 0)
+        {
+            <h2>@CatalogTexts.PrintDocuments</h2>
+            <table>
+                <tbody>
+                    @foreach (var d in _revision.Documents)
+                    {
+                        <tr>
+                            <td style="width:25%">@d.Type.Label()</td>
+                            <td><b>@d.Title</b></td>
+                            <td>@(d.Kind == DocumentKind.Paper ? string.Format(CultureInfo.CurrentCulture, CatalogTexts.PrintPaper, d.PaperLocation) : d.FileName)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <footer class="bz-sheet-footer">
+            @string.Format(CultureInfo.CurrentCulture, CatalogTexts.PrintFooter, Time.GetLocalNow().ToString("dd/MM/yyyy", CultureInfo.CurrentCulture), displayed.Index)
+        </footer>
+    </article>
+}
+
+@code {
+    private PartDetails? _part;
+    private RevisionDetails? _revision;
+    private string? _qrSvg;
+
+    [Parameter] public string Reference { get; set; } = string.Empty;
+
+    [SupplyParameterFromQuery(Name = "indice")] public string? Index { get; set; }
+
+    private string BackHref => $"pieces/{Uri.EscapeDataString(Reference)}" + (Index is null ? string.Empty : $"?indice={Uri.EscapeDataString(Index)}");
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var part = await Parts.GetByReferenceAsync(Reference);
+        if (part.IsFailure)
+        {
+            return;
+        }
+
+        _part = part.Value;
+        var revisionId = _part.FindRevision(Index)?.Id ?? _part.CurrentRevisionId ?? _part.Revisions.First().Id;
+        _revision = (await Parts.GetRevisionAsync(_part.Id, revisionId)).Value;
+        (_, _qrSvg) = await QrCodes.ForPartAsync(_part.InternalReference);
+    }
+}

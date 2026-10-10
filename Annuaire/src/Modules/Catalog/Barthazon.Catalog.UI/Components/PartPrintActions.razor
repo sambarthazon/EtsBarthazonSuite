@@ -1,7 +1,16 @@
-@* Impression et QR code : complétés au jalon J7. *@
+@inject IDialogService Dialogs
+
+<MudButton Href="@($"pieces/{Uri.EscapeDataString(Part.InternalReference)}/impression?indice={Uri.EscapeDataString(Revision.Index)}")"
+           Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Print">@CatalogTexts.Print</MudButton>
+<MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.QrCode2" OnClick="ShowQrAsync">@CatalogTexts.QrCode</MudButton>
 
 @code {
     [Parameter] public PartDetails Part { get; set; } = default!;
 
     [Parameter] public RevisionDetails Revision { get; set; } = default!;
+
+    private async Task ShowQrAsync() =>
+        await Dialogs.ShowAsync<QrCodeDialog>(string.Format(CultureInfo.CurrentCulture, CatalogTexts.QrTitle, Part.InternalReference),
+            new DialogParameters<QrCodeDialog> { { d => d.Reference, Part.InternalReference } },
+            new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true });
 }

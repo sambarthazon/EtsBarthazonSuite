@@ -1,0 +1,201 @@
+@page "/pieces/import"
+@inject IPartExchangeService Exchange
+@inject ICurrentUser CurrentUser
+@inject BrowserInterop Browser
+@inject Notifier Notifier
+
+<PageHeader Title="@CatalogTexts.ImportTitle" Subtitle="@CatalogTexts.ImportSubtitle" BackHref="pieces" BackText="@CatalogTexts.PartsTitle">
+    <Actions>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Description" OnClick="DownloadTemplateAsync">@CatalogTexts.ImportTemplate</MudButton>
+    </Actions>
+</PageHeader>
+
+@if (CurrentUser.Role < UserRole.Editor)
+{
+    <MudAlert Severity="Severity.Warning">@KernelForbidden</MudAlert>
+}
+else if (_result is not null)
+{
+    <MudPaper Class="pa-4 bz-card" Elevation="0">
+        <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">3. @CatalogTexts.ImportStep3</MudText>
+        <MudAlert Severity="@(_result.Failed.Count == 0 ? Severity.Success : Severity.Warning)" Class="mb-3">
+            @string.Format(CultureInfo.CurrentCulture, CatalogTexts.ImportDone, _result.Created, _result.Updated)
+        </MudAlert>
+        @if (_result.Failed.Count > 0)
+        {
+            <MudText Typo="Typo.subtitle1" Class="mb-2"><b>@CatalogTexts.ImportFailedLines</b></MudText>
+            @RowsTable(_result.Failed)
+        }
+        <div class="d-flex gap-2 mt-3">
+            <MudButton Href="pieces?tri=updatedat&ordre=desc" Variant="Variant.Filled" Color="Color.Primary">@CatalogTexts.ImportSeeParts</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="Reset">@CatalogTexts.ImportOtherFile</MudButton>
+        </div>
+    </MudPaper>
+}
+else if (_preview is null)
+{
+    <MudPaper Class="pa-4 bz-card" Elevation="0">
+        <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">1. @CatalogTexts.ImportStep1</MudText>
+        <MudText Class="mb-3">@CatalogTexts.ImportHelp</MudText>
+        <div class="bz-dropzone">
+            <svg viewBox="0 0 24 24" aria-hidden="true">@((MarkupString)Icons.Material.Filled.UploadFile)</svg>
+            @if (_busy)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" Style="max-width:320px" />
+                <span>@CatalogTexts.ImportAnalyzing</span>
+            }
+            else
+            {
+                <b>@CatalogTexts.ImportChooseFile</b>
+            }
+            <InputFile OnChange="OnFileAsync" accept=".xlsx,.csv,.txt" aria-label="@CatalogTexts.ImportChooseFile" disabled="@_busy" />
+        </div>
+    </MudPaper>
+}
+else
+{
+    <MudPaper Class="pa-4 bz-card" Elevation="0">
+        <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">2. @CatalogTexts.ImportStep2 — @_fileName</MudText>
+        @foreach (var error in _preview.FileErrors)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-2">@error</MudAlert>
+        }
+        @if (_preview.FileErrors.Count == 0)
+        {
+            <MudAlert Severity="@(_preview.ErrorCount == 0 ? Severity.Info : Severity.Warning)" Class="mb-3">
+                @string.Format(CultureInfo.CurrentCulture, CatalogTexts.ImportSummary, _preview.CreateCount, _preview.UpdateCount, _preview.ErrorCount)
+            </MudAlert>
+            @if (_preview.MissingCustomers.Count > 0)
+            {
+                <MudCheckBox T="bool" @bind-Value="_createCustomers" Color="Color.Primary" Label="@CatalogTexts.ImportCreateCustomers" />
+                <MudText Typo="Typo.body2" Class="bz-muted ml-8 mb-2">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.ImportMissingCustomers, string.Join(", ", _preview.MissingCustomers))</MudText>
+            }
+            @if (_preview.MissingMaterials.Count > 0)
+            {
+                <MudCheckBox T="bool" @bind-Value="_createMaterials" Color="Color.Primary" Label="@CatalogTexts.ImportCreateMaterials" />
+                <MudText Typo="Typo.body2" Class="bz-muted ml-8 mb-2">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.ImportMissingMaterials, string.Join(", ", _preview.MissingMaterials))</MudText>
+            }
+            @if (_preview.MissingFamilies.Count > 0)
+            {
+                <MudCheckBox T="bool" @bind-Value="_createFamilies" Color="Color.Primary" Label="@CatalogTexts.ImportCreateFamilies" />
+                <MudText Typo="Typo.body2" Class="bz-muted ml-8 mb-2">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.ImportMissingFamilies, string.Join(", ", _preview.MissingFamilies))</MudText>
+            }
+            <MudSwitch T="bool" @bind-Value="_onlyProblems" Color="Color.Primary" Label="@CatalogTexts.ImportOnlyErrors" Class="mt-2" />
+            @RowsTable(_preview.Rows.Where(r => !_onlyProblems || r.Action == ImportAction.Error || r.Warnings.Count > 0).ToList())
+        }
+        <div class="d-flex gap-2 mt-3 justify-end">
+            <MudButton Variant="Variant.Text" OnClick="Reset">@CatalogTexts.ImportOtherFile</MudButton>
+            @if (_preview.FileErrors.Count == 0)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlaylistAddCheck" OnClick="ApplyAsync"
+                           Disabled="@(_busy || _preview.CreateCount + _preview.UpdateCount == 0)">
+                    @(_busy ? CatalogTexts.ImportRunning : CatalogTexts.ImportConfirm)
+                </MudButton>
+            }
+        </div>
+    </MudPaper>
+}
+
+@code {
+    private const long MaxImportBytes = 20 * 1024 * 1024;
+    private byte[]? _content;
+    private string _fileName = string.Empty;
+    private ImportPreview? _preview;
+    private ImportResult? _result;
+    private bool _busy;
+    private bool _onlyProblems;
+    private bool _createCustomers = true;
+    private bool _createMaterials = true;
+    private bool _createFamilies = true;
+
+    private static string KernelForbidden => Barthazon.Shared.Kernel.Resources.KernelTexts.EditForbidden;
+
+    private async Task DownloadTemplateAsync()
+    {
+        var template = Exchange.CreateTemplate();
+        await Browser.DownloadAsync(template.FileName, template.Content);
+    }
+
+    private async Task OnFileAsync(InputFileChangeEventArgs e)
+    {
+        _busy = true;
+        _fileName = e.File.Name;
+        using var memory = new MemoryStream();
+        await using (var stream = e.File.OpenReadStream(MaxImportBytes))
+        {
+            await stream.CopyToAsync(memory);
+        }
+
+        _content = memory.ToArray();
+        using var analysis = new MemoryStream(_content);
+        var result = await Exchange.AnalyzeAsync(analysis, _fileName);
+        if (Notifier.Handle(result))
+        {
+            _preview = result.Value;
+            _onlyProblems = _preview.ErrorCount > 0;
+        }
+
+        _busy = false;
+    }
+
+    private async Task ApplyAsync()
+    {
+        _busy = true;
+        using var stream = new MemoryStream(_content!);
+        var result = await Exchange.ApplyAsync(stream, _fileName, new ImportOptions(_createCustomers, _createMaterials, _createFamilies));
+        if (Notifier.Handle(result))
+        {
+            _result = result.Value;
+        }
+
+        _busy = false;
+    }
+
+    private void Reset()
+    {
+        _content = null;
+        _preview = null;
+        _result = null;
+    }
+
+    private static RenderFragment RowsTable(IReadOnlyList<ImportRowPreview> rows) => __builder =>
+    {
+        <div style="overflow-x:auto">
+            <MudSimpleTable Dense="true" Hover="true" Elevation="0" Bordered="true">
+                <thead>
+                    <tr>
+                        <th>@CatalogTexts.ImportColLine</th>
+                        <th>@CatalogTexts.ColReference</th>
+                        <th>@CatalogTexts.ColDesignation</th>
+                        <th>@CatalogTexts.ColCustomer</th>
+                        <th>@CatalogTexts.ImportColAction</th>
+                        <th>@CatalogTexts.ImportColMessages</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in rows)
+                    {
+                        <tr>
+                            <td>@row.LineNumber</td>
+                            <td><b>@row.InternalReference</b></td>
+                            <td>@row.Designation</td>
+                            <td>@row.CustomerCode</td>
+                            <td>
+                                @switch (row.Action)
+                                {
+                                    case ImportAction.Create: <StatusChip Text="@CatalogTexts.ImportActionCreate" Tone="StatusTone.Success" />; break;
+                                    case ImportAction.Update: <StatusChip Text="@CatalogTexts.ImportActionUpdate" Tone="StatusTone.Info" />; break;
+                                    default: <StatusChip Text="@CatalogTexts.ImportActionError" Tone="StatusTone.Error" />; break;
+                                }
+                            </td>
+                            <td>
+                                @foreach (var error in row.Errors) { <div class="bz-tone-error">@error</div> }
+                                @foreach (var warning in row.Warnings) { <div class="bz-tone-warning">@warning</div> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </div>
+    };
+}

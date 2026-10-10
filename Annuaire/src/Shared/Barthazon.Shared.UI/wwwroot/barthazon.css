@@ -442,3 +442,41 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
 .bz-camera-button { position: relative; overflow: hidden; }
 .bz-camera-button input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .bz-paper-location { border-left: 4px solid var(--bz-accent); padding: 6px 10px; background: var(--bz-surface-alt); border-radius: var(--bz-radius-sm); font-weight: 600; }
+
+/* Documents imprimables. */
+.bz-print-root { background: var(--bz-print-background); color: var(--bz-print-text); min-height: 100vh; }
+.bz-print-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bz-lines); background: var(--bz-surface); position: sticky; top: 0; z-index: 10; }
+.bz-sheet { max-width: 190mm; margin: 0 auto; padding: 8mm 0 20mm; font-size: 10.5pt; }
+.bz-sheet h1 { font-size: 20pt; margin: 0; }
+.bz-sheet h2 { font-size: 11pt; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1.5px solid var(--bz-print-text); margin: 5mm 0 2mm; padding-bottom: 1mm; }
+.bz-sheet table { width: 100%; border-collapse: collapse; }
+.bz-sheet th, .bz-sheet td { border: 1px solid var(--bz-print-lines); padding: 1.5mm 2mm; text-align: left; vertical-align: top; }
+.bz-sheet th { background: var(--bz-surface-alt); }
+.bz-sheet-header { display: grid; grid-template-columns: 1fr auto; gap: 6mm; align-items: start; border-bottom: 2.5px solid var(--bz-print-text); padding-bottom: 3mm; }
+.bz-sheet-qr svg { width: 32mm; height: 32mm; display: block; }
+.bz-sheet-index { display: inline-block; border: 2px solid var(--bz-print-text); padding: 1mm 3mm; font-size: 14pt; font-weight: 700; margin-top: 2mm; }
+.bz-sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5mm 6mm; }
+.bz-sheet-grid .bz-field-label { font-size: 7.5pt; color: var(--bz-print-text); }
+.bz-sheet-grid .bz-field-value { font-size: 10.5pt; }
+.bz-sheet-box { border: 2px solid var(--bz-print-text); padding: 2mm 3mm; white-space: pre-line; font-weight: 600; }
+.bz-sheet-warning { border: 3px solid var(--bz-print-text); padding: 2mm 3mm; font-weight: 700; margin-top: 3mm; }
+.bz-sheet-notice { font-size: 8.5pt; margin-top: 2mm; font-weight: 600; }
+.bz-sheet-footer { margin-top: 6mm; border-top: 1px solid var(--bz-print-text); padding-top: 2mm; font-size: 9pt; font-weight: 600; }
+
+/* Planche d'étiquettes A4 : 3 × 8 étiquettes de 70 × 37 mm. */
+.bz-labels { display: grid; grid-template-columns: repeat(3, 70mm); grid-auto-rows: 37mm; width: 210mm; margin: 0 auto; padding: 0; }
+.bz-label { box-sizing: border-box; padding: 2.5mm 3mm; display: grid; grid-template-columns: 25mm 1fr; gap: 2mm; overflow: hidden; border: 1px dashed var(--bz-lines); position: relative; }
+.bz-label svg { width: 25mm; height: 25mm; }
+.bz-label-ref { font-weight: 800; font-size: 12pt; line-height: 1.1; word-break: break-all; }
+.bz-label-text { font-size: 8pt; line-height: 1.2; }
+.bz-label-excluded { opacity: .25; }
+.bz-label-check { position: absolute; top: 1mm; right: 1mm; }
+.bz-label-check input { width: 18px; height: 18px; accent-color: var(--bz-primary); }
+
+@media print {
+    .bz-print-toolbar, .bz-label-check { display: none !important; }
+    .bz-label { border: none; }
+    .bz-label-excluded { display: none !important; }
+    .bz-sheet { padding: 0; max-width: none; }
+    .bz-sheet h2, .bz-sheet table tr { break-inside: avoid; }
+}

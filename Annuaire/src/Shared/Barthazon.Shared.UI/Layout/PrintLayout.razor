@@ -1,0 +1,10 @@
+@inherits LayoutComponentBase
+
+@* Mise en page des documents imprimables (fiche, étiquettes) : toujours en mode clair, sans menus. *@
+<MudThemeProvider Theme="BrandTheme.Theme" IsDarkMode="false" />
+<MudPopoverProvider />
+<MudSnackbarProvider />
+<BrandStyles IsDarkMode="false" />
+<div class="bz-print-root">
+    @Body
+</div>

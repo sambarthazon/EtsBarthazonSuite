@@ -1,0 +1,96 @@
+@page "/pieces/etiquettes"
+@layout Barthazon.Shared.UI.Layout.PrintLayout
+@inject IPartService Parts
+@inject ICustomerLookup Customers
+@inject NavigationManager Navigation
+@inject BrowserInterop Browser
+@inject Barthazon.Catalog.UI.Services.PartQrCodes QrCodes
+
+<PageTitle>@CatalogTexts.LabelsTitle</PageTitle>
+<HeadContent><style>@@page { size: A4 portrait; margin: 13mm 0 0 0; }</style></HeadContent>
+
+<div class="bz-print-toolbar">
+    <MudButton Href="@BackHref" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack">@SharedTexts.Back</MudButton>
+    <MudText Typo="Typo.subtitle1"><b>@CatalogTexts.LabelsTitle</b> — @string.Format(CultureInfo.CurrentCulture, CatalogTexts.LabelsSubtitle, _labels.Count(l => l.Selected), _labels.Count)</MudText>
+    <MudSpacer />
+    <MudNumericField T="int" @bind-Value="_skip" Label="@CatalogTexts.LabelsSkip" Min="0" Max="23" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:230px" />
+    <MudButton Variant="Variant.Text" OnClick="() => SetAll(true)">@CatalogTexts.LabelsSelectAll</MudButton>
+    <MudButton Variant="Variant.Text" OnClick="() => SetAll(false)">@CatalogTexts.LabelsSelectNone</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="() => Browser.PrintAsync()" Disabled="@(!_labels.Any(l => l.Selected))">@CatalogTexts.PrintButton</MudButton>
+</div>
+
+@if (_loaded && _labels.Count == 0)
+{
+    <EmptyState Title="@CatalogTexts.LabelsEmpty" Icon="@Icons.Material.Outlined.QrCode2" />
+}
+
+<div class="bz-labels">
+    @for (var i = 0; i < _skip; i++)
+    {
+        <div class="bz-label" aria-hidden="true"></div>
+    }
+    @foreach (var label in _labels)
+    {
+        <div class="bz-label @(label.Selected ? null : "bz-label-excluded")">
+            <div>@((MarkupString)label.Svg)</div>
+            <div style="min-width:0">
+                <div class="bz-label-ref">@label.Item.InternalReference</div>
+                <div class="bz-label-text"><b>@label.Item.Designation</b></div>
+                <div class="bz-label-text">@label.Item.CustomerCode @(label.Item.CustomerReference is null ? null : $"· {label.Item.CustomerReference}")</div>
+            </div>
+            <div class="bz-label-check">
+                <input type="checkbox" checked="@label.Selected" @onchange="e => label.Selected = e.Value is true" aria-label="@label.Item.InternalReference" />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Label> _labels = [];
+    private bool _loaded;
+    private int _skip;
+
+    [SupplyParameterFromQuery(Name = "refs")] public string? References { get; set; }
+
+    private string BackHref => References is null ? "pieces" + new Uri(Navigation.Uri).Query : $"pieces/{Uri.EscapeDataString(References.Split(',')[0])}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IReadOnlyList<PartListItem> items;
+        if (References is not null)
+        {
+            var wanted = References.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var all = await Parts.SearchAsync(new PartSearchRequest { IncludeArchived = true, PageSize = 10_000 });
+            items = all.IsSuccess
+                ? wanted.Select(r => all.Value.Items.FirstOrDefault(i => string.Equals(i.InternalReference, r, StringComparison.OrdinalIgnoreCase))).OfType<PartListItem>().ToList()
+                : [];
+        }
+        else
+        {
+            var request = PartFilterQuery.Parse(new Uri(Navigation.Uri).Query, await Customers.ListAsync(includeArchived: true)) with { PageSize = 10_000 };
+            var found = await Parts.SearchAsync(request);
+            items = found.IsSuccess ? found.Value.Items : [];
+        }
+
+        var labels = new List<Label>();
+        foreach (var item in items)
+        {
+            var (_, svg) = await QrCodes.ForPartAsync(item.InternalReference);
+            labels.Add(new Label(item, svg));
+        }
+
+        _labels = labels;
+        _loaded = true;
+    }
+
+    private void SetAll(bool selected) => _labels.ForEach(l => l.Selected = selected);
+
+    private sealed class Label(PartListItem item, string svg)
+    {
+        public PartListItem Item { get; } = item;
+
+        public string Svg { get; } = svg;
+
+        public bool Selected { get; set; } = true;
+    }
+}

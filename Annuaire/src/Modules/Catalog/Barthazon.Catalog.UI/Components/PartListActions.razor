@@ -1,5 +1,30 @@
-@* Actions sur la liste filtrée (export Excel, étiquettes QR) : jalon J7. *@
+@inject IPartExchangeService Exchange
+@inject BrowserInterop Browser
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+
+@* Actions sur la liste filtrée : export Excel, planche d'étiquettes QR (mêmes filtres). *@
+<MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportAsync" Disabled="_exporting">
+    @(_exporting ? CatalogTexts.Exporting : CatalogTexts.ExportExcel)
+</MudButton>
+<MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.QrCode2" Href="@LabelsHref">@CatalogTexts.QrLabels</MudButton>
 
 @code {
+    private bool _exporting;
+
     [Parameter] public PartSearchRequest Request { get; set; } = new();
+
+    private string LabelsHref => "pieces/etiquettes" + new Uri(Navigation.Uri).Query;
+
+    private async Task ExportAsync()
+    {
+        _exporting = true;
+        var result = await Exchange.ExportAsync(Request);
+        if (Notifier.Handle(result))
+        {
+            await Browser.DownloadAsync(result.Value.FileName, result.Value.Content);
+        }
+
+        _exporting = false;
+    }
 }

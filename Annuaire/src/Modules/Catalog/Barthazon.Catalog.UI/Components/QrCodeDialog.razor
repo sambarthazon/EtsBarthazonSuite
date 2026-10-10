@@ -1,0 +1,29 @@
+@inject Barthazon.Catalog.UI.Services.PartQrCodes QrCodes
+
+<MudDialog>
+    <DialogContent>
+        @if (_svg is not null)
+        {
+            <div class="pa-4" style="background:var(--bz-print-background);border-radius:var(--bz-radius)">
+                <div style="width:220px;height:220px;margin:0 auto" role="img" aria-label="@_url">@((MarkupString)_svg)</div>
+            </div>
+            <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-2" Style="word-break:break-all"><a href="@_url">@_url</a></MudText>
+            <MudText Typo="Typo.caption" Class="bz-muted d-block mt-2">@CatalogTexts.QrHelp</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Href="@($"pieces/etiquettes?refs={Uri.EscapeDataString(Reference)}")" StartIcon="@Icons.Material.Filled.Print">@CatalogTexts.QrPrintLabel</MudButton>
+        <MudButton OnClick="() => Dialog!.Close()">@SharedTexts.Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string? _url;
+    private string? _svg;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public string Reference { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync() => (_url, _svg) = await QrCodes.ForPartAsync(Reference);
+}

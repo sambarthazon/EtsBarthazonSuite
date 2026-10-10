@@ -1,5 +1,7 @@
 using System.Reflection;
 using Barthazon.Catalog.Core.Persistence;
+using Barthazon.Catalog.Core.Services;
+using Barthazon.Catalog.Infrastructure.Exchange;
 using Barthazon.Catalog.Infrastructure.Persistence;
 using Barthazon.Shared.Infrastructure.Persistence;
 using Barthazon.Shared.Kernel.Persistence;
@@ -18,5 +20,6 @@ public sealed class CatalogPersistence : IModulePersistence
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IUnitOfWorkFactory<ICatalogUnitOfWork>, CatalogUnitOfWorkFactory>();
+        services.AddSingleton<IPartSpreadsheet, ClosedXmlPartSpreadsheet>();
     }
 }

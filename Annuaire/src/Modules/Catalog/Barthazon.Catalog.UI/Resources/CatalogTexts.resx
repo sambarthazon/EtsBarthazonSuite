@@ -426,4 +426,53 @@
   <data name="DemoOrderNumber" xml:space="preserve"><value>CMD-2025-118</value></data>
   <data name="DemoStockQuantity" xml:space="preserve"><value>120 pcs</value></data>
   <data name="DemoLastDelivery" xml:space="preserve"><value>12/09/2025 — 40 pcs</value></data>
+  <data name="ExportExcel" xml:space="preserve"><value>Export Excel</value></data>
+  <data name="QrLabels" xml:space="preserve"><value>Étiquettes QR</value></data>
+  <data name="Exporting" xml:space="preserve"><value>Préparation de l'export…</value></data>
+  <data name="ImportTitle" xml:space="preserve"><value>Import Excel / CSV</value></data>
+  <data name="ImportSubtitle" xml:space="preserve"><value>Chargement initial ou mise à jour en masse des pièces.</value></data>
+  <data name="ImportStep1" xml:space="preserve"><value>Choisir le fichier</value></data>
+  <data name="ImportStep2" xml:space="preserve"><value>Vérifier</value></data>
+  <data name="ImportStep3" xml:space="preserve"><value>Résultat</value></data>
+  <data name="ImportTemplate" xml:space="preserve"><value>Télécharger le modèle de fichier</value></data>
+  <data name="ImportHelp" xml:space="preserve"><value>Une ligne par pièce. Colonnes obligatoires : Référence interne, Désignation, Code client. Si la référence interne existe déjà, la pièce est mise à jour ; sinon elle est créée avec son premier indice en vigueur.</value></data>
+  <data name="ImportChooseFile" xml:space="preserve"><value>Déposez le fichier Excel (.xlsx) ou CSV ici, ou touchez pour choisir</value></data>
+  <data name="ImportAnalyzing" xml:space="preserve"><value>Analyse du fichier…</value></data>
+  <data name="ImportSummary" xml:space="preserve"><value>{0} création(s), {1} mise(s) à jour, {2} ligne(s) en erreur</value></data>
+  <data name="ImportMissingCustomers" xml:space="preserve"><value>Clients inconnus : {0}</value></data>
+  <data name="ImportMissingMaterials" xml:space="preserve"><value>Matières inconnues : {0}</value></data>
+  <data name="ImportMissingFamilies" xml:space="preserve"><value>Familles inconnues : {0}</value></data>
+  <data name="ImportCreateCustomers" xml:space="preserve"><value>Créer automatiquement les clients inconnus</value></data>
+  <data name="ImportCreateMaterials" xml:space="preserve"><value>Créer automatiquement les matières inconnues</value></data>
+  <data name="ImportCreateFamilies" xml:space="preserve"><value>Créer automatiquement les familles inconnues</value></data>
+  <data name="ImportColLine" xml:space="preserve"><value>Ligne</value></data>
+  <data name="ImportColAction" xml:space="preserve"><value>Action</value></data>
+  <data name="ImportColMessages" xml:space="preserve"><value>Messages</value></data>
+  <data name="ImportActionCreate" xml:space="preserve"><value>Création</value></data>
+  <data name="ImportActionUpdate" xml:space="preserve"><value>Mise à jour</value></data>
+  <data name="ImportActionError" xml:space="preserve"><value>Erreur</value></data>
+  <data name="ImportConfirm" xml:space="preserve"><value>Importer</value></data>
+  <data name="ImportRunning" xml:space="preserve"><value>Import en cours…</value></data>
+  <data name="ImportOtherFile" xml:space="preserve"><value>Choisir un autre fichier</value></data>
+  <data name="ImportDone" xml:space="preserve"><value>Import terminé : {0} création(s), {1} mise(s) à jour.</value></data>
+  <data name="ImportFailedLines" xml:space="preserve"><value>Lignes non importées</value></data>
+  <data name="ImportOnlyErrors" xml:space="preserve"><value>Afficher seulement les lignes en erreur ou avec avertissement</value></data>
+  <data name="ImportSeeParts" xml:space="preserve"><value>Voir les pièces</value></data>
+  <data name="PrintTitle" xml:space="preserve"><value>Fiche pièce {0}</value></data>
+  <data name="PrintButton" xml:space="preserve"><value>Imprimer</value></data>
+  <data name="PrintFooter" xml:space="preserve"><value>Imprimé le {0} — indice {1} — vérifier l'indice en vigueur avant usinage</value></data>
+  <data name="PrintNotInForce" xml:space="preserve"><value>ATTENTION : cet indice n'est pas l'indice en vigueur ({0}).</value></data>
+  <data name="PrintNoInForce" xml:space="preserve"><value>ATTENTION : aucun indice n'est en vigueur pour cette pièce.</value></data>
+  <data name="PrintDocuments" xml:space="preserve"><value>Documents</value></data>
+  <data name="PrintPaper" xml:space="preserve"><value>papier : {0}</value></data>
+  <data name="PrintTotals" xml:space="preserve"><value>Totaux</value></data>
+  <data name="QrTitle" xml:space="preserve"><value>QR code de la pièce {0}</value></data>
+  <data name="QrHelp" xml:space="preserve"><value>Le QR code mène à la fiche de la pièce (toujours à l'indice en vigueur). Il se lit avec l'appareil photo du téléphone.</value></data>
+  <data name="QrPrintLabel" xml:space="preserve"><value>Imprimer l'étiquette</value></data>
+  <data name="LabelsTitle" xml:space="preserve"><value>Étiquettes QR</value></data>
+  <data name="LabelsSubtitle" xml:space="preserve"><value>{0} étiquette(s) sur {1} — planche A4 de 3 × 8 étiquettes (70 × 37 mm)</value></data>
+  <data name="LabelsSelectAll" xml:space="preserve"><value>Tout cocher</value></data>
+  <data name="LabelsSelectNone" xml:space="preserve"><value>Tout décocher</value></data>
+  <data name="LabelsEmpty" xml:space="preserve"><value>Aucune pièce à étiqueter.</value></data>
+  <data name="LabelsSkip" xml:space="preserve"><value>Étiquettes déjà utilisées sur la planche</value></data>
 </root>

@@ -72,7 +72,7 @@ internal sealed partial class PartService(
         var rows = await uow.Parts.SearchAsync(ToQuery(request), cancellationToken);
         var items = await ToListItemsAsync(uow, rows, cancellationToken);
         var sorted = Sort(items, request.Sort, request.Descending).ToList();
-        var pageSize = Math.Clamp(request.PageSize, 1, 500);
+        var pageSize = Math.Clamp(request.PageSize, 1, 10_000);
         var page = sorted.Skip(Math.Max(0, request.PageIndex) * pageSize).Take(pageSize).ToList();
         return new PagedResult<PartListItem>(page, sorted.Count);
     }
