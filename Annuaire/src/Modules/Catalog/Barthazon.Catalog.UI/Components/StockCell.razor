@@ -1,6 +1,17 @@
-@* Colonne « Stock » : arrivera avec l'application Stock (jalon J6). *@
-<span class="bz-muted">—</span>
+@inject Barthazon.Shared.Kernel.Features.IFeatureFlags Features
+
+@* Colonne « Stock » de la liste : grisée tant que l'application Stock n'existe pas. *@
+@if (Features.IsEnabled(FeatureNames.Stock) && Stock is not null)
+{
+    <span class="@(Stock.IsBelowThreshold ? "bz-tone-warning" : null)">@CatalogLabels.Number(Stock.Quantity) @Stock.Unit</span>
+}
+else
+{
+    <span class="bz-tone-disabled" aria-label="@CatalogTexts.NotAvailable">—</span>
+}
 
 @code {
     [Parameter] public Guid PartId { get; set; }
+
+    [Parameter] public PartStockInfo? Stock { get; set; }
 }

@@ -168,6 +168,7 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
 
 /* Fonctions à venir : contenu factice en transparence, non cliquable. */
 .bz-coming-soon {
+    min-height: 120px;
     position: relative;
     border: 1px dashed var(--bz-disabled);
     border-radius: var(--bz-radius);

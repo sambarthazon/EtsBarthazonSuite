@@ -9,6 +9,7 @@
 @inject NavigationManager Navigation
 @inject BrowserInterop Browser
 @inject Notifier Notifier
+@inject IPartStockInfoProvider StockProvider
 
 <PageHeader Title="@CatalogTexts.PartsTitle" Subtitle="@(_result is null ? null : string.Format(CultureInfo.CurrentCulture, CatalogTexts.PartsSubtitle, _result.TotalCount))">
     <Actions>
@@ -141,7 +142,7 @@
         @if (Show("tags")) { <MudTh>@CatalogTexts.ColTags</MudTh> }
         @if (Show("status")) { <MudTh><SortHeader Text="@CatalogTexts.ColStatus" Sort="PartSort.Status" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh> }
         @if (Show("updated")) { <MudTh><SortHeader Text="@CatalogTexts.ColUpdatedAt" Sort="PartSort.UpdatedAt" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh> }
-        @if (Show("stock")) { <MudTh>@CatalogTexts.ColStock</MudTh> }
+        @if (Show("stock")) { <MudTh><FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock" Inline="true" Placeholder="@StockHeader">@CatalogTexts.ColStock</FeatureGate></MudTh> }
     </HeaderContent>
     <RowTemplate Context="p">
         @if (Show("thumb")) { <MudTd><PartThumbnail DocumentId="p.ThumbnailDocumentId" /></MudTd> }
@@ -158,7 +159,7 @@
         @if (Show("tags")) { <MudTd><div class="d-flex flex-wrap gap-1">@foreach (var t in p.Tags) { <TagChip Label="@t.Label" Color="t.Color" Query="@Q" /> }</div></MudTd> }
         @if (Show("status")) { <MudTd><PartStatusChip Status="p.Status" /></MudTd> }
         @if (Show("updated")) { <MudTd>@p.UpdatedAt.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</MudTd> }
-        @if (Show("stock")) { <MudTd><StockCell PartId="p.Id" /></MudTd> }
+        @if (Show("stock")) { <MudTd><StockCell PartId="p.Id" Stock="@_stock.GetValueOrDefault(p.Id)" /></MudTd> }
     </RowTemplate>
     <CardTemplate Context="p">
         <div class="d-flex gap-3 align-start @(p.IsArchived ? "bz-list-row-archived" : null)">
@@ -206,7 +207,10 @@
 
     private static readonly string[] DefaultColumns = ["thumb", "designation", "customer", "customerRef", "index", "material", "status", "updated", "stock"];
 
+    private static readonly RenderFragment StockHeader = builder => builder.AddContent(0, CatalogTexts.ColStock);
+
     private PagedResult<PartListItem>? _result;
+    private IReadOnlyDictionary<Guid, PartStockInfo> _stock = new Dictionary<Guid, PartStockInfo>();
     private PartSearchRequest _request = new();
     private bool _loading = true;
     private bool _filtersOpen;
@@ -313,6 +317,7 @@
         if (Notifier.Handle(result))
         {
             _result = result.Value;
+            _stock = await StockProvider.GetManyAsync(_result.Items.Select(i => i.Id));
         }
 
         _loading = false;

@@ -1,0 +1,33 @@
+@* Fonction à venir : contenu factice en transparence, non cliquable, avec un bandeau explicatif (accessible). *@
+@if (Inline)
+{
+    <span class="bz-coming-soon-inline" aria-disabled="true" title="@Message" role="note">
+        <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Size="Size.Small" />
+        @if (ChildContent is not null) { @ChildContent } else { <span>@SharedTexts.ComingSoon</span> }
+        <span class="sr-only">@Message</span>
+    </span>
+}
+else
+{
+    <div class="bz-coming-soon @Class" aria-disabled="true" role="region" aria-label="@Message">
+        <div class="bz-coming-soon-content" aria-hidden="true" inert>@ChildContent</div>
+        <div class="bz-coming-soon-banner"><span>@Message</span></div>
+    </div>
+}
+
+@code {
+    /// <summary>Nom de l'application qui apportera la fonction (ex. « Stock »).</summary>
+    [Parameter] public string? Application { get; set; }
+
+    /// <summary>Contenu factice montré en transparence (ou libellé pour la version en ligne).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Version compacte (pastille, cellule de tableau).</summary>
+    [Parameter] public bool Inline { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    private string Message => Application is null
+        ? SharedTexts.ComingSoon
+        : string.Format(CultureInfo.CurrentCulture, SharedTexts.ComingSoonWith, Application);
+}

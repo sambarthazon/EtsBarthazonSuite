@@ -1,5 +1,25 @@
-@* Pastille « Stock », favori : complétés aux jalons J6 et J9. *@
+@inject IPartStockInfoProvider StockProvider
+
+@* Pastille « Stock » dans l'en-tête : grisée tant que l'application Stock n'existe pas. *@
+<FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock" Inline="true">
+    <ChildContent>
+        @if (_stock is null)
+        {
+            <StatusChip Text="@CatalogTexts.StockPillEmpty" Tone="StatusTone.Neutral" />
+        }
+        else
+        {
+            <StatusChip Text="@string.Format(CultureInfo.CurrentCulture, CatalogTexts.StockPill, $"{CatalogLabels.Number(_stock.Quantity)} {_stock.Unit}".Trim())"
+                        Tone="@(_stock.IsBelowThreshold ? StatusTone.Warning : StatusTone.Success)" />
+        }
+    </ChildContent>
+    <Placeholder>@CatalogTexts.StockPillEmpty</Placeholder>
+</FeatureGate>
 
 @code {
+    private PartStockInfo? _stock;
+
     [Parameter] public PartDetails Part { get; set; } = default!;
+
+    protected override async Task OnParametersSetAsync() => _stock = await StockProvider.GetAsync(Part.Id);
 }

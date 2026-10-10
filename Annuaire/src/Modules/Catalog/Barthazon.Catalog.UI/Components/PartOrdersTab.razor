@@ -1,5 +1,38 @@
-@* Zone « à venir » : complétée au jalon J6. *@
+@inject IPartOrderInfoProvider Orders
+
+<FeatureGate Feature="@FeatureNames.Orders" Application="@CatalogTexts.AppOrders">
+    <ChildContent>
+        @if (_orders.Count == 0)
+        {
+            <MudText Class="bz-muted">@(Orders.IsAvailable ? CatalogTexts.NoOrders : CatalogTexts.NotAvailable)</MudText>
+        }
+        else
+        {
+            @Table(_orders)
+        }
+    </ChildContent>
+    <Placeholder>
+        <div class="pa-4">@Table([new PartOrderInfo(CatalogTexts.DemoOrderNumber, new DateOnly(2025, 11, 28), 200, 80, null)])</div>
+    </Placeholder>
+</FeatureGate>
 
 @code {
+    private IReadOnlyList<PartOrderInfo> _orders = [];
+
     [Parameter] public Guid PartId { get; set; }
+
+    protected override async Task OnParametersSetAsync() => _orders = await Orders.GetOpenOrdersAsync(PartId);
+
+    private static RenderFragment Table(IReadOnlyList<PartOrderInfo> rows) => __builder =>
+    {
+        <MudSimpleTable Dense="true" Elevation="0">
+            <thead><tr><th>@CatalogTexts.OrderNumber</th><th>@CatalogTexts.OrderDueDate</th><th>@CatalogTexts.OrderQuantity</th><th>@CatalogTexts.OrderRemaining</th></tr></thead>
+            <tbody>
+                @foreach (var o in rows)
+                {
+                    <tr><td>@o.OrderNumber</td><td>@o.DueDate?.ToString("d", CultureInfo.CurrentCulture)</td><td>@CatalogLabels.Number(o.OrderedQuantity)</td><td><b>@CatalogLabels.Number(o.RemainingQuantity)</b></td></tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    };
 }

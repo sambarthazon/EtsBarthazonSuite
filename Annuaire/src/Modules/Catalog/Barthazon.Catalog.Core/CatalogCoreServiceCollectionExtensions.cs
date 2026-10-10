@@ -2,6 +2,7 @@ using Barthazon.Catalog.Contracts;
 using Barthazon.Catalog.Core.Services;
 using Barthazon.Referential.Contracts;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Barthazon.Catalog.Core;
 
@@ -20,6 +21,11 @@ public static class CatalogCoreServiceCollectionExtensions
         services.AddScoped<IPartLookup>(sp => sp.GetRequiredService<PartService>());
         services.AddScoped<IRevisionService, RevisionService>();
         services.AddScoped<IDocumentService, DocumentService>();
+
+        // Points d'extension pour les futures applications : « non disponible » tant qu'un module ne fournit pas mieux.
+        services.TryAddSingleton<IPartStockInfoProvider, UnavailablePartInfoProvider>();
+        services.TryAddSingleton<IPartDeliveryInfoProvider, UnavailablePartInfoProvider>();
+        services.TryAddSingleton<IPartOrderInfoProvider, UnavailablePartInfoProvider>();
         return services;
     }
 }

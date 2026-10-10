@@ -1,1 +1,13 @@
-@* Filtre « En rupture » : arrivera avec l'application Stock (jalon J6). *@
+@* Filtre « En rupture » : grisé tant que l'application Stock n'existe pas. *@
+<FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock" Inline="true">
+    <ChildContent>
+        <MudSwitch T="bool" Value="Value" ValueChanged="ValueChanged" Color="Color.Warning" Label="@CatalogTexts.OutOfStockFilter" />
+    </ChildContent>
+    <Placeholder>@CatalogTexts.OutOfStockFilter</Placeholder>
+</FeatureGate>
+
+@code {
+    [Parameter] public bool Value { get; set; }
+
+    [Parameter] public EventCallback<bool> ValueChanged { get; set; }
+}

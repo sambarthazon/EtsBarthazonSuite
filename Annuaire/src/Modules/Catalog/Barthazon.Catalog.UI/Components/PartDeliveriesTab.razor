@@ -1,5 +1,41 @@
-@* Zone « à venir » : complétée au jalon J6. *@
+@inject IPartDeliveryInfoProvider Deliveries
+
+<FeatureGate Feature="@FeatureNames.Deliveries" Application="@CatalogTexts.AppOrders">
+    <ChildContent>
+        @if (_deliveries.Count == 0)
+        {
+            <MudText Class="bz-muted">@(Deliveries.IsAvailable ? CatalogTexts.NoDeliveries : CatalogTexts.NotAvailable)</MudText>
+        }
+        else
+        {
+            @Table(_deliveries)
+        }
+    </ChildContent>
+    <Placeholder>
+        <div class="pa-4">
+            <MudText Typo="Typo.subtitle1" Class="mb-2"><b>@CatalogTexts.LastDelivery</b> : @CatalogTexts.DemoLastDelivery — @CatalogTexts.DemoDeliveryNote</MudText>
+            @Table([new PartDeliveryInfo(new DateOnly(2025, 9, 12), 40, CatalogTexts.DemoDeliveryNote, null), new PartDeliveryInfo(new DateOnly(2025, 6, 3), 60, "BL-2025-0277", null)])
+        </div>
+    </Placeholder>
+</FeatureGate>
 
 @code {
+    private IReadOnlyList<PartDeliveryInfo> _deliveries = [];
+
     [Parameter] public Guid PartId { get; set; }
+
+    protected override async Task OnParametersSetAsync() => _deliveries = await Deliveries.GetHistoryAsync(PartId);
+
+    private static RenderFragment Table(IReadOnlyList<PartDeliveryInfo> rows) => __builder =>
+    {
+        <MudSimpleTable Dense="true" Elevation="0">
+            <thead><tr><th>@CatalogTexts.DeliveryDate</th><th>@CatalogTexts.DeliveryQuantity</th><th>@CatalogTexts.DeliveryNote</th></tr></thead>
+            <tbody>
+                @foreach (var d in rows)
+                {
+                    <tr><td>@d.Date.ToString("d", CultureInfo.CurrentCulture)</td><td>@CatalogLabels.Number(d.Quantity)</td><td>@d.DeliveryNoteNumber</td></tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    };
 }

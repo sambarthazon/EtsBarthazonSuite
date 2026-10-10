@@ -1,0 +1,30 @@
+@using Barthazon.Shared.Kernel.Features
+@inject IFeatureFlags Features
+
+@* Affiche le contenu réel si la fonction est activée (configuration « Features »), sinon la zone « à venir ». *@
+@if (Features.IsEnabled(Feature))
+{
+    @ChildContent
+}
+else
+{
+    <ComingSoon Application="@Application" Inline="Inline" Class="@Class">@Placeholder</ComingSoon>
+}
+
+@code {
+    /// <summary>Nom de la fonction (voir FeatureNames : Stock, Deliveries, Orders, TimeTracking).</summary>
+    [Parameter, EditorRequired] public string Feature { get; set; } = string.Empty;
+
+    /// <summary>Application qui apportera la fonction (texte du bandeau).</summary>
+    [Parameter] public string? Application { get; set; }
+
+    /// <summary>Contenu réel, quand la fonction est active.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Contenu factice montré grisé tant que la fonction n'est pas active.</summary>
+    [Parameter] public RenderFragment? Placeholder { get; set; }
+
+    [Parameter] public bool Inline { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+}

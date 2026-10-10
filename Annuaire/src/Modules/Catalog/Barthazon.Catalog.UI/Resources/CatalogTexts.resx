@@ -398,4 +398,32 @@
   <data name="AddedOn" xml:space="preserve"><value>Ajouté le {0} par {1}</value></data>
   <data name="NoMainDrawing" xml:space="preserve"><value>Aucun plan pour cet indice.</value></data>
   <data name="OpenDocuments" xml:space="preserve"><value>Voir tous les documents</value></data>
+  <data name="AppStock" xml:space="preserve"><value>Stock</value></data>
+  <data name="AppOrders" xml:space="preserve"><value>Commandes &amp; livraisons</value></data>
+  <data name="StockPill" xml:space="preserve"><value>Stock : {0}</value></data>
+  <data name="StockPillEmpty" xml:space="preserve"><value>Stock : —</value></data>
+  <data name="StockQuantity" xml:space="preserve"><value>Quantité en stock</value></data>
+  <data name="StockLocation" xml:space="preserve"><value>Emplacement</value></data>
+  <data name="StockThreshold" xml:space="preserve"><value>Seuil mini</value></data>
+  <data name="StockValue" xml:space="preserve"><value>Valeur</value></data>
+  <data name="StockBelowThreshold" xml:space="preserve"><value>Sous le seuil</value></data>
+  <data name="OutOfStockFilter" xml:space="preserve"><value>En rupture</value></data>
+  <data name="LastDelivery" xml:space="preserve"><value>Dernière livraison</value></data>
+  <data name="DeliveryDate" xml:space="preserve"><value>Date</value></data>
+  <data name="DeliveryQuantity" xml:space="preserve"><value>Quantité</value></data>
+  <data name="DeliveryNote" xml:space="preserve"><value>Bon de livraison</value></data>
+  <data name="DeliveryHistory" xml:space="preserve"><value>Historique des livraisons</value></data>
+  <data name="OpenOrders" xml:space="preserve"><value>Commandes en cours</value></data>
+  <data name="OrderNumber" xml:space="preserve"><value>Commande</value></data>
+  <data name="OrderDueDate" xml:space="preserve"><value>Échéance</value></data>
+  <data name="OrderQuantity" xml:space="preserve"><value>Quantité commandée</value></data>
+  <data name="OrderRemaining" xml:space="preserve"><value>Reste à livrer</value></data>
+  <data name="NotAvailable" xml:space="preserve"><value>Non disponible</value></data>
+  <data name="NoDeliveries" xml:space="preserve"><value>Aucune livraison.</value></data>
+  <data name="NoOrders" xml:space="preserve"><value>Aucune commande en cours.</value></data>
+  <data name="DemoStockLocation" xml:space="preserve"><value>Rayon B3</value></data>
+  <data name="DemoDeliveryNote" xml:space="preserve"><value>BL-2025-0412</value></data>
+  <data name="DemoOrderNumber" xml:space="preserve"><value>CMD-2025-118</value></data>
+  <data name="DemoStockQuantity" xml:space="preserve"><value>120 pcs</value></data>
+  <data name="DemoLastDelivery" xml:space="preserve"><value>12/09/2025 — 40 pcs</value></data>
 </root>

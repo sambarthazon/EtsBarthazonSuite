@@ -1,5 +1,35 @@
-@* Zone « à venir » : complétée au jalon J6. *@
+@inject IPartStockInfoProvider StockProvider
+
+<FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock">
+    <ChildContent>
+        @if (_stock is null)
+        {
+            <MudAlert Severity="Severity.Info">@CatalogTexts.NotAvailable</MudAlert>
+        }
+        else
+        {
+            <div class="bz-fields">
+                <FieldView Label="@CatalogTexts.StockQuantity" Value="@($"{CatalogLabels.Number(_stock.Quantity)} {_stock.Unit}")" />
+                <FieldView Label="@CatalogTexts.StockLocation" Value="@_stock.Location" />
+                <FieldView Label="@CatalogTexts.StockThreshold" Value="@CatalogLabels.Number(_stock.MinimumThreshold)" />
+                <FieldView Label="@CatalogTexts.StockValue" Value="@_stock.Value?.ToString("C", CultureInfo.CurrentCulture)" />
+            </div>
+        }
+    </ChildContent>
+    <Placeholder>
+        <div class="bz-fields pa-4">
+            <FieldView Label="@CatalogTexts.StockQuantity" Value="@CatalogTexts.DemoStockQuantity" />
+            <FieldView Label="@CatalogTexts.StockLocation" Value="@CatalogTexts.DemoStockLocation" />
+            <FieldView Label="@CatalogTexts.StockThreshold" Value="50" />
+            <FieldView Label="@CatalogTexts.StockValue" Value="@(1250m.ToString("C", CultureInfo.CurrentCulture))" />
+        </div>
+    </Placeholder>
+</FeatureGate>
 
 @code {
+    private PartStockInfo? _stock;
+
     [Parameter] public Guid PartId { get; set; }
+
+    protected override async Task OnParametersSetAsync() => _stock = await StockProvider.GetAsync(PartId);
 }
