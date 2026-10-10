@@ -1,14 +1,27 @@
 using System.Globalization;
 using Barthazon.Portal.Components;
 using Barthazon.Portal.Hosting;
-using Barthazon.Shared.Infrastructure.Features;
-using Barthazon.Shared.Kernel.Features;
+using Barthazon.Shared.Infrastructure;
+using Barthazon.Shared.Infrastructure.Hosting;
+using Barthazon.Shared.Infrastructure.Persistence;
 using Barthazon.Shared.Kernel.Modules;
 using Barthazon.Shared.Kernel.Security;
-using Barthazon.Shared.Kernel.Settings;
 using Barthazon.Shared.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Validation de la configuration : en cas d'erreur, arrêt immédiat avec un message clair.
+var report = ConfigurationValidator.Validate(builder.Configuration, builder.Environment.ContentRootPath);
+if (!report.IsValid)
+{
+    Console.Error.WriteLine("Configuration invalide — l'application ne peut pas démarrer :");
+    foreach (var error in report.Errors)
+    {
+        Console.Error.WriteLine("  - " + error);
+    }
+
+    return 1;
+}
 
 // Culture française (dates, virgule décimale).
 var culture = CultureInfo.GetCultureInfo(builder.Configuration["App:Culture"] ?? "fr-FR");
@@ -20,6 +33,10 @@ builder.Services.AddRazorComponents()
 
 builder.Services.Configure<BrandingOptions>(builder.Configuration.GetSection(BrandingOptions.SectionName));
 builder.Services.AddSharedUi();
+builder.Services.AddSingleton(new ConfigurationWarnings(report.Warnings));
+
+// Socle de données + persistance des modules.
+builder.Services.AddSharedInfrastructure(builder.Configuration, builder.Environment.ContentRootPath, PortalModules.Persistence);
 
 // Modules : chaque module enregistre ses propres services.
 var modules = PortalModules.All;
@@ -31,10 +48,10 @@ foreach (var module in modules)
 
 builder.Services.AddScoped<CurrentUserAccessor>();
 builder.Services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<CurrentUserAccessor>());
-builder.Services.AddSingleton<IFeatureFlags, ConfigurationFeatureFlags>();
-builder.Services.AddSingleton<IApplicationSettingsStore, ConfigurationSettingsStore>();
 
 var app = builder.Build();
+
+await app.Services.GetRequiredService<DatabaseInitializer>().InitializeAsync();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -48,4 +65,5 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.Run();
+await app.RunAsync();
+return 0;
