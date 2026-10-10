@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <base href="/" />
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["_content/MudBlazor/MudBlazor.min.css"]" />
+    <link rel="stylesheet" href="@Assets["_content/Barthazon.Shared.UI/barthazon.css"]" />
+    <link rel="stylesheet" href="@Assets["Barthazon.Portal.styles.css"]" />
+    <ImportMap />
+    <link rel="icon" type="image/svg+xml" href="img/logo.svg" />
+    <HeadOutlet @rendermode="PageRenderMode" />
+</head>
+
+<body>
+    <Routes @rendermode="PageRenderMode" DarkMode="DarkMode" />
+    <ReconnectModal />
+    <script src="@Assets["_content/MudBlazor/MudBlazor.min.js"]"></script>
+    <script src="@Assets["_content/Barthazon.Shared.UI/barthazon.js"]"></script>
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    /// <summary>Les pages marquées [ExcludeFromInteractiveRouting] (connexion…) sont rendues côté serveur sans circuit.</summary>
+    private IComponentRenderMode? PageRenderMode =>
+        HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
+
+    /// <summary>Mode sombre mémorisé dans un cookie (connu dès le prérendu, sans clignotement).</summary>
+    private bool? DarkMode => HttpContext.Request.Cookies["bz-theme"] switch
+    {
+        "dark" => true,
+        "light" => false,
+        _ => null,
+    };
+}

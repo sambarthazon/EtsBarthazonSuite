@@ -1,0 +1,18 @@
+@* Affiche un texte en surlignant les termes recherchés (insensible à la casse, aux accents et aux séparateurs). *@
+@foreach (var segment in SearchHighlighter.Split(Text, Query))
+{
+    if (segment.IsMatch)
+    {
+        <mark class="bz-highlight">@segment.Text</mark>
+    }
+    else
+    {
+        @segment.Text
+    }
+}
+
+@code {
+    [Parameter] public string? Text { get; set; }
+
+    [Parameter] public string? Query { get; set; }
+}

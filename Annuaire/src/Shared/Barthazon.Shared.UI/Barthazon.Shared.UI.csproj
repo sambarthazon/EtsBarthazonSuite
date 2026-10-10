@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <!-- Bibliothèque Razor commune : thème, mise en page, composants partagés. -->
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MudBlazor" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Barthazon.Shared.Kernel\Barthazon.Shared.Kernel.csproj" />
+  </ItemGroup>
+</Project>

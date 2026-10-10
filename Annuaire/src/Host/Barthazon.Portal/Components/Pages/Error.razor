@@ -1,0 +1,21 @@
+@page "/Error"
+@using System.Diagnostics
+
+<PageHeader Title="@SharedTexts.ErrorTitle" />
+<EmptyState Title="@SharedTexts.ErrorTitle" Text="@SharedTexts.ErrorText" Icon="@Icons.Material.Outlined.ErrorOutline">
+    @if (RequestId is not null)
+    {
+        <MudText Typo="Typo.caption" Class="bz-muted">@RequestId</MudText>
+    }
+    <MudButton Href="" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">@SharedTexts.BackToPortal</MudButton>
+</EmptyState>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

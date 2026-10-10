@@ -1,0 +1,53 @@
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+
+@if (CurrentUser.IsAuthenticated)
+{
+    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@CurrentUser.DisplayName">
+        <ActivatorContent>
+            <MudAvatar Color="Color.Secondary" Size="Size.Medium" Class="bz-touch" Style="cursor:pointer">@Initials</MudAvatar>
+        </ActivatorContent>
+        <ChildContent>
+            <div class="px-4 py-2">
+                <MudText Typo="Typo.subtitle2">@CurrentUser.DisplayName</MudText>
+                <MudText Typo="Typo.caption" Class="bz-muted">@RoleLabel</MudText>
+            </div>
+            <MudDivider />
+            <form method="post" action="compte/deconnexion" class="px-2 py-1">
+                <AntiforgeryToken />
+                <input type="hidden" name="returnUrl" value="@Navigation.ToBaseRelativePath(Navigation.Uri)" />
+                <MudButton ButtonType="ButtonType.Submit" StartIcon="@Icons.Material.Filled.Logout" Variant="Variant.Text" FullWidth="true">
+                    @SharedTexts.SignOut
+                </MudButton>
+            </form>
+        </ChildContent>
+    </MudMenu>
+}
+else
+{
+    <MudButton Href="@LoginUrl" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Login" Variant="Variant.Text" Class="bz-hide-mobile">
+        @SharedTexts.SignIn
+    </MudButton>
+    <MudIconButton Href="@LoginUrl" Color="Color.Inherit" Icon="@Icons.Material.Filled.Login" Class="bz-hide-desktop" aria-label="@SharedTexts.SignIn" />
+}
+
+@code {
+    private string LoginUrl => "connexion?returnUrl=" + Uri.EscapeDataString("/" + Navigation.ToBaseRelativePath(Navigation.Uri));
+
+    private string Initials
+    {
+        get
+        {
+            var name = CurrentUser.DisplayName ?? CurrentUser.UserName ?? "?";
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return string.Concat(parts.Take(2).Select(p => char.ToUpperInvariant(p[0])));
+        }
+    }
+
+    private string RoleLabel => CurrentUser.Role switch
+    {
+        UserRole.Administrator => SharedTexts.RoleAdministrator,
+        UserRole.Editor => SharedTexts.RoleEditor,
+        _ => SharedTexts.RoleReader,
+    };
+}

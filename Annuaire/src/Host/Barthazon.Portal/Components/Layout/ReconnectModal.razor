@@ -1,0 +1,38 @@
+<script type="module" src="@Assets["Components/Layout/ReconnectModal.razor.js"]"></script>
+
+@* Indicateur de perte de connexion avec le serveur, avec reconnexion automatique. *@
+<dialog id="components-reconnect-modal" data-nosnippet>
+    <div class="components-reconnect-container">
+        <div class="components-rejoining-animation" aria-hidden="true">
+            <div></div>
+            <div></div>
+        </div>
+        <p class="components-reconnect-first-attempt-visible">
+            @SharedTexts.ReconnectFirst
+        </p>
+        <p class="components-reconnect-repeated-attempt-visible">
+            @RetryingBefore<span id="components-seconds-to-next-attempt"></span>@RetryingAfter
+        </p>
+        <p class="components-reconnect-failed-visible">
+            @SharedTexts.ReconnectFailed
+        </p>
+        <button id="components-reconnect-button" class="components-reconnect-failed-visible">
+            @SharedTexts.ReconnectRetry
+        </button>
+        <p class="components-pause-visible">
+            @SharedTexts.ReconnectPaused
+        </p>
+        <p class="components-resume-failed-visible">
+            @SharedTexts.ReconnectResumeFailed
+        </p>
+        <button id="components-resume-button" class="components-pause-visible components-resume-failed-visible">
+            @SharedTexts.ReconnectResume
+        </button>
+    </div>
+</dialog>
+
+@code {
+    private static string RetryingBefore => SharedTexts.ReconnectRetrying.Split("{0}")[0];
+
+    private static string RetryingAfter => SharedTexts.ReconnectRetrying.Split("{0}").ElementAtOrDefault(1) ?? string.Empty;
+}

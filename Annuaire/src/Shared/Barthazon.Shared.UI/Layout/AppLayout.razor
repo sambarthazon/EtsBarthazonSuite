@@ -1,0 +1,132 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@using Barthazon.Shared.Kernel.Settings
+@using Microsoft.Extensions.Options
+@inject NavigationManager Navigation
+@inject IModuleCatalog ModuleCatalog
+@inject ICurrentUser CurrentUser
+@inject BrowserInterop Browser
+@inject IOptions<BrandingOptions> Branding
+@inject IApplicationSettingsStore SettingsStore
+@inject IEnumerable<IGlobalSearchProvider> SearchProviders
+
+<MudThemeProvider Theme="BrandTheme.Theme" IsDarkMode="_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider CloseButton="true" BackdropClick="true" CloseOnEscapeKey="true" />
+<MudSnackbarProvider />
+<BrandStyles IsDarkMode="_isDarkMode" />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="false">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                       OnClick="ToggleDrawer" aria-label="@SharedTexts.OpenMenu" Class="bz-hide-mobile" />
+        <a href="" class="bz-brand" title="@SharedTexts.Portal">
+            <img src="@Branding.Value.LogoUrl" alt="" />
+            <span>@_applicationName</span>
+        </a>
+        <MudSpacer />
+        <div class="bz-hide-mobile bz-appbar-search">
+            <GlobalSearch />
+        </div>
+        <MudIconButton Icon="@Icons.Material.Filled.Search" Color="Color.Inherit" Class="bz-hide-desktop"
+                       Href="@MobileSearchUrl" aria-label="@SharedTexts.Search" />
+        <MudTooltip Text="@SharedTexts.ToggleTheme">
+            <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                           Color="Color.Inherit" OnClick="ToggleThemeAsync" aria-label="@SharedTexts.ToggleTheme" />
+        </MudTooltip>
+        <UserMenu />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Responsive"
+               Breakpoint="Breakpoint.Md" Elevation="1">
+        <ModuleNav ActiveModule="_activeModule" />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="bz-page">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+
+    <BottomNav ActiveModule="_activeModule" OnMenuClick="ToggleDrawer" />
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode;
+    private string _applicationName = string.Empty;
+    private IModule? _activeModule;
+
+    /// <summary>Mode sombre connu au prérendu (cookie), transmis par le portail.</summary>
+    [CascadingParameter(Name = "BzDarkMode")]
+    public bool? InitialDarkMode { get; set; }
+
+    private string MobileSearchUrl => SearchProviders.OrderBy(p => p.Order).FirstOrDefault()?.FullResultsUrl(string.Empty) ?? string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isDarkMode = InitialDarkMode ?? false;
+        _applicationName = Branding.Value.Name;
+        UpdateActiveModule();
+        Navigation.LocationChanged += OnLocationChanged;
+        try
+        {
+            var settings = await SettingsStore.GetAsync();
+            if (!string.IsNullOrWhiteSpace(settings.ApplicationName))
+            {
+                _applicationName = settings.ApplicationName;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Base pas encore prête : on garde le nom de la configuration.
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Browser.RegisterShortcutsAsync();
+            if (InitialDarkMode is null)
+            {
+                var prefersDark = await Browser.PrefersDarkAsync();
+                if (prefersDark == true)
+                {
+                    _isDarkMode = true;
+                    StateHasChanged();
+                }
+            }
+        }
+    }
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    private async Task ToggleThemeAsync()
+    {
+        _isDarkMode = !_isDarkMode;
+        await Browser.SetThemeAsync(_isDarkMode);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        UpdateActiveModule();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateActiveModule()
+    {
+        var path = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var module = ModuleCatalog.FindByPath(path);
+        if (module is null || !module.IsApplication)
+        {
+            // Pages communes (clients, référentiels, administration) : on garde l'application courante,
+            // à défaut la première application disponible.
+            module = _activeModule ?? ModuleCatalog.Modules.FirstOrDefault(m => m.IsApplication && m.State == ModuleState.Available);
+        }
+
+        _activeModule = module;
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+}

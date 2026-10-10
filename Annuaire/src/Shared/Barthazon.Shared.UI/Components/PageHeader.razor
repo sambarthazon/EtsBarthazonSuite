@@ -1,0 +1,38 @@
+@* En-tête de page : titre (h1), sous-titre et actions. Renseigne aussi le titre de l'onglet. *@
+<PageTitle>@(PageTitleText ?? Title)</PageTitle>
+<header class="bz-page-header">
+    <div style="min-width:0">
+        @if (BackHref is not null)
+        {
+            <MudButton Href="@BackHref" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" Class="mb-1 bz-no-print">
+                @(BackText ?? SharedTexts.Back)
+            </MudButton>
+        }
+        <MudText Typo="Typo.h4" HtmlTag="h1">@Title</MudText>
+        @if (Subtitle is not null)
+        {
+            <MudText Typo="Typo.body1" Class="bz-muted">@Subtitle</MudText>
+        }
+        @SubContent
+    </div>
+    @if (Actions is not null)
+    {
+        <div class="bz-actions bz-no-print">@Actions</div>
+    }
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+
+    [Parameter] public string? Subtitle { get; set; }
+
+    [Parameter] public string? PageTitleText { get; set; }
+
+    [Parameter] public string? BackHref { get; set; }
+
+    [Parameter] public string? BackText { get; set; }
+
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    [Parameter] public RenderFragment? SubContent { get; set; }
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ModuleName" xml:space="preserve"><value>Référentiel</value></data>
+  <data name="ModuleDescription" xml:space="preserve"><value>Données partagées : clients, matières, machines.</value></data>
+  <data name="MenuCustomers" xml:space="preserve"><value>Clients</value></data>
+  <data name="MenuReferentials" xml:space="preserve"><value>Référentiels</value></data>
+  <data name="CustomersTitle" xml:space="preserve"><value>Clients</value></data>
+  <data name="ReferentialsTitle" xml:space="preserve"><value>Référentiels</value></data>
+</root>

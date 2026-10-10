@@ -1,0 +1,29 @@
+@page "/"
+@inject IModuleCatalog ModuleCatalog
+@inject Microsoft.Extensions.Options.IOptions<BrandingOptions> Branding
+
+<PageHeader Title="@PortalTexts.PortalTitle" Subtitle="@PortalTexts.PortalWelcome" PageTitleText="@Branding.Value.Name" />
+
+<div class="bz-tiles">
+    @foreach (var module in ModuleCatalog.Modules.Where(m => m.IsApplication))
+    {
+        @if (module.State == ModuleState.Available)
+        {
+            <a class="bz-tile" href="@module.EntryRoute" aria-label="@string.Format(CultureInfo.CurrentCulture, PortalTexts.OpenApplication, module.DisplayName)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">@((MarkupString)module.Icon)</svg>
+                <span class="bz-tile-title">@module.DisplayName</span>
+                <span class="bz-tile-desc">@module.Description</span>
+            </a>
+        }
+        else
+        {
+            <div class="bz-tile bz-tile-disabled" aria-disabled="true" role="group"
+                 aria-label="@string.Format(CultureInfo.CurrentCulture, PortalTexts.ComingSoonApplication, module.DisplayName)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">@((MarkupString)module.Icon)</svg>
+                <span class="bz-tile-title">@module.DisplayName</span>
+                <span class="bz-tile-desc">@module.Description</span>
+                <span class="bz-coming-soon-inline" style="align-self:flex-start">@SharedTexts.ComingSoonTile</span>
+            </div>
+        }
+    }
+</div>

@@ -1,0 +1,16 @@
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+TestResults/
+publish/
+# Données locales (base, fichiers, sauvegardes, journaux) en développement
+src/Host/Barthazon.Portal/App_Data/
+*.db
+*.db-shm
+*.db-wal
+logs/
+node_modules/

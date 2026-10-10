@@ -1,0 +1,18 @@
+@inject IModuleCatalog ModuleCatalog
+
+<CascadingValue Name="BzDarkMode" Value="DarkMode" IsFixed="true">
+    <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="ModuleAssemblies" NotFoundPage="typeof(Pages.NotFound)">
+        <Found Context="routeData">
+            <RouteView RouteData="routeData" DefaultLayout="typeof(AppLayout)" />
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+    </Router>
+</CascadingValue>
+
+@code {
+    [Parameter] public bool? DarkMode { get; set; }
+
+    /// <summary>Assemblages des pages de chaque module (routage).</summary>
+    private IEnumerable<System.Reflection.Assembly> ModuleAssemblies =>
+        ModuleCatalog.Modules.Select(m => m.UiAssembly).OfType<System.Reflection.Assembly>().Distinct();
+}

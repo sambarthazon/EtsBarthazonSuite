@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PortalTitle" xml:space="preserve"><value>Applications</value></data>
+  <data name="PortalWelcome" xml:space="preserve"><value>Bienvenue. Choisissez une application.</value></data>
+  <data name="StockName" xml:space="preserve"><value>Stocks</value></data>
+  <data name="StockDescription" xml:space="preserve"><value>Quantités en stock, emplacements, seuils et mouvements.</value></data>
+  <data name="OrdersName" xml:space="preserve"><value>Commandes &amp; livraisons</value></data>
+  <data name="OrdersDescription" xml:space="preserve"><value>Commandes clients en cours, livraisons et bons de livraison.</value></data>
+  <data name="TimeTrackingName" xml:space="preserve"><value>Pointage</value></data>
+  <data name="TimeTrackingDescription" xml:space="preserve"><value>Pointage des temps passés à l'atelier.</value></data>
+  <data name="OpenApplication" xml:space="preserve"><value>Ouvrir l'application {0}</value></data>
+  <data name="ComingSoonApplication" xml:space="preserve"><value>{0} — bientôt disponible</value></data>
+</root>

@@ -1,0 +1,14 @@
+@* Pastille de statut colorée. Le texte est toujours affiché (la couleur seule ne suffit pas : accessibilité). *@
+<span class="bz-status @ToneClass @Class" title="@Tooltip">@Text</span>
+
+@code {
+    [Parameter, EditorRequired] public string Text { get; set; } = string.Empty;
+
+    [Parameter] public StatusTone Tone { get; set; } = StatusTone.Neutral;
+
+    [Parameter] public string? Tooltip { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    private string ToneClass => "bz-tone-" + Tone.ToString().ToLowerInvariant();
+}

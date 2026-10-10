@@ -1,0 +1,106 @@
+@inject IEnumerable<IGlobalSearchProvider> Providers
+@inject NavigationManager Navigation
+
+@* Recherche globale : résultats instantanés pendant la frappe (anti-rebond), terme surligné. Raccourcis : « / » ou Ctrl+K. *@
+<MudAutocomplete T="GlobalSearchHit"
+                 @ref="_autocomplete"
+                 InputId="bz-global-search"
+                 Placeholder="@SharedTexts.SearchPlaceholder"
+                 aria-label="@SharedTexts.SearchLabel"
+                 SearchFunc="SearchAsync"
+                 ToStringFunc="@(h => h?.Title ?? string.Empty)"
+                 ValueChanged="OnSelectedAsync"
+                 DebounceInterval="250"
+                 MinCharacters="1"
+                 MaxItems="null"
+                 Dense="true"
+                 Variant="Variant.Outlined"
+                 Margin="Margin.Dense"
+                 AdornmentIcon="@Icons.Material.Filled.Search"
+                 Adornment="Adornment.Start"
+                 ResetValueOnEmptyText="true"
+                 CoerceText="false"
+                 OnKeyDown="OnKeyDownAsync"
+                 Immediate="true"
+                 TextChanged="t => _text = t">
+    <ItemTemplate Context="hit">
+        <div class="d-flex align-center gap-3" style="min-width:0">
+            @if (hit.Icon is not null)
+            {
+                <MudIcon Icon="@hit.Icon" Size="Size.Small" Color="Color.Primary" />
+            }
+            <div style="min-width:0">
+                <div><Highlight Text="@hit.Title" Query="@_text" /></div>
+                @if (!string.IsNullOrEmpty(hit.Subtitle))
+                {
+                    <div class="bz-muted" style="font-size:.85rem"><Highlight Text="@hit.Subtitle" Query="@_text" /></div>
+                }
+            </div>
+            @if (hit.Badge is not null)
+            {
+                <MudSpacer />
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@hit.Badge</MudChip>
+            }
+        </div>
+    </ItemTemplate>
+    <NoItemsTemplate>
+        <MudText Class="pa-3 bz-muted">@string.Format(CultureInfo.CurrentCulture, SharedTexts.SearchNoResult, _text)</MudText>
+    </NoItemsTemplate>
+    <AfterItemsTemplate>
+        @if (!string.IsNullOrWhiteSpace(_text) && Primary is not null)
+        {
+            <MudDivider />
+            <MudLink Href="@Primary.FullResultsUrl(_text ?? string.Empty)" Class="pa-3 d-block">
+                @string.Format(CultureInfo.CurrentCulture, SharedTexts.SearchSeeAll, _text)
+            </MudLink>
+        }
+    </AfterItemsTemplate>
+</MudAutocomplete>
+
+@code {
+    private MudAutocomplete<GlobalSearchHit>? _autocomplete;
+    private string? _text;
+
+    private IGlobalSearchProvider? Primary => Providers.OrderBy(p => p.Order).FirstOrDefault();
+
+    private async Task<IEnumerable<GlobalSearchHit>> SearchAsync(string? query, CancellationToken cancellationToken)
+    {
+        _text = query;
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return [];
+        }
+
+        var hits = new List<GlobalSearchHit>();
+        foreach (var provider in Providers.OrderBy(p => p.Order))
+        {
+            hits.AddRange(await provider.SearchAsync(query, 8, cancellationToken));
+        }
+
+        return hits;
+    }
+
+    private async Task OnSelectedAsync(GlobalSearchHit? hit)
+    {
+        if (hit is null)
+        {
+            return;
+        }
+
+        Navigation.NavigateTo(hit.Href);
+        _text = null;
+        if (_autocomplete is not null)
+        {
+            await _autocomplete.ClearAsync();
+        }
+    }
+
+    private void OnKeyDownAsync(KeyboardEventArgs e)
+    {
+        // Entrée sans sélection : page de résultats complets.
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_text) && Primary is not null && _autocomplete is { Open: false })
+        {
+            Navigation.NavigateTo(Primary.FullResultsUrl(_text));
+        }
+    }
+}

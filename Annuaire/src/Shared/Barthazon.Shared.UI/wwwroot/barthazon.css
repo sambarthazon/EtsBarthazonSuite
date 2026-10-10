@@ -1,0 +1,294 @@
+/* Styles communs. Toutes les couleurs proviennent des variables --bz-* générées depuis Theme/BrandTokens.cs. */
+
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/inter-latin-700-normal.woff2") format("woff2"); }
+
+html, body {
+    font-family: var(--bz-font);
+    background: var(--bz-background);
+    color: var(--bz-text);
+    overflow-x: hidden;
+}
+
+a { color: var(--bz-primary); }
+
+/* Zones tactiles larges pour l'atelier. */
+.mud-button-root, .mud-icon-button, .mud-nav-link, .mud-list-item, .bz-touch {
+    min-height: var(--bz-touch);
+}
+.mud-icon-button { min-width: var(--bz-touch); }
+
+/* Focus clavier bien visible (accessibilité). */
+:focus-visible {
+    outline: 3px solid var(--bz-accent) !important;
+    outline-offset: 2px;
+}
+
+/* Titre focalisé après navigation (lecteurs d'écran) : pas de cadre visuel. */
+h1:focus, [tabindex="-1"]:focus { outline: none !important; }
+
+.bz-page {
+    padding-top: 16px;
+    padding-bottom: 24px;
+}
+
+/* Marque dans la barre du haut. */
+.bz-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--bz-appbar-text);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+.bz-brand img { height: 36px; width: 36px; flex-shrink: 0; }
+
+.bz-appbar-search {
+    width: min(520px, 45vw);
+}
+.bz-appbar-search .mud-input {
+    background: var(--bz-surface);
+    color: var(--bz-text);
+    border-radius: var(--bz-radius);
+}
+
+/* Barre de navigation basse (téléphone). */
+.bz-bottom-nav {
+    display: none;
+}
+@media (max-width: 959.98px) {
+    .bz-bottom-nav {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: var(--bz-bottom-bar);
+        background: var(--bz-surface);
+        border-top: 1px solid var(--bz-lines);
+        box-shadow: 0 -2px 8px var(--bz-shadow);
+        z-index: 1200;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .bz-bottom-nav a, .bz-bottom-nav button {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        min-height: var(--bz-touch);
+        color: var(--bz-text-secondary);
+        text-decoration: none;
+        font-size: 0.72rem;
+        font-weight: 600;
+        background: none;
+        border: none;
+        font-family: inherit;
+        cursor: pointer;
+    }
+    .bz-bottom-nav a.active { color: var(--bz-primary); }
+    .bz-bottom-nav svg { width: 24px; height: 24px; fill: currentColor; }
+    .mud-main-content { padding-bottom: calc(var(--bz-bottom-bar) + 16px) !important; }
+    .bz-hide-mobile { display: none !important; }
+}
+@media (min-width: 960px) {
+    .bz-hide-desktop { display: none !important; }
+}
+
+/* Cartes et sections. */
+.bz-card {
+    background: var(--bz-surface);
+    border: 1px solid var(--bz-lines);
+    border-radius: var(--bz-radius);
+    box-shadow: 0 1px 3px var(--bz-shadow);
+}
+
+.bz-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.bz-page-header h1 { margin: 0; }
+.bz-page-header .bz-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.bz-muted { color: var(--bz-text-secondary); }
+
+.bz-highlight {
+    background: var(--bz-highlight);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+/* Pastilles de statut. */
+.bz-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+    border: 1px solid currentColor;
+}
+.bz-status::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.bz-tone-success { color: var(--bz-success); }
+.bz-tone-warning { color: var(--bz-warning); }
+.bz-tone-error { color: var(--bz-error); }
+.bz-tone-info { color: var(--bz-info); }
+.bz-tone-neutral { color: var(--bz-text-secondary); }
+.bz-tone-disabled { color: var(--bz-disabled); }
+
+/* État vide. */
+.bz-empty {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--bz-text-secondary);
+}
+.bz-empty svg { width: 56px; height: 56px; fill: var(--bz-disabled); }
+
+/* Fonctions à venir : contenu factice en transparence, non cliquable. */
+.bz-coming-soon {
+    position: relative;
+    border: 1px dashed var(--bz-disabled);
+    border-radius: var(--bz-radius);
+    overflow: hidden;
+}
+.bz-coming-soon-content {
+    opacity: 0.35;
+    filter: grayscale(1);
+    pointer-events: none;
+    user-select: none;
+}
+.bz-coming-soon-banner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px;
+    background: var(--bz-overlay);
+    color: var(--bz-text);
+    font-weight: 600;
+}
+.bz-coming-soon-banner span {
+    background: var(--bz-surface);
+    border: 1px solid var(--bz-disabled);
+    border-radius: 999px;
+    padding: 6px 14px;
+    color: var(--bz-text-secondary);
+}
+.bz-coming-soon-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--bz-disabled);
+    border: 1px dashed var(--bz-disabled);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: help;
+}
+
+/* Tuiles du portail. */
+.bz-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+.bz-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px;
+    min-height: 160px;
+    text-decoration: none;
+    color: var(--bz-text);
+    background: var(--bz-surface);
+    border: 1px solid var(--bz-lines);
+    border-radius: var(--bz-radius);
+    box-shadow: 0 1px 3px var(--bz-shadow);
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+.bz-tile:hover { transform: translateY(-2px); box-shadow: 0 6px 16px var(--bz-shadow); }
+.bz-tile svg { width: 40px; height: 40px; fill: var(--bz-primary); }
+.bz-tile-title { font-size: 1.2rem; font-weight: 700; }
+.bz-tile-desc { color: var(--bz-text-secondary); font-size: 0.92rem; }
+.bz-tile.bz-tile-disabled {
+    cursor: not-allowed;
+    color: var(--bz-disabled);
+    background: var(--bz-surface-alt);
+    border-style: dashed;
+    box-shadow: none;
+}
+.bz-tile.bz-tile-disabled:hover { transform: none; box-shadow: none; }
+.bz-tile.bz-tile-disabled svg { fill: var(--bz-disabled); }
+.bz-tile.bz-tile-disabled .bz-tile-desc { color: var(--bz-disabled); }
+
+/* Liste de définitions (fiche). */
+.bz-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px 24px;
+}
+.bz-field-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--bz-text-secondary); font-weight: 600; }
+.bz-field-value { font-size: 1rem; white-space: pre-line; word-break: break-word; }
+.bz-field-value.bz-empty-value { color: var(--bz-disabled); }
+
+/* Vignettes. */
+.bz-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--bz-radius-sm);
+    object-fit: cover;
+    background: var(--bz-surface-alt);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.bz-thumb svg { width: 28px; height: 28px; fill: var(--bz-disabled); }
+
+/* Bandeau d'alerte « indice remplacé » : impossible à manquer. */
+.bz-revision-alert {
+    border: 3px solid var(--bz-error);
+    background: var(--bz-surface);
+    border-radius: var(--bz-radius);
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    color: var(--bz-error);
+    font-size: 1.05rem;
+}
+
+/* Impression. */
+@media print {
+    .mud-appbar, .mud-drawer, .bz-bottom-nav, .bz-no-print, .mud-snackbar-provider, #components-reconnect-modal { display: none !important; }
+    .mud-main-content { padding: 0 !important; margin: 0 !important; }
+    html, body { background: var(--bz-print-background) !important; color: var(--bz-print-text) !important; }
+    .bz-card { box-shadow: none; border-color: var(--bz-print-lines); }
+}

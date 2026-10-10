@@ -1,0 +1,25 @@
+@inject ICurrentUser CurrentUser
+
+@* Barre de navigation basse, visible uniquement sur téléphone (voir barthazon.css). *@
+<nav class="bz-bottom-nav" aria-label="@SharedTexts.Menu">
+    @if (ActiveModule is not null)
+    {
+        @foreach (var item in ActiveModule.MenuItems.Where(i => i.ShowInBottomBar && (i.MinimumRole is null || (CurrentUser.Role is { } role && role >= i.MinimumRole))).Take(4))
+        {
+            <NavLink href="@item.Href" Match="@(item.MatchAll ? NavLinkMatch.All : NavLinkMatch.Prefix)" ActiveClass="active">
+                <svg viewBox="0 0 24 24" aria-hidden="true">@((MarkupString)item.Icon)</svg>
+                <span>@item.Title</span>
+            </NavLink>
+        }
+    }
+    <button type="button" @onclick="OnMenuClick" aria-label="@SharedTexts.OpenMenu">
+        <svg viewBox="0 0 24 24" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Menu)</svg>
+        <span>@SharedTexts.Menu</span>
+    </button>
+</nav>
+
+@code {
+    [Parameter] public IModule? ActiveModule { get; set; }
+
+    [Parameter] public EventCallback OnMenuClick { get; set; }
+}

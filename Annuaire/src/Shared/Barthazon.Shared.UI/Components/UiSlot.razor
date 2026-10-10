@@ -1,0 +1,31 @@
+@inject UiExtensionRegistry Registry
+
+@* Emplacement d'extension : affiche les composants déclarés par les autres modules pour cet emplacement. *@
+@foreach (var extension in Registry.For(Name))
+{
+    @if (ItemTemplate is not null)
+    {
+        @ItemTemplate((extension, Render(extension)))
+    }
+    else
+    {
+        @Render(extension)
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
+
+    [Parameter] public IDictionary<string, object>? Parameters { get; set; }
+
+    /// <summary>Gabarit optionnel autour de chaque extension (ex. un onglet).</summary>
+    [Parameter] public RenderFragment<(UiExtension Extension, RenderFragment Content)>? ItemTemplate { get; set; }
+
+    private RenderFragment Render(UiExtension extension) => builder =>
+    {
+        builder.OpenComponent<DynamicComponent>(0);
+        builder.AddAttribute(1, nameof(DynamicComponent.Type), extension.ComponentType);
+        builder.AddAttribute(2, nameof(DynamicComponent.Parameters), Parameters);
+        builder.CloseComponent();
+    };
+}

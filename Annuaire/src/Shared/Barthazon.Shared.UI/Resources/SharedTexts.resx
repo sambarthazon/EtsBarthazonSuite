@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Menu" xml:space="preserve"><value>Menu</value></data>
+  <data name="OpenMenu" xml:space="preserve"><value>Ouvrir le menu</value></data>
+  <data name="Home" xml:space="preserve"><value>Accueil</value></data>
+  <data name="Portal" xml:space="preserve"><value>Portail</value></data>
+  <data name="AllApplications" xml:space="preserve"><value>Toutes les applications</value></data>
+  <data name="SharedData" xml:space="preserve"><value>Données communes</value></data>
+  <data name="Administration" xml:space="preserve"><value>Administration</value></data>
+  <data name="DarkMode" xml:space="preserve"><value>Mode sombre</value></data>
+  <data name="LightMode" xml:space="preserve"><value>Mode clair</value></data>
+  <data name="ToggleTheme" xml:space="preserve"><value>Basculer entre mode clair et mode sombre</value></data>
+  <data name="SignIn" xml:space="preserve"><value>Se connecter</value></data>
+  <data name="SignOut" xml:space="preserve"><value>Se déconnecter</value></data>
+  <data name="SignedInAs" xml:space="preserve"><value>Connecté : {0}</value></data>
+  <data name="Anonymous" xml:space="preserve"><value>Consultation sans connexion</value></data>
+  <data name="RoleReader" xml:space="preserve"><value>Lecteur</value></data>
+  <data name="RoleEditor" xml:space="preserve"><value>Éditeur</value></data>
+  <data name="RoleAdministrator" xml:space="preserve"><value>Administrateur</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Rechercher une pièce, une référence, un client…  ( / )</value></data>
+  <data name="SearchShortPlaceholder" xml:space="preserve"><value>Rechercher…</value></data>
+  <data name="SearchLabel" xml:space="preserve"><value>Recherche globale</value></data>
+  <data name="SearchSeeAll" xml:space="preserve"><value>Voir tous les résultats pour « {0} »</value></data>
+  <data name="SearchNoResult" xml:space="preserve"><value>Aucun résultat pour « {0} »</value></data>
+  <data name="Search" xml:space="preserve"><value>Rechercher</value></data>
+  <data name="ComingSoon" xml:space="preserve"><value>Bientôt disponible</value></data>
+  <data name="ComingSoonWith" xml:space="preserve"><value>Bientôt disponible — arrivera avec l'application {0}</value></data>
+  <data name="ComingSoonTile" xml:space="preserve"><value>Bientôt disponible</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Annuler</value></data>
+  <data name="Confirm" xml:space="preserve"><value>Confirmer</value></data>
+  <data name="Close" xml:space="preserve"><value>Fermer</value></data>
+  <data name="Save" xml:space="preserve"><value>Enregistrer</value></data>
+  <data name="Yes" xml:space="preserve"><value>Oui</value></data>
+  <data name="No" xml:space="preserve"><value>Non</value></data>
+  <data name="Delete" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="Edit" xml:space="preserve"><value>Modifier</value></data>
+  <data name="Back" xml:space="preserve"><value>Retour</value></data>
+  <data name="Loading" xml:space="preserve"><value>Chargement…</value></data>
+  <data name="EmptyValue" xml:space="preserve"><value>—</value></data>
+  <data name="UnsavedChanges" xml:space="preserve"><value>Des modifications ne sont pas enregistrées. Quitter quand même ?</value></data>
+  <data name="UnsavedChangesTitle" xml:space="preserve"><value>Modifications non enregistrées</value></data>
+  <data name="UnsavedBanner" xml:space="preserve"><value>Modifications non enregistrées</value></data>
+  <data name="ConflictTitle" xml:space="preserve"><value>Modification concurrente</value></data>
+  <data name="ConflictReload" xml:space="preserve"><value>Recharger la dernière version</value></data>
+  <data name="NotFoundTitle" xml:space="preserve"><value>Page introuvable</value></data>
+  <data name="NotFoundText" xml:space="preserve"><value>La page demandée n'existe pas ou a été déplacée.</value></data>
+  <data name="BackToPortal" xml:space="preserve"><value>Retour au portail</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Une erreur est survenue</value></data>
+  <data name="ErrorText" xml:space="preserve"><value>L'opération n'a pas pu aboutir. Si le problème persiste, prévenez l'administrateur.</value></data>
+  <data name="ReconnectFirst" xml:space="preserve"><value>Connexion au serveur perdue — reconnexion en cours…</value></data>
+  <data name="ReconnectRetrying" xml:space="preserve"><value>Reconnexion impossible… nouvel essai dans {0} secondes.</value></data>
+  <data name="ReconnectFailed" xml:space="preserve"><value>Impossible de se reconnecter au serveur. Vérifiez le réseau puis réessayez.</value></data>
+  <data name="ReconnectRetry" xml:space="preserve"><value>Réessayer</value></data>
+  <data name="ReconnectPaused" xml:space="preserve"><value>La session a été mise en pause par le serveur.</value></data>
+  <data name="ReconnectResumeFailed" xml:space="preserve"><value>Impossible de reprendre la session. Rechargez la page.</value></data>
+  <data name="ReconnectResume" xml:space="preserve"><value>Reprendre</value></data>
+  <data name="UploadDrop" xml:space="preserve"><value>Déposez un fichier ici ou cliquez pour choisir</value></data>
+  <data name="UploadTakePhoto" xml:space="preserve"><value>Prendre une photo</value></data>
+  <data name="UploadChooseFile" xml:space="preserve"><value>Choisir un fichier</value></data>
+  <data name="NoData" xml:space="preserve"><value>Aucune donnée</value></data>
+  <data name="ClearFilters" xml:space="preserve"><value>Effacer les filtres</value></data>
+</root>

@@ -1,0 +1,26 @@
+@* Affichage d'un champ en lecture (libellé + valeur), valeur vide affichée « — ». *@
+<div class="bz-field @Class">
+    <div class="bz-field-label">@Label</div>
+    @if (ChildContent is not null)
+    {
+        <div class="bz-field-value">@ChildContent</div>
+    }
+    else if (string.IsNullOrWhiteSpace(Value))
+    {
+        <div class="bz-field-value bz-empty-value">@SharedTexts.EmptyValue</div>
+    }
+    else
+    {
+        <div class="bz-field-value">@Value</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+
+    [Parameter] public string? Value { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

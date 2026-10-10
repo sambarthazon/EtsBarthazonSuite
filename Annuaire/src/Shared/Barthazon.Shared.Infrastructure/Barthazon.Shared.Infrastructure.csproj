@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Socle technique : EF Core, repositories génériques, fichiers, sauvegarde, audit. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="QRCoder" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Barthazon.Shared.Kernel\Barthazon.Shared.Kernel.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Barthazon.Shared.Tests" />
+  </ItemGroup>
+</Project>

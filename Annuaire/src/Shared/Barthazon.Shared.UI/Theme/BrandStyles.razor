@@ -1,0 +1,8 @@
+@* Injecte les variables CSS de la charte (--bz-*) pour le mode courant. Aucune couleur ici : tout vient de BrandTokens. *@
+<style>
+    :root { @((MarkupString)BrandTokens.ToCssVariables(IsDarkMode ? BrandTokens.Dark : BrandTokens.Light)) }
+</style>
+
+@code {
+    [Parameter] public bool IsDarkMode { get; set; }
+}

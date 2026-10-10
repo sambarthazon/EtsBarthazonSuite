@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <PackageReference Include="coverlet.collector" PrivateAssets="all" />
+    <PackageReference Include="FluentAssertions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Catalog\Barthazon.Catalog.Infrastructure\Barthazon.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Referential\Barthazon.Referential.Infrastructure\Barthazon.Referential.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Host\Barthazon.Migrations.Sqlite\Barthazon.Migrations.Sqlite.csproj" />
+  </ItemGroup>
+</Project>

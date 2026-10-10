@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Persistance du module : mappings EF Core et implémentation des repositories. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Barthazon.Shared.Infrastructure\Barthazon.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\Barthazon.Catalog.Core\Barthazon.Catalog.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" />
+  </ItemGroup>
+</Project>

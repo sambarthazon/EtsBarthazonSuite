@@ -1,0 +1,43 @@
+@inject IModuleCatalog ModuleCatalog
+@inject ICurrentUser CurrentUser
+
+<nav aria-label="@SharedTexts.Menu">
+    <MudNavMenu Color="Color.Primary" Bordered="true" Class="pt-2">
+        @if (ActiveModule is not null)
+        {
+            <MudText Typo="Typo.overline" Class="px-4 bz-muted">@ActiveModule.DisplayName</MudText>
+            @foreach (var item in Visible(ActiveModule.MenuItems))
+            {
+                <MudNavLink Href="@item.Href" Icon="@item.Icon" Match="@(item.MatchAll ? NavLinkMatch.All : NavLinkMatch.Prefix)">@item.Title</MudNavLink>
+            }
+        }
+
+        @{ var shared = ModuleCatalog.Modules.Where(m => !m.IsApplication && m.State == ModuleState.Available).ToList(); }
+        @if (shared.Count > 0)
+        {
+            <MudDivider Class="my-2" />
+            <MudText Typo="Typo.overline" Class="px-4 bz-muted">@SharedTexts.SharedData</MudText>
+            @foreach (var module in shared)
+            {
+                @foreach (var item in Visible(module.MenuItems))
+                {
+                    <MudNavLink Href="@item.Href" Icon="@item.Icon" Match="@(item.MatchAll ? NavLinkMatch.All : NavLinkMatch.Prefix)">@item.Title</MudNavLink>
+                }
+            }
+        }
+
+        <MudDivider Class="my-2" />
+        <MudNavLink Href="" Icon="@Icons.Material.Filled.Apps" Match="NavLinkMatch.All">@SharedTexts.AllApplications</MudNavLink>
+        @if (CurrentUser.Role == UserRole.Administrator)
+        {
+            <MudNavLink Href="admin" Icon="@Icons.Material.Filled.AdminPanelSettings" Match="NavLinkMatch.Prefix">@SharedTexts.Administration</MudNavLink>
+        }
+    </MudNavMenu>
+</nav>
+
+@code {
+    [Parameter] public IModule? ActiveModule { get; set; }
+
+    private IEnumerable<ModuleMenuItem> Visible(IEnumerable<ModuleMenuItem> items) =>
+        items.Where(i => i.MinimumRole is null || (CurrentUser.Role is { } role && role >= i.MinimumRole));
+}

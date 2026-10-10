@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="NotAuthenticated" xml:space="preserve"><value>Vous devez vous connecter pour effectuer cette action.</value></data>
+  <data name="ReadForbidden" xml:space="preserve"><value>Vous devez vous connecter pour consulter ces informations.</value></data>
+  <data name="EditForbidden" xml:space="preserve"><value>Votre compte ne permet pas de modifier les données (rôle éditeur requis).</value></data>
+  <data name="AdminForbidden" xml:space="preserve"><value>Cette action est réservée aux administrateurs.</value></data>
+  <data name="ConcurrencyConflict" xml:space="preserve"><value>Ces données ont été modifiées par quelqu'un d'autre pendant votre saisie. Rechargez la page pour voir la dernière version, puis refaites votre modification.</value></data>
+  <data name="UniqueConflict" xml:space="preserve"><value>Une valeur doit être unique et existe déjà.</value></data>
+  <data name="NotFound" xml:space="preserve"><value>Élément introuvable.</value></data>
+</root>
