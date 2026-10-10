@@ -63,4 +63,5 @@
   <data name="UploadChooseFile" xml:space="preserve"><value>Choisir un fichier</value></data>
   <data name="NoData" xml:space="preserve"><value>Aucune donnée</value></data>
   <data name="ClearFilters" xml:space="preserve"><value>Effacer les filtres</value></data>
+  <data name="RequiredField" xml:space="preserve"><value>Champ obligatoire</value></data>
 </root>

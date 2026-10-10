@@ -11,4 +11,36 @@
   <data name="MenuNewPart" xml:space="preserve"><value>Nouvelle pièce</value></data>
   <data name="MenuImport" xml:space="preserve"><value>Import Excel</value></data>
   <data name="DashboardTitle" xml:space="preserve"><value>Annuaire de pièces</value></data>
+  <data name="TabFamilies" xml:space="preserve"><value>Familles</value></data>
+  <data name="TabTags" xml:space="preserve"><value>Étiquettes</value></data>
+  <data name="NewFamily" xml:space="preserve"><value>Nouvelle famille</value></data>
+  <data name="EditFamily" xml:space="preserve"><value>Modifier la famille</value></data>
+  <data name="NewTag" xml:space="preserve"><value>Nouvelle étiquette</value></data>
+  <data name="EditTag" xml:space="preserve"><value>Modifier l'étiquette</value></data>
+  <data name="FamilyName" xml:space="preserve"><value>Nom</value></data>
+  <data name="FamilyDescription" xml:space="preserve"><value>Description</value></data>
+  <data name="TagLabel" xml:space="preserve"><value>Libellé</value></data>
+  <data name="TagColor" xml:space="preserve"><value>Couleur</value></data>
+  <data name="ColUsage" xml:space="preserve"><value>Pièces</value></data>
+  <data name="ColActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="ShowArchived" xml:space="preserve"><value>Afficher les archivés</value></data>
+  <data name="StatusArchived" xml:space="preserve"><value>Archivé</value></data>
+  <data name="Archive" xml:space="preserve"><value>Archiver</value></data>
+  <data name="Restore" xml:space="preserve"><value>Restaurer</value></data>
+  <data name="Delete" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="DeleteTitle" xml:space="preserve"><value>Supprimer définitivement</value></data>
+  <data name="DeleteText" xml:space="preserve"><value>Supprimer « {0} » ? Cet élément n'est utilisé par aucune pièce.</value></data>
+  <data name="InUseHint" xml:space="preserve"><value>Utilisé : archivage seulement</value></data>
+  <data name="Saved" xml:space="preserve"><value>Enregistré.</value></data>
+  <data name="Deleted" xml:space="preserve"><value>Supprimé.</value></data>
+  <data name="NoFamilies" xml:space="preserve"><value>Aucune famille</value></data>
+  <data name="NoTags" xml:space="preserve"><value>Aucune étiquette</value></data>
+  <data name="UsageCount" xml:space="preserve"><value>{0} pièce(s)</value></data>
+  <data name="TagColor_Neutral" xml:space="preserve"><value>Gris</value></data>
+  <data name="TagColor_Primary" xml:space="preserve"><value>Bleu (principal)</value></data>
+  <data name="TagColor_Accent" xml:space="preserve"><value>Orange (accent)</value></data>
+  <data name="TagColor_Success" xml:space="preserve"><value>Vert</value></data>
+  <data name="TagColor_Warning" xml:space="preserve"><value>Ambre</value></data>
+  <data name="TagColor_Error" xml:space="preserve"><value>Rouge</value></data>
+  <data name="TagColor_Info" xml:space="preserve"><value>Bleu clair</value></data>
 </root>

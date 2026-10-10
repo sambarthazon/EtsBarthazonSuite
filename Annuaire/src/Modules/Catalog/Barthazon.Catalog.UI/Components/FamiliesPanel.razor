@@ -1,0 +1,92 @@
+@inject IClassificationService Classification
+@inject ICurrentUser CurrentUser
+@inject Notifier Notifier
+@inject IDialogService Dialogs
+
+<div class="d-flex flex-wrap align-center justify-space-between gap-3 mb-3">
+    <MudSwitch T="bool" Value="_includeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@CatalogTexts.ShowArchived" />
+    @if (CanEdit)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => EditAsync(null)">@CatalogTexts.NewFamily</MudButton>
+    }
+</div>
+
+<AdaptiveList T="FamilyItem" Items="_items" Loading="_loading" Dense="true" OnItemClick="EditAsync" AriaLabel="@CatalogTexts.TabFamilies">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel T="FamilyItem" SortBy="f => f.Name">@CatalogTexts.FamilyName</MudTableSortLabel></MudTh>
+        <MudTh>@CatalogTexts.FamilyDescription</MudTh>
+        <MudTh Style="text-align:right"><MudTableSortLabel T="FamilyItem" SortBy="f => f.UsageCount">@CatalogTexts.ColUsage</MudTableSortLabel></MudTh>
+        <MudTh>@CatalogTexts.ColActions</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="f">
+        <MudTd><b>@f.Name</b> @if (f.IsArchived) { <StatusChip Text="@CatalogTexts.StatusArchived" Tone="StatusTone.Disabled" Class="ml-2" /> }</MudTd>
+        <MudTd>@f.Description</MudTd>
+        <MudTd Style="text-align:right">@f.UsageCount</MudTd>
+        <MudTd><ClassificationRowActions IsArchived="f.IsArchived" UsageCount="f.UsageCount" CanEdit="CanEdit" OnArchive="() => SetArchivedAsync(f)" OnDelete="() => DeleteAsync(f)" /></MudTd>
+    </RowTemplate>
+    <CardTemplate Context="f">
+        <MudText Typo="Typo.subtitle1"><b>@f.Name</b></MudText>
+        <MudText Typo="Typo.body2" Class="bz-muted">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.UsageCount, f.UsageCount) @(f.Description is null ? null : $"· {f.Description}")</MudText>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@CatalogTexts.NoFamilies" Icon="@Icons.Material.Outlined.Category" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<FamilyItem>? _items;
+    private bool _includeArchived;
+    private bool _loading = true;
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task OnArchivedChangedAsync(bool value)
+    {
+        _includeArchived = value;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var result = await Classification.ListFamiliesAsync(_includeArchived);
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private async Task EditAsync(FamilyItem? item)
+    {
+        if (!CanEdit)
+        {
+            return;
+        }
+
+        var dialog = await Dialogs.ShowAsync<FamilyDialog>(item is null ? CatalogTexts.NewFamily : CatalogTexts.EditFamily,
+            new DialogParameters<FamilyDialog> { { d => d.Item, item } }, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task SetArchivedAsync(FamilyItem item)
+    {
+        if (Notifier.Handle(await Classification.SetFamilyArchivedAsync(item.Id, !item.IsArchived), CatalogTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task DeleteAsync(FamilyItem item)
+    {
+        if (await Dialogs.ConfirmAsync(CatalogTexts.DeleteTitle, string.Format(CultureInfo.CurrentCulture, CatalogTexts.DeleteText, item.Name), CatalogTexts.Delete, danger: true)
+            && Notifier.Handle(await Classification.DeleteFamilyAsync(item.Id), CatalogTexts.Deleted))
+        {
+            await LoadAsync();
+        }
+    }
+}

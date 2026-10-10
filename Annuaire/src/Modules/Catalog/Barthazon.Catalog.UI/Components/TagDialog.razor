@@ -1,0 +1,51 @@
+@inject IClassificationService Classification
+@inject Notifier Notifier
+
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudTextField @bind-Value="_input.Label" Label="@CatalogTexts.TagLabel" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" AutoFocus="true" MaxLength="50"
+                      Error="_form.HasError(nameof(TagInput.Label))" ErrorText="@_form.ErrorFor(nameof(TagInput.Label))" />
+        <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">@CatalogTexts.TagColor</MudText>
+        <MudRadioGroup T="TagColor" @bind-Value="_input.Color">
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var color in Enum.GetValues<TagColor>())
+                {
+                    <MudRadio Value="color" Color="Color.Primary"><TagChip Label="@(string.IsNullOrWhiteSpace(_input.Label) ? color.Label() : _input.Label)" Color="color" /></MudRadio>
+                }
+            </div>
+        </MudRadioGroup>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private TagInput _input = new();
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter] public TagItem? Item { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Item is not null)
+        {
+            _input = new TagInput { Label = Item.Label, Color = Item.Color, Version = Item.Version };
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        var result = await Classification.SaveTagAsync(Item?.Id, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(CatalogTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

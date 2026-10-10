@@ -1,0 +1,76 @@
+@page "/connexion"
+@layout AccountLayout
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Barthazon.Portal.Endpoints
+@using Barthazon.Portal.Hosting
+@using Barthazon.Referential.Core.Services
+@using Barthazon.Shared.Infrastructure.Security
+@inject IUserService Users
+@inject SecurityOptions Security
+@inject NavigationManager Navigation
+
+<PageTitle>@PortalTexts.LoginTitle</PageTitle>
+<h1 class="bz-account-title">@PortalTexts.LoginTitle</h1>
+<p class="bz-muted">@(Security.AllowAnonymousRead ? PortalTexts.LoginSubtitle : PortalTexts.LoginSubtitleRequired)</p>
+
+@if (_error is not null)
+{
+    <div class="bz-account-error" role="alert">@_error</div>
+}
+
+<EditForm Model="Input" FormName="login" OnValidSubmit="LoginAsync" method="post">
+    <label class="bz-account-label" for="username">@PortalTexts.UserName</label>
+    <InputText id="username" class="bz-account-input" @bind-Value="Input!.UserName" autocomplete="username" autofocus required />
+    <label class="bz-account-label" for="password">@PortalTexts.Password</label>
+    <InputText id="password" type="password" class="bz-account-input" @bind-Value="Input!.Password" autocomplete="current-password" required />
+    <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+    <button type="submit" class="bz-account-button">@PortalTexts.SignIn</button>
+</EditForm>
+
+@if (Security.AllowAnonymousRead)
+{
+    <a class="bz-account-link" href="@EndpointsReturn">@PortalTexts.BackWithoutSignIn</a>
+}
+
+@code {
+    private string? _error;
+
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm] private LoginInput? Input { get; set; }
+
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+
+    private string EndpointsReturn => AccountEndpoints.SafeReturnUrl(ReturnUrl);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+        if (HttpMethods.IsGet(HttpContext.Request.Method) && !await Users.AnyUserAsync())
+        {
+            Navigation.NavigateTo(PortalAuthentication.SetupPath, forceLoad: true);
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        var result = await Users.AuthenticateAsync(Input!.UserName ?? string.Empty, Input!.Password ?? string.Empty);
+        if (result.IsFailure)
+        {
+            _error = result.FirstError?.Message;
+            Input!.Password = null;
+            return;
+        }
+
+        await PortalAuthentication.SignInAsync(HttpContext, result.Value, Security);
+        Navigation.NavigateTo(AccountEndpoints.SafeReturnUrl(ReturnUrl), forceLoad: true);
+    }
+
+    private sealed class LoginInput
+    {
+        public string? UserName { get; set; }
+
+        public string? Password { get; set; }
+    }
+}

@@ -49,6 +49,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Barthazon.Catalog.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Barthazon.Architecture.Tests", "tests\Barthazon.Architecture.Tests\Barthazon.Architecture.Tests.csproj", "{B7549394-5F37-450A-B1EE-6AF33E22765F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Barthazon.Referential.Tests", "tests\Barthazon.Referential.Tests\Barthazon.Referential.Tests.csproj", "{58876418-EAEF-4993-A683-C6F67C1DA68D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -251,6 +253,18 @@ Global
 		{B7549394-5F37-450A-B1EE-6AF33E22765F}.Release|x64.Build.0 = Release|Any CPU
 		{B7549394-5F37-450A-B1EE-6AF33E22765F}.Release|x86.ActiveCfg = Release|Any CPU
 		{B7549394-5F37-450A-B1EE-6AF33E22765F}.Release|x86.Build.0 = Release|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Debug|x64.Build.0 = Debug|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Debug|x86.Build.0 = Debug|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Release|x64.ActiveCfg = Release|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Release|x64.Build.0 = Release|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Release|x86.ActiveCfg = Release|Any CPU
+		{58876418-EAEF-4993-A683-C6F67C1DA68D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -277,5 +291,6 @@ Global
 		{DA4242D7-CAFA-48CE-B457-7326D9F55C71} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{CEB70E0A-F33F-47B2-A179-FE1D5DBDBF90} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{B7549394-5F37-450A-B1EE-6AF33E22765F} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{58876418-EAEF-4993-A683-C6F67C1DA68D} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

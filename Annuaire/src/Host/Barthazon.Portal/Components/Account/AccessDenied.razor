@@ -1,0 +1,7 @@
+@page "/acces-refuse"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+
+<PageHeader Title="@PortalTexts.AccessDeniedTitle" />
+<EmptyState Title="@PortalTexts.AccessDeniedTitle" Text="@PortalTexts.AccessDeniedText" Icon="@Icons.Material.Outlined.Block">
+    <MudButton Href="" Variant="Variant.Filled" Color="Color.Primary">@SharedTexts.BackToPortal</MudButton>
+</EmptyState>

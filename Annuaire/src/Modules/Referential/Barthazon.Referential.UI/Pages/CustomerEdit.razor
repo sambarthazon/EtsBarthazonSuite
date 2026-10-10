@@ -1,0 +1,158 @@
+@page "/clients/nouveau"
+@page "/clients/{Code}/modifier"
+@inject ICustomerService Customers
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+
+<PageHeader Title="@(IsNew ? ReferentialTexts.NewCustomer : ReferentialTexts.EditCustomer)"
+            Subtitle="@(IsNew ? null : $"{_input.Code} — {_input.Name}")"
+            BackHref="@(IsNew ? "clients" : $"clients/{Uri.EscapeDataString(Code!)}")" />
+
+<UnsavedChangesGuard IsDirty="() => !_saving && _form.IsDirty(_input)" ShowBanner="true" />
+<FormErrors State="_form" OnReload="ReloadAsync" />
+
+@if (_loaded)
+{
+    <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true" novalidate>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4 bz-card" Elevation="0">
+                    <MudText Typo="Typo.h6" Class="mb-2">@ReferentialTexts.SectionIdentity</MudText>
+                    <MudTextField @bind-Value="_input.Code" Label="@ReferentialTexts.FieldCode" HelperText="@ReferentialTexts.FieldCodeHelp"
+                                  Required="true" RequiredError="@SharedTexts.RequiredField" MaxLength="20" Immediate="true"
+                                  Error="_form.HasError(nameof(CustomerInput.Code))" ErrorText="@_form.ErrorFor(nameof(CustomerInput.Code))"
+                                  Variant="Variant.Outlined" AutoFocus="IsNew" Style="text-transform:uppercase" />
+                    <MudTextField @bind-Value="_input.Name" Label="@ReferentialTexts.FieldName" Required="true" RequiredError="@SharedTexts.RequiredField"
+                                  MaxLength="200" Immediate="true" Variant="Variant.Outlined" Class="mt-3"
+                                  Error="_form.HasError(nameof(CustomerInput.Name))" ErrorText="@_form.ErrorFor(nameof(CustomerInput.Name))" />
+                    <MudSwitch @bind-Value="_input.IsActive" Color="Color.Success" Label="@ReferentialTexts.FieldActive" Class="mt-3" />
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4 bz-card" Elevation="0">
+                    <MudText Typo="Typo.h6" Class="mb-2">@ReferentialTexts.SectionAddress</MudText>
+                    <MudTextField @bind-Value="_input.Address" Label="@ReferentialTexts.FieldAddress" Lines="2" MaxLength="300" Variant="Variant.Outlined" />
+                    <div class="d-flex gap-3 mt-3">
+                        <MudTextField @bind-Value="_input.PostalCode" Label="@ReferentialTexts.FieldPostalCode" MaxLength="20" Variant="Variant.Outlined" Style="max-width:140px" InputMode="InputMode.numeric" />
+                        <MudTextField @bind-Value="_input.City" Label="@ReferentialTexts.FieldCity" MaxLength="100" Variant="Variant.Outlined" />
+                    </div>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12">
+                <MudPaper Class="pa-4 bz-card" Elevation="0">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.h6">@ReferentialTexts.SectionContacts</MudText>
+                        <MudButton StartIcon="@Icons.Material.Filled.PersonAdd" Variant="Variant.Outlined" OnClick="AddContact">@ReferentialTexts.AddContact</MudButton>
+                    </div>
+                    @if (_input.Contacts.Count == 0)
+                    {
+                        <MudText Class="bz-muted">@ReferentialTexts.NoContacts</MudText>
+                    }
+                    @for (var i = 0; i < _input.Contacts.Count; i++)
+                    {
+                        var index = i;
+                        var contact = _input.Contacts[index];
+                        var nameField = $"Contacts[{index}].Name";
+                        var emailField = $"Contacts[{index}].Email";
+                        <MudPaper Outlined="true" Class="pa-3 mb-3" Elevation="0">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6" md="3">
+                                    <MudTextField @bind-Value="contact.Name" Label="@ReferentialTexts.ContactName" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                  Error="_form.HasError(nameField)" ErrorText="@_form.ErrorFor(nameField)" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="3">
+                                    <MudTextField @bind-Value="contact.Function" Label="@ReferentialTexts.ContactFunction" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="2">
+                                    <MudTextField @bind-Value="contact.Phone" Label="@ReferentialTexts.ContactPhone" Variant="Variant.Outlined" Margin="Margin.Dense" InputType="InputType.Telephone" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="3">
+                                    <MudTextField @bind-Value="contact.Email" Label="@ReferentialTexts.ContactEmail" Variant="Variant.Outlined" Margin="Margin.Dense" InputType="InputType.Email"
+                                                  Error="_form.HasError(emailField)" ErrorText="@_form.ErrorFor(emailField)" />
+                                </MudItem>
+                                <MudItem xs="12" md="1" Class="d-flex align-center justify-end">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => _input.Contacts.RemoveAt(index)" aria-label="@ReferentialTexts.RemoveContact" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="contact.Notes" Label="@ReferentialTexts.ContactNotes" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12">
+                <MudPaper Class="pa-4 bz-card" Elevation="0">
+                    <MudText Typo="Typo.h6" Class="mb-2">@ReferentialTexts.SectionNotes</MudText>
+                    <MudTextField @bind-Value="_input.Notes" Label="@ReferentialTexts.FieldNotes" Lines="4" MaxLength="4000" Variant="Variant.Outlined" />
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+        <div class="d-flex gap-2 justify-end mt-4">
+            <MudButton Href="@(IsNew ? "clients" : $"clients/{Uri.EscapeDataString(Code!)}")" Variant="Variant.Text">@SharedTexts.Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" Disabled="_saving">@SharedTexts.Save</MudButton>
+        </div>
+    </form>
+}
+else
+{
+    <MudSkeleton Height="300px" SkeletonType="SkeletonType.Rectangle" />
+}
+
+@code {
+    private readonly FormState _form = new();
+    private CustomerInput _input = new();
+    private Guid _id;
+    private bool _loaded;
+    private bool _saving;
+
+    [Parameter] public string? Code { get; set; }
+
+    private bool IsNew => Code is null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsNew)
+        {
+            _input = new CustomerInput();
+            _form.Snapshot(_input);
+            _loaded = true;
+            return;
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        var result = await Customers.GetByCodeAsync(Code!);
+        if (!Notifier.Handle(result))
+        {
+            Navigation.NavigateTo("clients");
+            return;
+        }
+
+        _id = result.Value.Id;
+        _input = CustomerInput.From(result.Value);
+        _form.Clear();
+        _form.Snapshot(_input);
+        _loaded = true;
+    }
+
+    private void AddContact() => _input.Contacts.Add(new ContactInput());
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = IsNew ? await Customers.CreateAsync(_input) : await Customers.UpdateAsync(_id, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(IsNew ? ReferentialTexts.Created : ReferentialTexts.Saved);
+            Navigation.NavigateTo($"clients/{Uri.EscapeDataString(result.Value.Code)}");
+            return;
+        }
+
+        _saving = false;
+    }
+}

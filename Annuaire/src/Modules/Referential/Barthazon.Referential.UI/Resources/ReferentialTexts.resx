@@ -10,4 +10,78 @@
   <data name="MenuReferentials" xml:space="preserve"><value>Référentiels</value></data>
   <data name="CustomersTitle" xml:space="preserve"><value>Clients</value></data>
   <data name="ReferentialsTitle" xml:space="preserve"><value>Référentiels</value></data>
+  <data name="CustomersSubtitle" xml:space="preserve"><value>Donneurs d'ordre et propriétaires des plans.</value></data>
+  <data name="NewCustomer" xml:space="preserve"><value>Nouveau client</value></data>
+  <data name="EditCustomer" xml:space="preserve"><value>Modifier le client</value></data>
+  <data name="SearchCustomers" xml:space="preserve"><value>Rechercher un client (code, nom, ville)</value></data>
+  <data name="ShowArchived" xml:space="preserve"><value>Afficher les archivés</value></data>
+  <data name="ColCode" xml:space="preserve"><value>Code</value></data>
+  <data name="ColName" xml:space="preserve"><value>Nom</value></data>
+  <data name="ColCity" xml:space="preserve"><value>Ville</value></data>
+  <data name="ColParts" xml:space="preserve"><value>Pièces</value></data>
+  <data name="ColStatus" xml:space="preserve"><value>Statut</value></data>
+  <data name="StatusActive" xml:space="preserve"><value>Actif</value></data>
+  <data name="StatusInactive" xml:space="preserve"><value>Inactif</value></data>
+  <data name="StatusArchived" xml:space="preserve"><value>Archivé</value></data>
+  <data name="NoCustomers" xml:space="preserve"><value>Aucun client</value></data>
+  <data name="NoCustomersMatch" xml:space="preserve"><value>Aucun client ne correspond à la recherche.</value></data>
+  <data name="SectionIdentity" xml:space="preserve"><value>Identification</value></data>
+  <data name="SectionAddress" xml:space="preserve"><value>Coordonnées</value></data>
+  <data name="SectionContacts" xml:space="preserve"><value>Contacts</value></data>
+  <data name="SectionNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="FieldCode" xml:space="preserve"><value>Code client</value></data>
+  <data name="FieldCodeHelp" xml:space="preserve"><value>Court et unique, en majuscules (ex. DUPONT).</value></data>
+  <data name="FieldName" xml:space="preserve"><value>Nom / raison sociale</value></data>
+  <data name="FieldAddress" xml:space="preserve"><value>Adresse</value></data>
+  <data name="FieldPostalCode" xml:space="preserve"><value>Code postal</value></data>
+  <data name="FieldCity" xml:space="preserve"><value>Ville</value></data>
+  <data name="FieldNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="FieldActive" xml:space="preserve"><value>Client actif</value></data>
+  <data name="ContactName" xml:space="preserve"><value>Nom</value></data>
+  <data name="ContactFunction" xml:space="preserve"><value>Fonction</value></data>
+  <data name="ContactPhone" xml:space="preserve"><value>Téléphone</value></data>
+  <data name="ContactEmail" xml:space="preserve"><value>E-mail</value></data>
+  <data name="ContactNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="AddContact" xml:space="preserve"><value>Ajouter un contact</value></data>
+  <data name="RemoveContact" xml:space="preserve"><value>Retirer ce contact</value></data>
+  <data name="NoContacts" xml:space="preserve"><value>Aucun contact enregistré.</value></data>
+  <data name="Saved" xml:space="preserve"><value>Enregistré.</value></data>
+  <data name="Created" xml:space="preserve"><value>Client créé.</value></data>
+  <data name="Archive" xml:space="preserve"><value>Archiver</value></data>
+  <data name="Restore" xml:space="preserve"><value>Restaurer</value></data>
+  <data name="ArchiveCustomerTitle" xml:space="preserve"><value>Archiver le client</value></data>
+  <data name="ArchiveCustomerText" xml:space="preserve"><value>Le client sera masqué des listes et ne pourra plus être choisi pour une nouvelle pièce. Ses pièces restent consultables. Continuer ?</value></data>
+  <data name="Archived" xml:space="preserve"><value>Client archivé.</value></data>
+  <data name="Restored" xml:space="preserve"><value>Client restauré.</value></data>
+  <data name="ArchivedBanner" xml:space="preserve"><value>Ce client est archivé.</value></data>
+  <data name="UpdatedOn" xml:space="preserve"><value>Modifié le {0} par {1}</value></data>
+  <data name="UpdatedOnNoUser" xml:space="preserve"><value>Modifié le {0}</value></data>
+  <data name="Call" xml:space="preserve"><value>Appeler</value></data>
+  <data name="SendMail" xml:space="preserve"><value>Écrire</value></data>
+  <data name="ReferentialsSubtitle" xml:space="preserve"><value>Matières, machines, familles et étiquettes utilisées par les applications.</value></data>
+  <data name="TabMaterials" xml:space="preserve"><value>Matières</value></data>
+  <data name="TabMachines" xml:space="preserve"><value>Machines</value></data>
+  <data name="NewMaterial" xml:space="preserve"><value>Nouvelle matière</value></data>
+  <data name="EditMaterial" xml:space="preserve"><value>Modifier la matière</value></data>
+  <data name="NewMachine" xml:space="preserve"><value>Nouvelle machine</value></data>
+  <data name="EditMachine" xml:space="preserve"><value>Modifier la machine</value></data>
+  <data name="MaterialDesignation" xml:space="preserve"><value>Désignation</value></data>
+  <data name="MaterialGrade" xml:space="preserve"><value>Nuance / norme</value></data>
+  <data name="MaterialFamily" xml:space="preserve"><value>Famille</value></data>
+  <data name="MaterialDensity" xml:space="preserve"><value>Masse volumique (kg/dm³)</value></data>
+  <data name="MaterialNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="MachineName" xml:space="preserve"><value>Nom</value></data>
+  <data name="MachineType" xml:space="preserve"><value>Type</value></data>
+  <data name="MachineNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="MachineActive" xml:space="preserve"><value>Machine en service</value></data>
+  <data name="ColUsage" xml:space="preserve"><value>Utilisations</value></data>
+  <data name="ColActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="Delete" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="DeleteTitle" xml:space="preserve"><value>Supprimer définitivement</value></data>
+  <data name="DeleteText" xml:space="preserve"><value>Supprimer « {0} » ? Cet élément n'est utilisé nulle part.</value></data>
+  <data name="Deleted" xml:space="preserve"><value>Supprimé.</value></data>
+  <data name="InUseHint" xml:space="preserve"><value>Utilisé : archivage seulement</value></data>
+  <data name="NoMaterials" xml:space="preserve"><value>Aucune matière</value></data>
+  <data name="NoMachines" xml:space="preserve"><value>Aucune machine</value></data>
+  <data name="UsageCount" xml:space="preserve"><value>{0} utilisation(s)</value></data>
 </root>

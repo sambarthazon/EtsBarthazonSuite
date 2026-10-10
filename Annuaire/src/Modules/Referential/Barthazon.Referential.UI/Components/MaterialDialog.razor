@@ -1,0 +1,63 @@
+@inject IMaterialService Materials
+@inject Notifier Notifier
+
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudTextField @bind-Value="_input.Designation" Label="@ReferentialTexts.MaterialDesignation" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" AutoFocus="true"
+                      Error="_form.HasError(nameof(MaterialInput.Designation))" ErrorText="@_form.ErrorFor(nameof(MaterialInput.Designation))" />
+        <MudTextField @bind-Value="_input.Grade" Label="@ReferentialTexts.MaterialGrade" Variant="Variant.Outlined" Class="mt-3" />
+        <MudSelect @bind-Value="_input.Family" Label="@ReferentialTexts.MaterialFamily" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="f => f.Label()">
+            @foreach (var family in Enum.GetValues<MaterialFamily>())
+            {
+                <MudSelectItem Value="family">@family.Label()</MudSelectItem>
+            }
+        </MudSelect>
+        <MudNumericField @bind-Value="_input.DensityKgDm3" Label="@ReferentialTexts.MaterialDensity" Variant="Variant.Outlined" Class="mt-3" Min="0m" HideSpinButtons="true"
+                         Error="_form.HasError(nameof(MaterialInput.DensityKgDm3))" ErrorText="@_form.ErrorFor(nameof(MaterialInput.DensityKgDm3))" />
+        <MudTextField @bind-Value="_input.Notes" Label="@ReferentialTexts.MaterialNotes" Variant="Variant.Outlined" Lines="2" Class="mt-3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private MaterialInput _input = new();
+    private bool _saving;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter] public MaterialItem? Item { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Item is not null)
+        {
+            _input = new MaterialInput
+            {
+                Designation = Item.Designation,
+                Grade = Item.Grade,
+                Family = Item.Family,
+                DensityKgDm3 = Item.DensityKgDm3,
+                Notes = Item.Notes,
+                Version = Item.Version,
+            };
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = Item is null ? await Materials.CreateAsync(_input) : await Materials.UpdateAsync(Item.Id, _input);
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            Notifier.Success(ReferentialTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

@@ -1,0 +1,113 @@
+@inject IMaterialService Materials
+@inject ICurrentUser CurrentUser
+@inject Notifier Notifier
+@inject IDialogService Dialogs
+
+<div class="d-flex flex-wrap align-center justify-space-between gap-3 mb-3">
+    <MudSwitch T="bool" Value="_includeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@ReferentialTexts.ShowArchived" />
+    @if (CanEdit)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => EditAsync(null)">@ReferentialTexts.NewMaterial</MudButton>
+    }
+</div>
+
+<AdaptiveList T="MaterialItem" Items="_items" Loading="_loading" Dense="true" OnItemClick="EditAsync" AriaLabel="@ReferentialTexts.TabMaterials">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel T="MaterialItem" SortBy="m => m.Designation">@ReferentialTexts.MaterialDesignation</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel T="MaterialItem" SortBy="m => m.Grade ?? string.Empty">@ReferentialTexts.MaterialGrade</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel T="MaterialItem" SortBy="m => m.Family">@ReferentialTexts.MaterialFamily</MudTableSortLabel></MudTh>
+        <MudTh Style="text-align:right">@ReferentialTexts.MaterialDensity</MudTh>
+        <MudTh Style="text-align:right"><MudTableSortLabel T="MaterialItem" SortBy="m => m.UsageCount">@ReferentialTexts.ColUsage</MudTableSortLabel></MudTh>
+        <MudTh>@ReferentialTexts.ColActions</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="m">
+        <MudTd><b>@m.Designation</b> @if (m.IsArchived) { <StatusChip Text="@ReferentialTexts.StatusArchived" Tone="StatusTone.Disabled" Class="ml-2" /> }</MudTd>
+        <MudTd>@m.Grade</MudTd>
+        <MudTd>@m.Family.Label()</MudTd>
+        <MudTd Style="text-align:right">@m.DensityKgDm3?.ToString("0.###", CultureInfo.CurrentCulture)</MudTd>
+        <MudTd Style="text-align:right">@m.UsageCount</MudTd>
+        <MudTd>
+            <RowActions IsArchived="m.IsArchived" UsageCount="m.UsageCount" CanEdit="CanEdit"
+                        OnArchive="() => SetArchivedAsync(m, !m.IsArchived)" OnDelete="() => DeleteAsync(m)" />
+        </MudTd>
+    </RowTemplate>
+    <CardTemplate Context="m">
+        <div class="d-flex justify-space-between align-center gap-2">
+            <div>
+                <MudText Typo="Typo.subtitle1"><b>@m.Designation</b></MudText>
+                <MudText Typo="Typo.body2" Class="bz-muted">@m.Grade · @m.Family.Label() · @string.Format(CultureInfo.CurrentCulture, ReferentialTexts.UsageCount, m.UsageCount)</MudText>
+            </div>
+            @if (m.IsArchived)
+            {
+                <StatusChip Text="@ReferentialTexts.StatusArchived" Tone="StatusTone.Disabled" />
+            }
+        </div>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@ReferentialTexts.NoMaterials" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<MaterialItem>? _items;
+    private bool _includeArchived;
+    private bool _loading = true;
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task OnArchivedChangedAsync(bool value)
+    {
+        _includeArchived = value;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var result = await Materials.ListAsync(_includeArchived);
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private async Task EditAsync(MaterialItem? item)
+    {
+        if (!CanEdit)
+        {
+            return;
+        }
+
+        var parameters = new DialogParameters<MaterialDialog> { { d => d.Item, item } };
+        var dialog = await Dialogs.ShowAsync<MaterialDialog>(item is null ? ReferentialTexts.NewMaterial : ReferentialTexts.EditMaterial, parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task SetArchivedAsync(MaterialItem item, bool archived)
+    {
+        if (Notifier.Handle(await Materials.SetArchivedAsync(item.Id, archived), ReferentialTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task DeleteAsync(MaterialItem item)
+    {
+        if (!await Dialogs.ConfirmAsync(ReferentialTexts.DeleteTitle, string.Format(CultureInfo.CurrentCulture, ReferentialTexts.DeleteText, item.Designation), ReferentialTexts.Delete, danger: true))
+        {
+            return;
+        }
+
+        if (Notifier.Handle(await Materials.DeleteAsync(item.Id), ReferentialTexts.Deleted))
+        {
+            await LoadAsync();
+        }
+    }
+}

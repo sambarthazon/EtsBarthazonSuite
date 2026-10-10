@@ -1,0 +1,89 @@
+@page "/clients"
+@inject ICustomerService Customers
+@inject ICurrentUser CurrentUser
+@inject Notifier Notifier
+
+<PageHeader Title="@ReferentialTexts.CustomersTitle" Subtitle="@ReferentialTexts.CustomersSubtitle">
+    <Actions>
+        @if (CanEdit)
+        {
+            <MudButton Href="clients/nouveau" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">@ReferentialTexts.NewCustomer</MudButton>
+        }
+    </Actions>
+</PageHeader>
+
+<div class="d-flex flex-wrap align-center gap-4 mb-3">
+    <MudTextField T="string" Value="_query" ValueChanged="OnQueryChangedAsync" Placeholder="@ReferentialTexts.SearchCustomers"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined"
+                  Margin="Margin.Dense" Immediate="true" DebounceInterval="250" Clearable="true" Style="max-width:420px" aria-label="@ReferentialTexts.SearchCustomers" />
+    <MudSwitch T="bool" Value="_includeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@ReferentialTexts.ShowArchived" />
+</div>
+
+<AdaptiveList T="CustomerListItem" Items="_items" Loading="_loading" ItemHref="@(c => $"clients/{Uri.EscapeDataString(c.Code)}")" AriaLabel="@ReferentialTexts.CustomersTitle">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel T="CustomerListItem" SortBy="c => c.Code" InitialDirection="SortDirection.Ascending">@ReferentialTexts.ColCode</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel T="CustomerListItem" SortBy="c => c.Name">@ReferentialTexts.ColName</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel T="CustomerListItem" SortBy="c => c.City ?? string.Empty">@ReferentialTexts.ColCity</MudTableSortLabel></MudTh>
+        <MudTh Style="text-align:right"><MudTableSortLabel T="CustomerListItem" SortBy="c => c.UsageCount">@ReferentialTexts.ColParts</MudTableSortLabel></MudTh>
+        <MudTh>@ReferentialTexts.ColStatus</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="c">
+        <MudTd DataLabel="@ReferentialTexts.ColCode"><a href="clients/@Uri.EscapeDataString(c.Code)"><b><Highlight Text="@c.Code" Query="@_query" /></b></a></MudTd>
+        <MudTd DataLabel="@ReferentialTexts.ColName"><Highlight Text="@c.Name" Query="@_query" /></MudTd>
+        <MudTd DataLabel="@ReferentialTexts.ColCity"><Highlight Text="@c.City" Query="@_query" /></MudTd>
+        <MudTd DataLabel="@ReferentialTexts.ColParts" Style="text-align:right">@c.UsageCount</MudTd>
+        <MudTd DataLabel="@ReferentialTexts.ColStatus"><CustomerStatus IsActive="c.IsActive" IsArchived="c.IsArchived" /></MudTd>
+    </RowTemplate>
+    <CardTemplate Context="c">
+        <div class="d-flex justify-space-between align-center gap-2">
+            <div style="min-width:0">
+                <MudText Typo="Typo.subtitle1"><b><Highlight Text="@c.Code" Query="@_query" /></b> — <Highlight Text="@c.Name" Query="@_query" /></MudText>
+                <MudText Typo="Typo.body2" Class="bz-muted">@c.City · @string.Format(CultureInfo.CurrentCulture, ReferentialTexts.UsageCount, c.UsageCount)</MudText>
+            </div>
+            <CustomerStatus IsActive="c.IsActive" IsArchived="c.IsArchived" />
+        </div>
+    </CardTemplate>
+    <EmptyContent>
+        <EmptyState Title="@(string.IsNullOrWhiteSpace(_query) ? ReferentialTexts.NoCustomers : ReferentialTexts.NoCustomersMatch)" Icon="@Icons.Material.Outlined.Business">
+            @if (!string.IsNullOrWhiteSpace(_query))
+            {
+                <MudButton Variant="Variant.Outlined" OnClick="() => OnQueryChangedAsync(null)">@SharedTexts.ClearFilters</MudButton>
+            }
+        </EmptyState>
+    </EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<CustomerListItem>? _items;
+    private string? _query;
+    private bool _includeArchived;
+    private bool _loading = true;
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task OnQueryChangedAsync(string? query)
+    {
+        _query = query;
+        await LoadAsync();
+    }
+
+    private async Task OnArchivedChangedAsync(bool value)
+    {
+        _includeArchived = value;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var result = await Customers.ListAsync(_query, _includeArchived);
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+}

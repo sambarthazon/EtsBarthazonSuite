@@ -1,0 +1,23 @@
+@if (CanEdit)
+{
+    <div class="d-flex gap-1" @onclick:stopPropagation="true">
+        <MudTooltip Text="@(IsArchived ? CatalogTexts.Restore : CatalogTexts.Archive)">
+            <MudIconButton Icon="@(IsArchived ? Icons.Material.Filled.Unarchive : Icons.Material.Filled.Archive)" OnClick="OnArchive" aria-label="@(IsArchived ? CatalogTexts.Restore : CatalogTexts.Archive)" />
+        </MudTooltip>
+        <MudTooltip Text="@(UsageCount > 0 ? CatalogTexts.InUseHint : CatalogTexts.Delete)">
+            <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" Disabled="UsageCount > 0" OnClick="OnDelete" aria-label="@CatalogTexts.Delete" />
+        </MudTooltip>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsArchived { get; set; }
+
+    [Parameter] public int UsageCount { get; set; }
+
+    [Parameter] public bool CanEdit { get; set; }
+
+    [Parameter] public EventCallback OnArchive { get; set; }
+
+    [Parameter] public EventCallback OnDelete { get; set; }
+}

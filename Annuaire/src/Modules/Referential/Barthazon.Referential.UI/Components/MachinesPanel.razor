@@ -1,0 +1,108 @@
+@inject IMachineService Machines
+@inject ICurrentUser CurrentUser
+@inject Notifier Notifier
+@inject IDialogService Dialogs
+
+<div class="d-flex flex-wrap align-center justify-space-between gap-3 mb-3">
+    <MudSwitch T="bool" Value="_includeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@ReferentialTexts.ShowArchived" />
+    @if (CanEdit)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => EditAsync(null)">@ReferentialTexts.NewMachine</MudButton>
+    }
+</div>
+
+<AdaptiveList T="MachineItem" Items="_items" Loading="_loading" Dense="true" OnItemClick="EditAsync" AriaLabel="@ReferentialTexts.TabMachines">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel T="MachineItem" SortBy="m => m.Name">@ReferentialTexts.MachineName</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel T="MachineItem" SortBy="m => m.Type">@ReferentialTexts.MachineType</MudTableSortLabel></MudTh>
+        <MudTh>@ReferentialTexts.ColStatus</MudTh>
+        <MudTh Style="text-align:right"><MudTableSortLabel T="MachineItem" SortBy="m => m.UsageCount">@ReferentialTexts.ColUsage</MudTableSortLabel></MudTh>
+        <MudTh>@ReferentialTexts.ColActions</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="m">
+        <MudTd><b>@m.Name</b></MudTd>
+        <MudTd>@m.Type.Label()</MudTd>
+        <MudTd><CustomerStatus IsActive="m.IsActive" IsArchived="m.IsArchived" /></MudTd>
+        <MudTd Style="text-align:right">@m.UsageCount</MudTd>
+        <MudTd>
+            <RowActions IsArchived="m.IsArchived" UsageCount="m.UsageCount" CanEdit="CanEdit"
+                        OnArchive="() => SetArchivedAsync(m, !m.IsArchived)" OnDelete="() => DeleteAsync(m)" />
+        </MudTd>
+    </RowTemplate>
+    <CardTemplate Context="m">
+        <div class="d-flex justify-space-between align-center gap-2">
+            <div>
+                <MudText Typo="Typo.subtitle1"><b>@m.Name</b></MudText>
+                <MudText Typo="Typo.body2" Class="bz-muted">@m.Type.Label() · @string.Format(CultureInfo.CurrentCulture, ReferentialTexts.UsageCount, m.UsageCount)</MudText>
+            </div>
+            <CustomerStatus IsActive="m.IsActive" IsArchived="m.IsArchived" />
+        </div>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@ReferentialTexts.NoMachines" Icon="@Icons.Material.Outlined.PrecisionManufacturing" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<MachineItem>? _items;
+    private bool _includeArchived;
+    private bool _loading = true;
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task OnArchivedChangedAsync(bool value)
+    {
+        _includeArchived = value;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var result = await Machines.ListAsync(_includeArchived);
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private async Task EditAsync(MachineItem? item)
+    {
+        if (!CanEdit)
+        {
+            return;
+        }
+
+        var parameters = new DialogParameters<MachineDialog> { { d => d.Item, item } };
+        var dialog = await Dialogs.ShowAsync<MachineDialog>(item is null ? ReferentialTexts.NewMachine : ReferentialTexts.EditMachine, parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task SetArchivedAsync(MachineItem item, bool archived)
+    {
+        if (Notifier.Handle(await Machines.SetArchivedAsync(item.Id, archived), ReferentialTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task DeleteAsync(MachineItem item)
+    {
+        if (!await Dialogs.ConfirmAsync(ReferentialTexts.DeleteTitle, string.Format(CultureInfo.CurrentCulture, ReferentialTexts.DeleteText, item.Name), ReferentialTexts.Delete, danger: true))
+        {
+            return;
+        }
+
+        if (Notifier.Handle(await Machines.DeleteAsync(item.Id), ReferentialTexts.Deleted))
+        {
+            await LoadAsync();
+        }
+    }
+}

@@ -1,0 +1,53 @@
+@inject IMachineService Machines
+@inject Notifier Notifier
+
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudTextField @bind-Value="_input.Name" Label="@ReferentialTexts.MachineName" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" AutoFocus="true"
+                      Error="_form.HasError(nameof(MachineInput.Name))" ErrorText="@_form.ErrorFor(nameof(MachineInput.Name))" />
+        <MudSelect @bind-Value="_input.Type" Label="@ReferentialTexts.MachineType" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="t => t.Label()">
+            @foreach (var type in Enum.GetValues<MachineType>())
+            {
+                <MudSelectItem Value="type">@type.Label()</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="_input.Notes" Label="@ReferentialTexts.MachineNotes" Variant="Variant.Outlined" Lines="2" Class="mt-3" />
+        <MudSwitch @bind-Value="_input.IsActive" Color="Color.Success" Label="@ReferentialTexts.MachineActive" Class="mt-3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private MachineInput _input = new();
+    private bool _saving;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter] public MachineItem? Item { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Item is not null)
+        {
+            _input = new MachineInput { Name = Item.Name, Type = Item.Type, Notes = Item.Notes, IsActive = Item.IsActive, Version = Item.Version };
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = Item is null ? await Machines.CreateAsync(_input) : await Machines.UpdateAsync(Item.Id, _input);
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            Notifier.Success(ReferentialTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

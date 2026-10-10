@@ -1,0 +1,26 @@
+@* Actions d'une ligne de référentiel : archiver / restaurer, supprimer (seulement si inutilisé). *@
+@if (CanEdit)
+{
+    <div class="d-flex gap-1" @onclick:stopPropagation="true">
+        <MudTooltip Text="@(IsArchived ? ReferentialTexts.Restore : ReferentialTexts.Archive)">
+            <MudIconButton Icon="@(IsArchived ? Icons.Material.Filled.Unarchive : Icons.Material.Filled.Archive)" Size="Size.Medium"
+                           OnClick="OnArchive" aria-label="@(IsArchived ? ReferentialTexts.Restore : ReferentialTexts.Archive)" />
+        </MudTooltip>
+        <MudTooltip Text="@(UsageCount > 0 ? ReferentialTexts.InUseHint : ReferentialTexts.Delete)">
+            <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" Size="Size.Medium" Disabled="UsageCount > 0"
+                           OnClick="OnDelete" aria-label="@ReferentialTexts.Delete" />
+        </MudTooltip>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsArchived { get; set; }
+
+    [Parameter] public int UsageCount { get; set; }
+
+    [Parameter] public bool CanEdit { get; set; }
+
+    [Parameter] public EventCallback OnArchive { get; set; }
+
+    [Parameter] public EventCallback OnDelete { get; set; }
+}

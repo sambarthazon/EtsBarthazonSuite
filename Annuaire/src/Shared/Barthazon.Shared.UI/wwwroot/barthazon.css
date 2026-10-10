@@ -292,3 +292,87 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
     html, body { background: var(--bz-print-background) !important; color: var(--bz-print-text) !important; }
     .bz-card { box-shadow: none; border-color: var(--bz-print-lines); }
 }
+
+/* Pages de compte (connexion, premier démarrage) : rendu statique, sans composants interactifs. */
+.bz-account {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--bz-background);
+}
+.bz-account-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 28px 24px;
+}
+.bz-account-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--bz-text);
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+.bz-account-brand img { width: 40px; height: 40px; }
+.bz-account-title { font-size: 1.6rem; margin: 0 0 6px; color: var(--bz-text); }
+.bz-account-label { display: block; font-weight: 600; margin: 14px 0 6px; color: var(--bz-text); }
+.bz-account-input {
+    width: 100%;
+    min-height: var(--bz-touch);
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--bz-text);
+    background: var(--bz-surface);
+    border: 1px solid var(--bz-text-secondary);
+    border-radius: var(--bz-radius-sm);
+    box-sizing: border-box;
+}
+.bz-account-input:focus { border-color: var(--bz-primary); }
+.bz-account-button {
+    width: 100%;
+    min-height: var(--bz-touch);
+    margin-top: 22px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--bz-primary-contrast);
+    background: var(--bz-primary);
+    border: none;
+    border-radius: var(--bz-radius-sm);
+    cursor: pointer;
+}
+.bz-account-button:hover { background: var(--bz-accent); color: var(--bz-accent-contrast); }
+.bz-account-link { display: block; text-align: center; margin-top: 16px; min-height: var(--bz-touch); line-height: var(--bz-touch); }
+.bz-account-error {
+    border: 1px solid var(--bz-error);
+    color: var(--bz-error);
+    border-radius: var(--bz-radius-sm);
+    padding: 10px 12px;
+    margin: 12px 0;
+    font-weight: 600;
+}
+
+/* Étiquettes : couleur choisie parmi les teintes de la charte. */
+.bz-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid currentColor;
+    background: var(--bz-surface);
+    white-space: nowrap;
+}
+.bz-tag-neutral { color: var(--bz-text-secondary); }
+.bz-tag-primary { color: var(--bz-primary); }
+.bz-tag-accent { color: var(--bz-accent); }
+.bz-tag-success { color: var(--bz-success); }
+.bz-tag-warning { color: var(--bz-warning); }
+.bz-tag-error { color: var(--bz-error); }
+.bz-tag-info { color: var(--bz-info); }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="TextTooLong" xml:space="preserve"><value>Texte trop long.</value></data>
+  <data name="FamilyNameRequired" xml:space="preserve"><value>Le nom de la famille est obligatoire.</value></data>
+  <data name="FamilyNameExists" xml:space="preserve"><value>Une famille porte déjà ce nom.</value></data>
+  <data name="FamilyNotFound" xml:space="preserve"><value>Famille introuvable.</value></data>
+  <data name="TagLabelRequired" xml:space="preserve"><value>Le libellé de l'étiquette est obligatoire.</value></data>
+  <data name="TagLabelExists" xml:space="preserve"><value>Une étiquette porte déjà ce libellé.</value></data>
+  <data name="TagNotFound" xml:space="preserve"><value>Étiquette introuvable.</value></data>
+  <data name="ItemInUse" xml:space="preserve"><value>Cet élément est utilisé par {0} pièce(s) : il ne peut pas être supprimé, seulement archivé.</value></data>
+</root>

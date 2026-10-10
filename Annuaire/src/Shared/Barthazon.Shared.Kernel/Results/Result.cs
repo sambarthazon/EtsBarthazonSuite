@@ -96,4 +96,6 @@ public sealed class Result<T> : Result
     public static new Result<T> Failure(IEnumerable<Error> errors) => Failure(errors.ToArray());
 
     public static implicit operator Result<T>(Error error) => Failure(error);
+
+    public static implicit operator Result<T>(T value) => Success(value);
 }

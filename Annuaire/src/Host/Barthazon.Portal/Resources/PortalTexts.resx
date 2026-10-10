@@ -14,4 +14,20 @@
   <data name="TimeTrackingDescription" xml:space="preserve"><value>Pointage des temps passés à l'atelier.</value></data>
   <data name="OpenApplication" xml:space="preserve"><value>Ouvrir l'application {0}</value></data>
   <data name="ComingSoonApplication" xml:space="preserve"><value>{0} — bientôt disponible</value></data>
+  <data name="LoginTitle" xml:space="preserve"><value>Connexion</value></data>
+  <data name="LoginSubtitle" xml:space="preserve"><value>Connectez-vous pour créer ou modifier des données. La consultation reste possible sans connexion.</value></data>
+  <data name="LoginSubtitleRequired" xml:space="preserve"><value>Connectez-vous pour accéder aux applications.</value></data>
+  <data name="UserName" xml:space="preserve"><value>Identifiant</value></data>
+  <data name="Password" xml:space="preserve"><value>Mot de passe</value></data>
+  <data name="PasswordConfirm" xml:space="preserve"><value>Confirmer le mot de passe</value></data>
+  <data name="SignIn" xml:space="preserve"><value>Se connecter</value></data>
+  <data name="BackWithoutSignIn" xml:space="preserve"><value>Continuer sans se connecter</value></data>
+  <data name="SetupTitle" xml:space="preserve"><value>Premier démarrage</value></data>
+  <data name="SetupSubtitle" xml:space="preserve"><value>Aucun compte n'existe encore. Créez le compte administrateur.</value></data>
+  <data name="DisplayName" xml:space="preserve"><value>Nom affiché</value></data>
+  <data name="CreateAdministrator" xml:space="preserve"><value>Créer le compte administrateur</value></data>
+  <data name="PasswordsDiffer" xml:space="preserve"><value>Les deux mots de passe ne sont pas identiques.</value></data>
+  <data name="PasswordHint" xml:space="preserve"><value>8 caractères minimum.</value></data>
+  <data name="AccessDeniedTitle" xml:space="preserve"><value>Accès refusé</value></data>
+  <data name="AccessDeniedText" xml:space="preserve"><value>Votre compte ne permet pas d'accéder à cette page.</value></data>
 </root>

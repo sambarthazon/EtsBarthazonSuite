@@ -1,0 +1,91 @@
+@page "/premier-demarrage"
+@layout AccountLayout
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Barthazon.Portal.Hosting
+@using Barthazon.Referential.Core.Services
+@using Barthazon.Shared.Infrastructure.Security
+@inject IUserService Users
+@inject SecurityOptions Security
+@inject FirstRunState FirstRun
+@inject NavigationManager Navigation
+
+<PageTitle>@PortalTexts.SetupTitle</PageTitle>
+<h1 class="bz-account-title">@PortalTexts.SetupTitle</h1>
+<p class="bz-muted">@PortalTexts.SetupSubtitle</p>
+
+@if (_errors.Count > 0)
+{
+    <div class="bz-account-error" role="alert">
+        @foreach (var error in _errors)
+        {
+            <div>@error</div>
+        }
+    </div>
+}
+
+<EditForm Model="Input" FormName="setup" OnValidSubmit="CreateAsync" method="post">
+    <label class="bz-account-label" for="username">@PortalTexts.UserName</label>
+    <InputText id="username" class="bz-account-input" @bind-Value="Input!.UserName" autocomplete="username" autofocus required />
+    <label class="bz-account-label" for="displayname">@PortalTexts.DisplayName</label>
+    <InputText id="displayname" class="bz-account-input" @bind-Value="Input!.DisplayName" autocomplete="name" required />
+    <label class="bz-account-label" for="password">@PortalTexts.Password <span class="bz-muted">(@PortalTexts.PasswordHint)</span></label>
+    <InputText id="password" type="password" class="bz-account-input" @bind-Value="Input!.Password" autocomplete="new-password" required minlength="8" />
+    <label class="bz-account-label" for="confirm">@PortalTexts.PasswordConfirm</label>
+    <InputText id="confirm" type="password" class="bz-account-input" @bind-Value="Input!.Confirm" autocomplete="new-password" required minlength="8" />
+    <button type="submit" class="bz-account-button">@PortalTexts.CreateAdministrator</button>
+</EditForm>
+
+@code {
+    private List<string> _errors = [];
+
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm] private SetupInput? Input { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+        if (await Users.AnyUserAsync())
+        {
+            FirstRun.HasUsers = true;
+            Navigation.NavigateTo(PortalAuthentication.LoginPath, forceLoad: true);
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (Input!.Password != Input!.Confirm)
+        {
+            _errors = [PortalTexts.PasswordsDiffer];
+            return;
+        }
+
+        var result = await Users.CreateFirstAdministratorAsync(new UserInput
+        {
+            UserName = Input!.UserName ?? string.Empty,
+            DisplayName = Input!.DisplayName ?? string.Empty,
+            Password = Input!.Password,
+        });
+        if (result.IsFailure)
+        {
+            _errors = result.Errors.Select(e => e.Message).ToList();
+            return;
+        }
+
+        FirstRun.HasUsers = true;
+        await PortalAuthentication.SignInAsync(HttpContext, result.Value, Security);
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private sealed class SetupInput
+    {
+        public string? UserName { get; set; }
+
+        public string? DisplayName { get; set; }
+
+        public string? Password { get; set; }
+
+        public string? Confirm { get; set; }
+    }
+}

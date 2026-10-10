@@ -9,8 +9,6 @@ public sealed class BrowserInterop(IJSRuntime js)
 
     public ValueTask RegisterShortcutsAsync() => SafeAsync("barthazon.registerShortcuts");
 
-    public ValueTask SetDirtyGuardAsync(bool dirty, string message) => SafeAsync("barthazon.setDirtyGuard", dirty, message);
-
     public ValueTask PrintAsync() => SafeAsync("barthazon.print");
 
     public ValueTask FocusAsync(string elementId) => SafeAsync("barthazon.focus", elementId);

@@ -1,0 +1,86 @@
+@typeparam T
+@inject NavigationManager Navigation
+
+@* Liste adaptative : tableau sur ordinateur / tablette, cartes empilées sur téléphone. *@
+<MudHidden Breakpoint="Breakpoint.SmAndDown">
+    <MudTable T="T" Items="Items" Hover="true" Dense="Dense" Elevation="0" Class="bz-card" Loading="Loading"
+              OnRowClick="OnRowClickAsync" RowClass="@(ItemHref is null && OnItemClick.HasDelegate is false ? null : "cursor-pointer")"
+              TableAttributes="TableAttributes" Breakpoint="Breakpoint.None" HorizontalScrollbar="true">
+        <HeaderContent>@HeaderContent</HeaderContent>
+        <RowTemplate>@RowTemplate(context)</RowTemplate>
+        <NoRecordsContent>@EmptyContent</NoRecordsContent>
+        <LoadingContent><MudSkeleton Height="40px" /><MudSkeleton Height="40px" /><MudSkeleton Height="40px" /></LoadingContent>
+    </MudTable>
+</MudHidden>
+<MudHidden Breakpoint="Breakpoint.MdAndUp">
+    @if (Loading)
+    {
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="80px" Class="mb-2" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="80px" Class="mb-2" />
+    }
+    else if (Items is null || !Items.Any())
+    {
+        @EmptyContent
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-2" role="list" aria-label="@AriaLabel">
+            @foreach (var item in Items)
+            {
+                var href = ItemHref?.Invoke(item);
+                <div role="listitem">
+                    @if (href is not null)
+                    {
+                        <a href="@href" class="bz-card d-block pa-3" style="text-decoration:none;color:inherit">@CardTemplate(item)</a>
+                    }
+                    else
+                    {
+                        <div class="bz-card pa-3" @onclick="() => OnItemClick.InvokeAsync(item)">@CardTemplate(item)</div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</MudHidden>
+
+@code {
+    [Parameter] public IEnumerable<T>? Items { get; set; }
+
+    [Parameter, EditorRequired] public RenderFragment HeaderContent { get; set; } = default!;
+
+    [Parameter, EditorRequired] public RenderFragment<T> RowTemplate { get; set; } = default!;
+
+    [Parameter, EditorRequired] public RenderFragment<T> CardTemplate { get; set; } = default!;
+
+    [Parameter] public RenderFragment? EmptyContent { get; set; }
+
+    [Parameter] public Func<T, string?>? ItemHref { get; set; }
+
+    [Parameter] public EventCallback<T> OnItemClick { get; set; }
+
+    [Parameter] public bool Loading { get; set; }
+
+    [Parameter] public bool Dense { get; set; }
+
+    [Parameter] public string? AriaLabel { get; set; }
+
+    private Dictionary<string, object> TableAttributes => AriaLabel is null ? [] : new() { ["aria-label"] = AriaLabel };
+
+    private async Task OnRowClickAsync(TableRowClickEventArgs<T> args)
+    {
+        if (args.Item is null)
+        {
+            return;
+        }
+
+        var href = ItemHref?.Invoke(args.Item);
+        if (href is not null)
+        {
+            Navigation.NavigateTo(href);
+        }
+        else
+        {
+            await OnItemClick.InvokeAsync(args.Item);
+        }
+    }
+}

@@ -1,0 +1,21 @@
+@* Erreurs générales d'un formulaire + proposition de recharger en cas de conflit de concurrence. *@
+@if (State.GeneralErrors.Count > 0)
+{
+    <MudAlert Severity="@(State.HasConflict ? Severity.Warning : Severity.Error)" Class="mb-3" Variant="Variant.Outlined">
+        @foreach (var error in State.GeneralErrors)
+        {
+            <div>@error</div>
+        }
+        @if (State.HasConflict && OnReload.HasDelegate)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small" Class="mt-2" OnClick="OnReload"
+                       StartIcon="@Icons.Material.Filled.Refresh">@SharedTexts.ConflictReload</MudButton>
+        }
+    </MudAlert>
+}
+
+@code {
+    [Parameter, EditorRequired] public FormState State { get; set; } = default!;
+
+    [Parameter] public EventCallback OnReload { get; set; }
+}

@@ -1,0 +1,146 @@
+@page "/clients/{Code}"
+@inject ICustomerService Customers
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+@inject IDialogService Dialogs
+
+@if (_customer is null)
+{
+    <MudSkeleton Height="200px" SkeletonType="SkeletonType.Rectangle" />
+}
+else
+{
+    <PageHeader Title="@($"{_customer.Code} — {_customer.Name}")" BackHref="clients" BackText="@ReferentialTexts.CustomersTitle">
+        <SubContent>
+            <div class="d-flex flex-wrap gap-2 align-center mt-1">
+                <CustomerStatus IsActive="_customer.IsActive" IsArchived="_customer.IsArchived" />
+                <MudText Typo="Typo.caption" Class="bz-muted">@UpdatedText</MudText>
+            </div>
+        </SubContent>
+        <Actions>
+            @if (CanEdit)
+            {
+                <MudButton Href="@($"clients/{Uri.EscapeDataString(_customer.Code)}/modifier")" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">@SharedTexts.Edit</MudButton>
+                @if (_customer.IsArchived)
+                {
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Unarchive" OnClick="() => SetArchivedAsync(false)">@ReferentialTexts.Restore</MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Archive" OnClick="() => SetArchivedAsync(true)">@ReferentialTexts.Archive</MudButton>
+                }
+            }
+        </Actions>
+    </PageHeader>
+
+    @if (_customer.IsArchived)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3">@ReferentialTexts.ArchivedBanner</MudAlert>
+    }
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="5">
+            <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+                <MudText Typo="Typo.h6" Class="mb-3">@ReferentialTexts.SectionAddress</MudText>
+                <div class="bz-fields">
+                    <FieldView Label="@ReferentialTexts.FieldAddress" Value="@_customer.Address" />
+                    <FieldView Label="@ReferentialTexts.FieldCity" Value="@(string.Join(" ", new[] { _customer.PostalCode, _customer.City }.Where(s => !string.IsNullOrWhiteSpace(s))))" />
+                </div>
+                @if (!string.IsNullOrWhiteSpace(_customer.Notes))
+                {
+                    <MudDivider Class="my-3" />
+                    <FieldView Label="@ReferentialTexts.SectionNotes" Value="@_customer.Notes" />
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="7">
+            <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+                <MudText Typo="Typo.h6" Class="mb-3">@ReferentialTexts.SectionContacts</MudText>
+                @if (_customer.Contacts.Count == 0)
+                {
+                    <MudText Class="bz-muted">@ReferentialTexts.NoContacts</MudText>
+                }
+                <MudList T="string" Dense="false" ReadOnly="true">
+                    @foreach (var contact in _customer.Contacts)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Person">
+                            <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+                                <div>
+                                    <MudText Typo="Typo.subtitle1"><b>@contact.Name</b> @(contact.Function is null ? null : $"· {contact.Function}")</MudText>
+                                    @if (contact.Notes is not null)
+                                    {
+                                        <MudText Typo="Typo.body2" Class="bz-muted">@contact.Notes</MudText>
+                                    }
+                                </div>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    @if (contact.Phone is not null)
+                                    {
+                                        <MudButton Href="@($"tel:{contact.Phone}")" Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Phone" aria-label="@($"{ReferentialTexts.Call} {contact.Name}")">@contact.Phone</MudButton>
+                                    }
+                                    @if (contact.Email is not null)
+                                    {
+                                        <MudButton Href="@($"mailto:{contact.Email}")" Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Email" aria-label="@($"{ReferentialTexts.SendMail} {contact.Name}")">@contact.Email</MudButton>
+                                    }
+                                </div>
+                            </div>
+                        </MudListItem>
+                    }
+                </MudList>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @* Sections fournies par les autres modules (ex. pièces du client, depuis l'annuaire). *@
+    <UiSlot Name="@UiSlots.CustomerDetails" Parameters="_slotParameters">
+        <ItemTemplate Context="slot">
+            <section class="mt-4">
+                <MudText Typo="Typo.h5" HtmlTag="h2" Class="mb-2">@slot.Extension.Title</MudText>
+                @slot.Content
+            </section>
+        </ItemTemplate>
+    </UiSlot>
+}
+
+@code {
+    private CustomerDetails? _customer;
+    private Dictionary<string, object> _slotParameters = [];
+
+    [Parameter] public string Code { get; set; } = string.Empty;
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    private string UpdatedText => _customer is null ? string.Empty
+        : _customer.UpdatedBy is null
+            ? string.Format(CultureInfo.CurrentCulture, ReferentialTexts.UpdatedOnNoUser, _customer.UpdatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture))
+            : string.Format(CultureInfo.CurrentCulture, ReferentialTexts.UpdatedOn, _customer.UpdatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), _customer.UpdatedBy);
+
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await Customers.GetByCodeAsync(Code);
+        if (!Notifier.Handle(result))
+        {
+            Navigation.NavigateTo("clients");
+            return;
+        }
+
+        _customer = result.Value;
+        _slotParameters = new() { ["CustomerId"] = _customer.Id };
+    }
+
+    private async Task SetArchivedAsync(bool archived)
+    {
+        if (archived && !await Dialogs.ConfirmAsync(ReferentialTexts.ArchiveCustomerTitle, ReferentialTexts.ArchiveCustomerText, ReferentialTexts.Archive))
+        {
+            return;
+        }
+
+        var result = await Customers.SetArchivedAsync(_customer!.Id, archived);
+        if (Notifier.Handle(result, archived ? ReferentialTexts.Archived : ReferentialTexts.Restored))
+        {
+            await LoadAsync();
+        }
+    }
+}

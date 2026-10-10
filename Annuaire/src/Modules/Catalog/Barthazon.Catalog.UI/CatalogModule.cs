@@ -1,7 +1,10 @@
 using System.Reflection;
+using Barthazon.Catalog.Core;
+using Barthazon.Catalog.UI.Components;
 using Barthazon.Catalog.UI.Resources;
 using Barthazon.Shared.Kernel.Modules;
 using Barthazon.Shared.Kernel.Security;
+using Barthazon.Shared.UI.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
@@ -41,5 +44,10 @@ public sealed class CatalogModule : IModule
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        services.AddCatalogCore();
+
+        // Onglets « Familles » et « Étiquettes » de la page Référentiels.
+        services.AddUiExtension(new UiExtension(UiSlots.ReferentialTabs, typeof(FamiliesPanel), CatalogTexts.TabFamilies, 10, Icons.Material.Filled.Category));
+        services.AddUiExtension(new UiExtension(UiSlots.ReferentialTabs, typeof(TagsPanel), CatalogTexts.TabTags, 20, Icons.Material.Filled.Sell));
     }
 }

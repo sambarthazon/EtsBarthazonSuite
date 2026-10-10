@@ -1,0 +1,31 @@
+@inject IDialogService Dialogs
+
+@* Garde « modifications non enregistrées » : confirmation avant de quitter la page (lien interne ou fermeture de l'onglet). *@
+<NavigationLock ConfirmExternalNavigation="Dirty" OnBeforeInternalNavigation="OnBeforeInternalNavigationAsync" />
+@if (Dirty && ShowBanner)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3 bz-no-print" Icon="@Icons.Material.Filled.EditNote">@SharedTexts.UnsavedBanner</MudAlert>
+}
+
+@code {
+    /// <summary>Évalué au moment de la navigation (pas seulement au rendu).</summary>
+    [Parameter, EditorRequired] public Func<bool> IsDirty { get; set; } = () => false;
+
+    private bool Dirty => IsDirty();
+
+    [Parameter] public bool ShowBanner { get; set; }
+
+    private async Task OnBeforeInternalNavigationAsync(LocationChangingContext context)
+    {
+        if (!IsDirty())
+        {
+            return;
+        }
+
+        var leave = await Dialogs.ConfirmAsync(SharedTexts.UnsavedChangesTitle, SharedTexts.UnsavedChanges, SharedTexts.Yes);
+        if (!leave)
+        {
+            context.PreventNavigation();
+        }
+    }
+}

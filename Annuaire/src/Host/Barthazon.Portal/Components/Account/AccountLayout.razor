@@ -1,0 +1,18 @@
+@inherits LayoutComponentBase
+@inject Microsoft.Extensions.Options.IOptions<BrandingOptions> Branding
+
+@* Mise en page des pages de compte (rendu serveur statique, sans circuit). *@
+<BrandStyles IsDarkMode="@(DarkMode == true)" />
+<div class="bz-account">
+    <div class="bz-account-card bz-card">
+        <a href="" class="bz-account-brand">
+            <img src="@Branding.Value.LogoUrl" alt="" />
+            <span>@Branding.Value.Name</span>
+        </a>
+        @Body
+    </div>
+</div>
+
+@code {
+    [CascadingParameter(Name = "BzDarkMode")] public bool? DarkMode { get; set; }
+}

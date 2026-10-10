@@ -1,0 +1,11 @@
+<span class="@Color.CssClass() @Class"><Highlight Text="@Label" Query="@Query" /></span>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+
+    [Parameter] public TagColor Color { get; set; }
+
+    [Parameter] public string? Query { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+}

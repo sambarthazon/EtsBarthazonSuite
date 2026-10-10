@@ -1,0 +1,94 @@
+@inject IClassificationService Classification
+@inject ICurrentUser CurrentUser
+@inject Notifier Notifier
+@inject IDialogService Dialogs
+
+<div class="d-flex flex-wrap align-center justify-space-between gap-3 mb-3">
+    <MudSwitch T="bool" Value="_includeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@CatalogTexts.ShowArchived" />
+    @if (CanEdit)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => EditAsync(null)">@CatalogTexts.NewTag</MudButton>
+    }
+</div>
+
+<AdaptiveList T="TagItem" Items="_items" Loading="_loading" Dense="true" OnItemClick="EditAsync" AriaLabel="@CatalogTexts.TabTags">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel T="TagItem" SortBy="t => t.Label">@CatalogTexts.TagLabel</MudTableSortLabel></MudTh>
+        <MudTh>@CatalogTexts.TagColor</MudTh>
+        <MudTh Style="text-align:right"><MudTableSortLabel T="TagItem" SortBy="t => t.UsageCount">@CatalogTexts.ColUsage</MudTableSortLabel></MudTh>
+        <MudTh>@CatalogTexts.ColActions</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="t">
+        <MudTd><TagChip Label="@t.Label" Color="t.Color" /> @if (t.IsArchived) { <StatusChip Text="@CatalogTexts.StatusArchived" Tone="StatusTone.Disabled" Class="ml-2" /> }</MudTd>
+        <MudTd>@t.Color.Label()</MudTd>
+        <MudTd Style="text-align:right">@t.UsageCount</MudTd>
+        <MudTd><ClassificationRowActions IsArchived="t.IsArchived" UsageCount="t.UsageCount" CanEdit="CanEdit" OnArchive="() => SetArchivedAsync(t)" OnDelete="() => DeleteAsync(t)" /></MudTd>
+    </RowTemplate>
+    <CardTemplate Context="t">
+        <div class="d-flex justify-space-between align-center">
+            <TagChip Label="@t.Label" Color="t.Color" />
+            <MudText Typo="Typo.body2" Class="bz-muted">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.UsageCount, t.UsageCount)</MudText>
+        </div>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@CatalogTexts.NoTags" Icon="@Icons.Material.Outlined.Sell" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<TagItem>? _items;
+    private bool _includeArchived;
+    private bool _loading = true;
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task OnArchivedChangedAsync(bool value)
+    {
+        _includeArchived = value;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var result = await Classification.ListTagsAsync(_includeArchived);
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private async Task EditAsync(TagItem? item)
+    {
+        if (!CanEdit)
+        {
+            return;
+        }
+
+        var dialog = await Dialogs.ShowAsync<TagDialog>(item is null ? CatalogTexts.NewTag : CatalogTexts.EditTag,
+            new DialogParameters<TagDialog> { { d => d.Item, item } }, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task SetArchivedAsync(TagItem item)
+    {
+        if (Notifier.Handle(await Classification.SetTagArchivedAsync(item.Id, !item.IsArchived), CatalogTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task DeleteAsync(TagItem item)
+    {
+        if (await Dialogs.ConfirmAsync(CatalogTexts.DeleteTitle, string.Format(CultureInfo.CurrentCulture, CatalogTexts.DeleteText, item.Label), CatalogTexts.Delete, danger: true)
+            && Notifier.Handle(await Classification.DeleteTagAsync(item.Id), CatalogTexts.Deleted))
+        {
+            await LoadAsync();
+        }
+    }
+}

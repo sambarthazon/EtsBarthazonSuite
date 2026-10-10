@@ -1,11 +1,12 @@
 using System.Globalization;
 using Barthazon.Portal.Components;
+using Barthazon.Portal.Endpoints;
 using Barthazon.Portal.Hosting;
 using Barthazon.Shared.Infrastructure;
 using Barthazon.Shared.Infrastructure.Hosting;
 using Barthazon.Shared.Infrastructure.Persistence;
+using Barthazon.Shared.Infrastructure.Security;
 using Barthazon.Shared.Kernel.Modules;
-using Barthazon.Shared.Kernel.Security;
 using Barthazon.Shared.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,8 +47,9 @@ foreach (var module in modules)
     module.ConfigureServices(builder.Services, builder.Configuration);
 }
 
-builder.Services.AddScoped<CurrentUserAccessor>();
-builder.Services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<CurrentUserAccessor>());
+// Comptes locaux, cookie, utilisateur courant.
+var security = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
+builder.Services.AddPortalAuthentication(security);
 
 var app = builder.Build();
 
@@ -59,11 +61,22 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    // Utilisateur courant pour les services appelés pendant la requête HTTP (prérendu, téléchargements).
+    context.RequestServices.GetRequiredService<CurrentUserAccessor>().SetUser(context.User);
+    await next();
+});
+app.UseAuthorization();
+app.UseFirstRunRedirect();
 app.UseAntiforgery();
 
-app.MapStaticAssets();
+app.MapStaticAssets().AllowAnonymous();
+app.MapAccountEndpoints();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode()
+    .AddAdditionalAssemblies(modules.Select(m => m.UiAssembly).OfType<System.Reflection.Assembly>().Distinct().ToArray());
 
 await app.RunAsync();
 return 0;

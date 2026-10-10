@@ -19,7 +19,7 @@ public sealed class AppDbContext : DbContext
     private static readonly HashSet<string> IgnoredAuditProperties =
     [
         nameof(IAuditable.Version), nameof(IAuditable.CreatedAt), nameof(IAuditable.CreatedBy),
-        nameof(IAuditable.UpdatedAt), nameof(IAuditable.UpdatedBy), "SearchText", "Id",
+        nameof(IAuditable.UpdatedAt), nameof(IAuditable.UpdatedBy), "SearchText", "Id", "LastLoginAt",
     ];
 
     /// <summary>Propriétés dont la valeur est masquée dans le journal.</summary>
@@ -97,6 +97,13 @@ public sealed class AppDbContext : DbContext
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
+            if (typeof(Entity).IsAssignableFrom(entityType.ClrType))
+            {
+                // Identifiants générés par le code : un enfant ajouté à une collection doit être inséré,
+                // pas pris pour une ligne existante.
+                modelBuilder.Entity(entityType.ClrType).Property(nameof(Entity.Id)).ValueGeneratedNever();
+            }
+
             if (typeof(IAuditable).IsAssignableFrom(entityType.ClrType))
             {
                 var builder = modelBuilder.Entity(entityType.ClrType);

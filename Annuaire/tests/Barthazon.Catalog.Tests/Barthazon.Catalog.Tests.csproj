@@ -15,6 +15,9 @@
     <Using Include="FluentAssertions" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Support\*.cs" Link="Support\%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\Catalog\Barthazon.Catalog.Infrastructure\Barthazon.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Referential\Barthazon.Referential.Infrastructure\Barthazon.Referential.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Host\Barthazon.Migrations.Sqlite\Barthazon.Migrations.Sqlite.csproj" />
