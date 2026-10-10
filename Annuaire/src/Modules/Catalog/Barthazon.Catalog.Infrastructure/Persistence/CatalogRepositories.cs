@@ -1,3 +1,4 @@
+using Barthazon.Catalog.Contracts;
 using Barthazon.Catalog.Core.Domain;
 using Barthazon.Catalog.Core.Persistence;
 using Barthazon.Shared.Infrastructure.Persistence;
@@ -35,13 +36,28 @@ internal sealed class TagRepository(AppDbContext context) : EfRepository<Tag>(co
     public void Remove(Tag tag) => Set.Remove(tag);
 }
 
-internal sealed partial class PartRepository(AppDbContext context) : EfRepository<Part>(context), IPartRepository
+internal sealed class PartLinkRepository(AppDbContext context) : EfRepository<PartLink>(context), IPartLinkRepository
 {
-    public Task<IReadOnlyDictionary<Guid, int>> CountByFamilyAsync(CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyDictionary<Guid, int>>(new Dictionary<Guid, int>());
+    public async Task<IReadOnlyList<PartLink>> ListForPartAsync(Guid partId, CancellationToken cancellationToken = default) =>
+        await Set.AsNoTracking().Where(l => l.SourcePartId == partId || l.TargetPartId == partId).ToListAsync(cancellationToken);
 
-    public Task<IReadOnlyDictionary<Guid, int>> CountByTagAsync(CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyDictionary<Guid, int>>(new Dictionary<Guid, int>());
+    public Task<bool> ExistsAsync(Guid sourcePartId, Guid targetPartId, Contracts.PartLinkType type, CancellationToken cancellationToken = default) =>
+        Set.AnyAsync(l => l.SourcePartId == sourcePartId && l.TargetPartId == targetPartId && l.Type == type, cancellationToken);
+
+    public void Remove(PartLink link) => Set.Remove(link);
+}
+
+internal sealed class FavoriteRepository(AppDbContext context) : IFavoriteRepository
+{
+    public async Task<IReadOnlyList<Guid>> ListPartIdsAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        await context.Set<Favorite>().AsNoTracking().Where(f => f.UserId == userId).OrderByDescending(f => f.CreatedAt).Select(f => f.PartId).ToListAsync(cancellationToken);
+
+    public Task<Favorite?> GetAsync(Guid userId, Guid partId, CancellationToken cancellationToken = default) =>
+        context.Set<Favorite>().FirstOrDefaultAsync(f => f.UserId == userId && f.PartId == partId, cancellationToken);
+
+    public void Add(Favorite favorite) => context.Set<Favorite>().Add(favorite);
+
+    public void Remove(Favorite favorite) => context.Set<Favorite>().Remove(favorite);
 }
 
 internal sealed class CatalogUnitOfWork : EfUnitOfWork, ICatalogUnitOfWork
@@ -52,6 +68,8 @@ internal sealed class CatalogUnitOfWork : EfUnitOfWork, ICatalogUnitOfWork
         Families = new PartFamilyRepository(context);
         Tags = new TagRepository(context);
         Parts = new PartRepository(context);
+        Links = new PartLinkRepository(context);
+        Favorites = new FavoriteRepository(context);
     }
 
     public IPartFamilyRepository Families { get; }
@@ -59,6 +77,10 @@ internal sealed class CatalogUnitOfWork : EfUnitOfWork, ICatalogUnitOfWork
     public ITagRepository Tags { get; }
 
     public IPartRepository Parts { get; }
+
+    public IPartLinkRepository Links { get; }
+
+    public IFavoriteRepository Favorites { get; }
 }
 
 /// <summary>Fabrique d'unités de travail de l'annuaire (une par opération applicative).</summary>

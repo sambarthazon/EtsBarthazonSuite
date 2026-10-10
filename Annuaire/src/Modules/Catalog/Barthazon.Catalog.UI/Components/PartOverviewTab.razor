@@ -1,0 +1,70 @@
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-3">@CatalogTexts.SectionMainInfo</MudText>
+            <div class="bz-fields">
+                <FieldView Label="@CatalogTexts.Designation" Value="@Part.Designation" />
+                <FieldView Label="@CatalogTexts.Customer">
+                    <a href="@($"clients/{Uri.EscapeDataString(Part.CustomerCode)}")" title="@CatalogTexts.ViewCustomer">@Part.CustomerCode — @Part.CustomerName</a>
+                </FieldView>
+                <FieldView Label="@CatalogTexts.CustomerReference" Value="@Part.CustomerReference" />
+                <FieldView Label="@CatalogTexts.Family" Value="@Part.FamilyName" />
+                <FieldView Label="@CatalogTexts.Status"><PartStatusChip Status="Part.Status" /></FieldView>
+                <FieldView Label="@CatalogTexts.Tags">
+                    @if (Part.Tags.Count == 0)
+                    {
+                        <span class="bz-muted">—</span>
+                    }
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var tag in Part.Tags)
+                        {
+                            <a href="@($"pieces?etiquettes={tag.Id}")" style="text-decoration:none"><TagChip Label="@tag.Label" Color="tag.Color" /></a>
+                        }
+                    </div>
+                </FieldView>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Part.Description))
+            {
+                <FieldView Label="@CatalogTexts.Description" Value="@Part.Description" Class="mt-3" />
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-3">@CatalogTexts.SectionMaterial</MudText>
+            <div class="bz-fields">
+                <FieldView Label="@CatalogTexts.Material" Value="@Revision.MaterialDisplay" />
+                <FieldView Label="@CatalogTexts.MaterialNote" Value="@Revision.MaterialNote" />
+                <FieldView Label="@CatalogTexts.BlankShape" Value="@Revision.BlankShape?.Label()" />
+                <FieldView Label="@CatalogTexts.BlankDimensions" Value="@Revision.BlankDimensions" />
+            </div>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-2">@CatalogTexts.SectionWorkshop</MudText>
+            @if (string.IsNullOrWhiteSpace(Revision.WorkshopNotes))
+            {
+                <MudText Class="bz-muted">@CatalogTexts.NoWorkshopNotes</MudText>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Engineering">
+                    <span style="white-space:pre-line;font-size:1.05rem">@Revision.WorkshopNotes</span>
+                </MudAlert>
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-2">@CatalogTexts.SectionMainDrawing</MudText>
+            <MainDrawingPreview Document="Revision.MainDrawing" />
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter, EditorRequired] public PartDetails Part { get; set; } = default!;
+
+    [Parameter, EditorRequired] public RevisionDetails Revision { get; set; } = default!;
+}

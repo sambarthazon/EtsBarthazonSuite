@@ -1,0 +1,59 @@
+@inject ICustomerLookup Customers
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+
+<PickerField OnQuickCreate="QuickCreateAsync" CanQuickCreate="CanCreate" QuickCreateLabel="@CatalogTexts.NewCustomerQuick">
+    <MudAutocomplete T="CustomerSummary" Value="_selected" ValueChanged="OnChangedAsync" SearchFunc="SearchAsync"
+                     ToStringFunc="@(c => c?.Display ?? string.Empty)" Label="@(Label ?? CatalogTexts.Customer)" Placeholder="@CatalogTexts.SearchCustomer"
+                     Variant="Variant.Outlined" Required="Required" RequiredError="@SharedTexts.RequiredField" Clearable="!Required"
+                     ResetValueOnEmptyText="true" DebounceInterval="200" MaxItems="30" OpenOnFocus="true"
+                     Error="Error" ErrorText="@ErrorText" Margin="Margin" />
+</PickerField>
+
+@code {
+    private CustomerSummary? _selected;
+
+    [Parameter] public Guid? Value { get; set; }
+
+    [Parameter] public EventCallback<Guid?> ValueChanged { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+
+    [Parameter] public bool Required { get; set; }
+
+    [Parameter] public bool Error { get; set; }
+
+    [Parameter] public string? ErrorText { get; set; }
+
+    [Parameter] public bool AllowQuickCreate { get; set; } = true;
+
+    [Parameter] public Margin Margin { get; set; } = Margin.Normal;
+
+    private bool CanCreate => AllowQuickCreate && CurrentUser.Role >= UserRole.Editor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Value != _selected?.Id)
+        {
+            _selected = Value is { } id ? await Customers.GetAsync(id) : null;
+        }
+    }
+
+    private async Task<IEnumerable<CustomerSummary>> SearchAsync(string? text, CancellationToken cancellationToken) =>
+        await Customers.SearchAsync(text, 30, cancellationToken);
+
+    private async Task OnChangedAsync(CustomerSummary? customer)
+    {
+        _selected = customer;
+        await ValueChanged.InvokeAsync(customer?.Id);
+    }
+
+    private async Task QuickCreateAsync()
+    {
+        var dialog = await Dialogs.ShowAsync<QuickCustomerDialog>(CatalogTexts.NewCustomerQuick, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false, Data: CustomerSummary created })
+        {
+            await OnChangedAsync(created);
+        }
+    }
+}

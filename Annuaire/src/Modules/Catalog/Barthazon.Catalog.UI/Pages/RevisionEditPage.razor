@@ -1,0 +1,277 @@
+@page "/pieces/{Reference}/indices/{Index}/modifier"
+@inject IPartService Parts
+@inject IRevisionService Revisions
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+
+@if (_part is null || _revision is null)
+{
+    <MudSkeleton Height="320px" SkeletonType="SkeletonType.Rectangle" />
+}
+else
+{
+    <PageHeader Title="@string.Format(CultureInfo.CurrentCulture, CatalogTexts.EditRevisionTitle, _revision.Index)"
+                Subtitle="@($"{_part.InternalReference} — {_part.Designation}")" BackHref="@DetailsHref" />
+
+    <UnsavedChangesGuard IsDirty="() => !_saving && _form.IsDirty(_input)" ShowBanner="true" />
+    <FormErrors State="_form" OnReload="ReloadAsync" />
+    @if (_revision.Status is RevisionStatus.InForce or RevisionStatus.Superseded)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-3">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.EditRevisionInForceWarning, _revision.Status.Label().ToLowerInvariant())</MudAlert>
+    }
+
+    <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true" novalidate>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+                    <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@CatalogTexts.SectionRevision</MudText>
+                    <div class="d-flex gap-2">
+                        <MudTextField @bind-Value="_input.Index" Label="@CatalogTexts.FirstIndex" Required="true" RequiredError="@SharedTexts.RequiredField" MaxLength="10" Variant="Variant.Outlined" Style="max-width:140px"
+                                      Error="_form.HasError(nameof(RevisionInput.Index))" ErrorText="@_form.ErrorFor(nameof(RevisionInput.Index))" />
+                        <MudSelect @bind-Value="_input.ChangeOrigin" Label="@CatalogTexts.NewRevisionOrigin" Variant="Variant.Outlined" ToStringFunc="o => o.Label()">
+                            @foreach (var origin in Enum.GetValues<ChangeOrigin>())
+                            {
+                                <MudSelectItem Value="origin">@origin.Label()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+                    <MudTextField @bind-Value="_input.ChangeDescription" Label="@CatalogTexts.ChangeDescription" Lines="3" Variant="Variant.Outlined" Class="mt-3" />
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+                    <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@CatalogTexts.SectionMaterial</MudText>
+                    <MaterialPicker @bind-Value="_input.MaterialId" Error="_form.HasError(nameof(RevisionInput.MaterialId))" ErrorText="@_form.ErrorFor(nameof(RevisionInput.MaterialId))" />
+                    <MudTextField @bind-Value="_input.MaterialNote" Label="@CatalogTexts.MaterialNote" HelperText="@CatalogTexts.MaterialNoteHelp" Variant="Variant.Outlined" Class="mt-3" />
+                    <MudGrid Spacing="2" Class="mt-1">
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="BlankShape?" @bind-Value="_input.BlankShape" Label="@CatalogTexts.BlankShape" Variant="Variant.Outlined" Clearable="true" ToStringFunc="s => s?.Label() ?? string.Empty">
+                                @foreach (var shape in Enum.GetValues<BlankShape>())
+                                {
+                                    <MudSelectItem T="BlankShape?" Value="shape">@shape.Label()</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6"><MudTextField @bind-Value="_input.BlankDimensions" Label="@CatalogTexts.BlankDimensions" HelperText="@CatalogTexts.BlankDimensionsHelp" Variant="Variant.Outlined" /></MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+                    <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@CatalogTexts.SectionDimensions</MudText>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="6" sm="4"><DecimalField @bind-Value="_input.LengthMm" Field="LengthMm" Form="_form" /></MudItem>
+                        <MudItem xs="6" sm="4"><DecimalField @bind-Value="_input.WidthMm" Field="WidthMm" Form="_form" /></MudItem>
+                        <MudItem xs="6" sm="4"><DecimalField @bind-Value="_input.HeightMm" Field="HeightMm" Form="_form" /></MudItem>
+                        <MudItem xs="6" sm="4"><DecimalField @bind-Value="_input.DiameterMm" Field="DiameterMm" Form="_form" /></MudItem>
+                        <MudItem xs="6" sm="4"><DecimalField @bind-Value="_input.MassKg" Field="MassKg" Form="_form" /></MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+                    <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@CatalogTexts.SectionTolerances</MudText>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6"><MudTextField @bind-Value="_input.GeneralTolerance" Label="@CatalogLabels.FieldLabel("GeneralTolerance")" Placeholder="ISO 2768-mK" Variant="Variant.Outlined" /></MudItem>
+                        <MudItem xs="12" sm="6"><MudTextField @bind-Value="_input.SurfaceRoughness" Label="@CatalogLabels.FieldLabel("SurfaceRoughness")" Placeholder="Ra 1,6" Variant="Variant.Outlined" /></MudItem>
+                        <MudItem xs="12" sm="4"><MudTextField @bind-Value="_input.HeatTreatment" Label="@CatalogLabels.FieldLabel("HeatTreatment")" Variant="Variant.Outlined" /></MudItem>
+                        <MudItem xs="12" sm="4"><MudTextField @bind-Value="_input.SurfaceTreatment" Label="@CatalogLabels.FieldLabel("SurfaceTreatment")" Variant="Variant.Outlined" /></MudItem>
+                        <MudItem xs="12" sm="4"><MudTextField @bind-Value="_input.Hardness" Label="@CatalogLabels.FieldLabel("Hardness")" Variant="Variant.Outlined" /></MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12">
+                <MudPaper Class="pa-4 bz-card" Elevation="0">
+                    <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@CatalogTexts.SectionToolingInspection</MudText>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="4"><MudTextField @bind-Value="_input.WorkshopNotes" Label="@CatalogLabels.FieldLabel("WorkshopNotes")" Lines="4" Variant="Variant.Outlined" /></MudItem>
+                        <MudItem xs="12" md="4"><MudTextField @bind-Value="_input.Tooling" Label="@CatalogLabels.FieldLabel("Tooling")" Lines="4" Variant="Variant.Outlined" /></MudItem>
+                        <MudItem xs="12" md="4"><MudTextField @bind-Value="_input.InspectionNotes" Label="@CatalogLabels.FieldLabel("InspectionNotes")" Lines="4" Variant="Variant.Outlined" /></MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12">
+                <MudPaper Class="pa-4 bz-card" Elevation="0">
+                    <div class="d-flex justify-space-between align-center mb-2 flex-wrap gap-2">
+                        <MudText Typo="Typo.h6" HtmlTag="h2">@CatalogTexts.SectionCharacteristicsEdit</MudText>
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _input.Characteristics.Add(new CharacteristicInput())">@CatalogTexts.AddCharacteristic</MudButton>
+                    </div>
+                    @for (var i = 0; i < _input.Characteristics.Count; i++)
+                    {
+                        var index = i;
+                        var c = _input.Characteristics[index];
+                        var nameField = $"Characteristics[{index}].Name";
+                        <div class="d-flex flex-wrap gap-2 align-start mb-2">
+                            <MudTextField @bind-Value="c.Name" Label="@CatalogTexts.CharacteristicName" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:200px" Class="flex-grow-1"
+                                          Error="_form.HasError(nameField)" ErrorText="@_form.ErrorFor(nameField)" />
+                            <MudTextField @bind-Value="c.Value" Label="@CatalogTexts.CharacteristicValue" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:160px" Class="flex-grow-1" />
+                            <MudTextField @bind-Value="c.Unit" Label="@CatalogTexts.CharacteristicUnit" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:110px" />
+                            <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Disabled="index == 0" OnClick="() => Move(_input.Characteristics, index, -1)" aria-label="@CatalogTexts.MoveUp" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => _input.Characteristics.RemoveAt(index)" aria-label="@CatalogTexts.RemoveLine" />
+                        </div>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" id="gamme">
+                <MudPaper Class="pa-4 bz-card" Elevation="0">
+                    <div class="d-flex justify-space-between align-center mb-2 flex-wrap gap-2">
+                        <MudText Typo="Typo.h6" HtmlTag="h2">@CatalogTexts.SectionRoutingEdit</MudText>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.FormatListNumbered" OnClick="Renumber">@CatalogTexts.Renumber</MudButton>
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddOperation">@CatalogTexts.AddOperation</MudButton>
+                        </div>
+                    </div>
+                    <MudText Typo="Typo.caption" Class="bz-muted d-block mb-2">@CatalogTexts.DragToReorder</MudText>
+                    <MudDropContainer T="OperationInput" @ref="_dropContainer" Items="_input.Operations" ItemsSelector="@((_, _) => true)" ItemDropped="OnOperationDropped" Class="d-flex flex-column">
+                        <ChildContent>
+                            <MudDropZone T="OperationInput" Identifier="routing" AllowReorder="true" Class="d-flex flex-column gap-2" />
+                        </ChildContent>
+                        <ItemRenderer>
+                            @{ var op = context; var index = _input.Operations.IndexOf(op); var numberField = $"Operations[{index}].Number"; }
+                            <MudPaper Outlined="true" Class="pa-3 mb-2" Elevation="0">
+                                <div class="d-flex flex-wrap gap-2 align-start">
+                                    <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Class="mt-3" Style="cursor:grab" />
+                                    <MudNumericField @bind-Value="op.Number" Label="@CatalogTexts.OperationNumber" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:90px" HideSpinButtons="true"
+                                                     Error="_form.HasError(numberField)" ErrorText="@_form.ErrorFor(numberField)" />
+                                    <MudSelect @bind-Value="op.Type" Label="@CatalogTexts.OperationType" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:180px" ToStringFunc="t => t.Label()">
+                                        @foreach (var type in Enum.GetValues<OperationType>())
+                                        {
+                                            <MudSelectItem Value="type">@type.Label()</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                    <div style="min-width:200px" class="flex-grow-1"><MachinePicker @bind-Value="op.MachineId" /></div>
+                                    <MudNumericField @bind-Value="op.SetupTimeMin" Label="@CatalogTexts.OperationSetup" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:130px" HideSpinButtons="true" Min="0m" />
+                                    <MudNumericField @bind-Value="op.CycleTimeMin" Label="@CatalogTexts.OperationCycle" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:130px" HideSpinButtons="true" Min="0m" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Disabled="index == 0" OnClick="() => MoveOperation(index, -1)" aria-label="@CatalogTexts.MoveUp" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Disabled="index == _input.Operations.Count - 1" OnClick="() => MoveOperation(index, 1)" aria-label="@CatalogTexts.MoveDown" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => RemoveOperation(op)" aria-label="@CatalogTexts.RemoveLine" />
+                                </div>
+                                <MudTextField @bind-Value="op.Description" Label="@CatalogTexts.OperationDescription" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2" Class="mt-2" />
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    <MudTextField @bind-Value="op.NcProgramReference" Label="@CatalogTexts.OperationProgramField" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1" />
+                                    <MudTextField @bind-Value="op.Tooling" Label="@CatalogTexts.OperationToolingField" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1" />
+                                    @if (op.Type == OperationType.Subcontracting || !string.IsNullOrEmpty(op.Subcontractor))
+                                    {
+                                        <MudTextField @bind-Value="op.Subcontractor" Label="@CatalogTexts.OperationSubcontractorField" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1" />
+                                    }
+                                </div>
+                            </MudPaper>
+                        </ItemRenderer>
+                    </MudDropContainer>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+        <div class="d-flex gap-2 justify-end mt-4">
+            <MudButton Href="@DetailsHref" Variant="Variant.Text">@SharedTexts.Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" Disabled="_saving">@SharedTexts.Save</MudButton>
+        </div>
+    </form>
+}
+
+@code {
+    private readonly FormState _form = new();
+    private RevisionInput _input = new();
+    private PartDetails? _part;
+    private RevisionDetails? _revision;
+    private MudDropContainer<OperationInput>? _dropContainer;
+    private bool _saving;
+
+    [Parameter] public string Reference { get; set; } = string.Empty;
+
+    [Parameter] public string Index { get; set; } = string.Empty;
+
+    private string DetailsHref => $"pieces/{Uri.EscapeDataString(_part?.InternalReference ?? Reference)}?indice={Uri.EscapeDataString(_input.Index.Length > 0 ? _input.Index : Index)}";
+
+    protected override Task OnParametersSetAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        var part = await Parts.GetByReferenceAsync(Reference);
+        var revisionId = part.IsSuccess ? part.Value.FindRevision(Index)?.Id : null;
+        if (!Notifier.Handle(part) || revisionId is null)
+        {
+            Navigation.NavigateTo("pieces");
+            return;
+        }
+
+        _part = part.Value;
+        var revision = await Parts.GetRevisionAsync(_part.Id, revisionId.Value);
+        if (!Notifier.Handle(revision))
+        {
+            return;
+        }
+
+        _revision = revision.Value;
+        _input = RevisionInput.From(_revision);
+        _form.Clear();
+        _form.Snapshot(_input);
+    }
+
+    private static void Move<T>(List<T> list, int index, int delta)
+    {
+        var target = index + delta;
+        if (target < 0 || target >= list.Count)
+        {
+            return;
+        }
+
+        (list[index], list[target]) = (list[target], list[index]);
+    }
+
+    private void AddOperation()
+    {
+        var next = _input.Operations.Count == 0 ? 10 : (_input.Operations.Max(o => o.Number) / 10 + 1) * 10;
+        _input.Operations.Add(new OperationInput { Number = next });
+        _dropContainer?.Refresh();
+    }
+
+    private void RemoveOperation(OperationInput operation)
+    {
+        _input.Operations.Remove(operation);
+        _dropContainer?.Refresh();
+    }
+
+    private void MoveOperation(int index, int delta)
+    {
+        Move(_input.Operations, index, delta);
+        Renumber();
+    }
+
+    private void OnOperationDropped(MudItemDropInfo<OperationInput> drop)
+    {
+        if (drop.Item is null)
+        {
+            return;
+        }
+
+        _input.Operations.Remove(drop.Item);
+        _input.Operations.Insert(Math.Clamp(drop.IndexInZone, 0, _input.Operations.Count), drop.Item);
+        Renumber();
+    }
+
+    /// <summary>10, 20, 30… dans l'ordre affiché.</summary>
+    private void Renumber()
+    {
+        for (var i = 0; i < _input.Operations.Count; i++)
+        {
+            _input.Operations[i].Number = (i + 1) * 10;
+        }
+
+        _dropContainer?.Refresh();
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = await Revisions.UpdateAsync(_part!.Id, _revision!.Id, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(CatalogTexts.RevisionSaved);
+            Navigation.NavigateTo($"pieces/{Uri.EscapeDataString(_part.InternalReference)}?indice={Uri.EscapeDataString(result.Value.Index)}");
+            return;
+        }
+
+        _saving = false;
+    }
+}

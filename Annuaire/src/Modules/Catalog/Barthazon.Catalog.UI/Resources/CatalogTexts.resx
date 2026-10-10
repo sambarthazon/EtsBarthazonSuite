@@ -43,4 +43,328 @@
   <data name="TagColor_Warning" xml:space="preserve"><value>Ambre</value></data>
   <data name="TagColor_Error" xml:space="preserve"><value>Rouge</value></data>
   <data name="TagColor_Info" xml:space="preserve"><value>Bleu clair</value></data>
+  <data name="PartStatus_Prototype" xml:space="preserve"><value>Prototype</value></data>
+  <data name="PartStatus_Active" xml:space="preserve"><value>Active</value></data>
+  <data name="PartStatus_Dormant" xml:space="preserve"><value>En sommeil</value></data>
+  <data name="PartStatus_Obsolete" xml:space="preserve"><value>Obsolète</value></data>
+  <data name="RevisionStatus_Draft" xml:space="preserve"><value>Brouillon</value></data>
+  <data name="RevisionStatus_InForce" xml:space="preserve"><value>En vigueur</value></data>
+  <data name="RevisionStatus_Superseded" xml:space="preserve"><value>Remplacé</value></data>
+  <data name="RevisionStatus_Cancelled" xml:space="preserve"><value>Annulé</value></data>
+  <data name="ChangeOrigin_CustomerRequest" xml:space="preserve"><value>Demande client</value></data>
+  <data name="ChangeOrigin_Correction" xml:space="preserve"><value>Correction</value></data>
+  <data name="ChangeOrigin_InternalImprovement" xml:space="preserve"><value>Amélioration interne</value></data>
+  <data name="ChangeOrigin_Creation" xml:space="preserve"><value>Création</value></data>
+  <data name="ChangeOrigin_Other" xml:space="preserve"><value>Autre</value></data>
+  <data name="BlankShape_Round" xml:space="preserve"><value>Rond</value></data>
+  <data name="BlankShape_Square" xml:space="preserve"><value>Carré</value></data>
+  <data name="BlankShape_Flat" xml:space="preserve"><value>Plat</value></data>
+  <data name="BlankShape_Hexagonal" xml:space="preserve"><value>Hexagonal</value></data>
+  <data name="BlankShape_Tube" xml:space="preserve"><value>Tube</value></data>
+  <data name="BlankShape_Sheet" xml:space="preserve"><value>Tôle</value></data>
+  <data name="BlankShape_Block" xml:space="preserve"><value>Bloc</value></data>
+  <data name="BlankShape_CastOrForged" xml:space="preserve"><value>Moulé / forgé</value></data>
+  <data name="BlankShape_Other" xml:space="preserve"><value>Autre</value></data>
+  <data name="OperationType_Cutting" xml:space="preserve"><value>Débit</value></data>
+  <data name="OperationType_Turning" xml:space="preserve"><value>Tournage</value></data>
+  <data name="OperationType_Milling" xml:space="preserve"><value>Fraisage</value></data>
+  <data name="OperationType_DrillingTapping" xml:space="preserve"><value>Perçage / taraudage</value></data>
+  <data name="OperationType_Grinding" xml:space="preserve"><value>Rectification</value></data>
+  <data name="OperationType_Deburring" xml:space="preserve"><value>Ébavurage</value></data>
+  <data name="OperationType_Treatment" xml:space="preserve"><value>Traitement</value></data>
+  <data name="OperationType_Inspection" xml:space="preserve"><value>Contrôle</value></data>
+  <data name="OperationType_Subcontracting" xml:space="preserve"><value>Sous-traitance</value></data>
+  <data name="OperationType_Other" xml:space="preserve"><value>Autre</value></data>
+  <data name="DocumentType_Drawing" xml:space="preserve"><value>Plan</value></data>
+  <data name="DocumentType_Model3D" xml:space="preserve"><value>Modèle 3D</value></data>
+  <data name="DocumentType_NcProgram" xml:space="preserve"><value>Programme CN</value></data>
+  <data name="DocumentType_InspectionSheet" xml:space="preserve"><value>Fiche de contrôle</value></data>
+  <data name="DocumentType_Photo" xml:space="preserve"><value>Photo</value></data>
+  <data name="DocumentType_Routing" xml:space="preserve"><value>Gamme</value></data>
+  <data name="DocumentType_Certificate" xml:space="preserve"><value>Certificat</value></data>
+  <data name="DocumentType_Other" xml:space="preserve"><value>Autre</value></data>
+  <data name="DocumentKind_File" xml:space="preserve"><value>Fichier</value></data>
+  <data name="DocumentKind_Paper" xml:space="preserve"><value>Papier</value></data>
+  <data name="PartLinkType_ComponentOf" xml:space="preserve"><value>Fait partie de</value></data>
+  <data name="PartLinkType_Replaces" xml:space="preserve"><value>Remplace</value></data>
+  <data name="PartLinkType_Variant" xml:space="preserve"><value>Variante de</value></data>
+  <data name="PartLinkType_Related" xml:space="preserve"><value>Associée à</value></data>
+  <data name="PartLinkTypeInverse_ComponentOf" xml:space="preserve"><value>Se compose de</value></data>
+  <data name="PartLinkTypeInverse_Replaces" xml:space="preserve"><value>Remplacée par</value></data>
+  <data name="PartLinkTypeInverse_Variant" xml:space="preserve"><value>A pour variante</value></data>
+  <data name="PartLinkTypeInverse_Related" xml:space="preserve"><value>Associée à</value></data>
+  <data name="Field_InternalReference" xml:space="preserve"><value>Référence interne</value></data>
+  <data name="Field_Designation" xml:space="preserve"><value>Désignation</value></data>
+  <data name="Field_CustomerId" xml:space="preserve"><value>Client</value></data>
+  <data name="Field_CustomerReference" xml:space="preserve"><value>Référence client</value></data>
+  <data name="Field_FamilyId" xml:space="preserve"><value>Famille</value></data>
+  <data name="Field_Status" xml:space="preserve"><value>Statut</value></data>
+  <data name="Field_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Field_Tags" xml:space="preserve"><value>Étiquettes</value></data>
+  <data name="Field_MainPhotoDocumentId" xml:space="preserve"><value>Photo principale</value></data>
+  <data name="Field_CurrentRevisionId" xml:space="preserve"><value>Indice affiché</value></data>
+  <data name="Field_RevisionsChangedAt" xml:space="preserve"><value>Indices modifiés le</value></data>
+  <data name="Field_IsArchived" xml:space="preserve"><value>Archivé</value></data>
+  <data name="Field_Index" xml:space="preserve"><value>Indice</value></data>
+  <data name="Field_Sequence" xml:space="preserve"><value>Ordre</value></data>
+  <data name="Field_EffectiveDate" xml:space="preserve"><value>Date de mise en vigueur</value></data>
+  <data name="Field_ChangeDescription" xml:space="preserve"><value>Description du changement</value></data>
+  <data name="Field_ChangeOrigin" xml:space="preserve"><value>Origine du changement</value></data>
+  <data name="Field_MaterialId" xml:space="preserve"><value>Matière</value></data>
+  <data name="Field_MaterialDisplay" xml:space="preserve"><value>Matière</value></data>
+  <data name="Field_MaterialNote" xml:space="preserve"><value>Note matière</value></data>
+  <data name="Field_BlankShape" xml:space="preserve"><value>Forme du brut</value></data>
+  <data name="Field_BlankDimensions" xml:space="preserve"><value>Dimensions du brut / débit</value></data>
+  <data name="Field_LengthMm" xml:space="preserve"><value>Longueur (mm)</value></data>
+  <data name="Field_WidthMm" xml:space="preserve"><value>Largeur (mm)</value></data>
+  <data name="Field_HeightMm" xml:space="preserve"><value>Hauteur (mm)</value></data>
+  <data name="Field_DiameterMm" xml:space="preserve"><value>Diamètre (mm)</value></data>
+  <data name="Field_MassKg" xml:space="preserve"><value>Masse (kg)</value></data>
+  <data name="Field_GeneralTolerance" xml:space="preserve"><value>Tolérance générale</value></data>
+  <data name="Field_SurfaceRoughness" xml:space="preserve"><value>État de surface</value></data>
+  <data name="Field_HeatTreatment" xml:space="preserve"><value>Traitement thermique</value></data>
+  <data name="Field_SurfaceTreatment" xml:space="preserve"><value>Traitement de surface</value></data>
+  <data name="Field_Hardness" xml:space="preserve"><value>Dureté</value></data>
+  <data name="Field_Tooling" xml:space="preserve"><value>Outillages / montages</value></data>
+  <data name="Field_WorkshopNotes" xml:space="preserve"><value>Consignes atelier</value></data>
+  <data name="Field_InspectionNotes" xml:space="preserve"><value>Points de contrôle</value></data>
+  <data name="Field_Name" xml:space="preserve"><value>Nom</value></data>
+  <data name="Field_Value" xml:space="preserve"><value>Valeur</value></data>
+  <data name="Field_Unit" xml:space="preserve"><value>Unité</value></data>
+  <data name="Field_Order" xml:space="preserve"><value>Ordre</value></data>
+  <data name="Field_Number" xml:space="preserve"><value>N°</value></data>
+  <data name="Field_Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Field_MachineId" xml:space="preserve"><value>Machine</value></data>
+  <data name="Field_SetupTimeMin" xml:space="preserve"><value>Réglage (min)</value></data>
+  <data name="Field_CycleTimeMin" xml:space="preserve"><value>Temps unitaire (min)</value></data>
+  <data name="Field_NcProgramReference" xml:space="preserve"><value>Programme CN</value></data>
+  <data name="Field_Subcontractor" xml:space="preserve"><value>Sous-traitant</value></data>
+  <data name="Field_Kind" xml:space="preserve"><value>Nature</value></data>
+  <data name="Field_Title" xml:space="preserve"><value>Titre</value></data>
+  <data name="Field_FileName" xml:space="preserve"><value>Fichier</value></data>
+  <data name="Field_ContentType" xml:space="preserve"><value>Type de contenu</value></data>
+  <data name="Field_SizeBytes" xml:space="preserve"><value>Taille</value></data>
+  <data name="Field_Sha256" xml:space="preserve"><value>Empreinte</value></data>
+  <data name="Field_StorageKey" xml:space="preserve"><value>Emplacement du fichier</value></data>
+  <data name="Field_PaperLocation" xml:space="preserve"><value>Emplacement de l'original</value></data>
+  <data name="Field_Notes" xml:space="preserve"><value>Notes</value></data>
+  <data name="Field_Quantity" xml:space="preserve"><value>Quantité</value></data>
+  <data name="Field_Note" xml:space="preserve"><value>Note</value></data>
+  <data name="Field_SourcePartId" xml:space="preserve"><value>Pièce</value></data>
+  <data name="Field_TargetPartId" xml:space="preserve"><value>Pièce liée</value></data>
+  <data name="Entity_Part" xml:space="preserve"><value>Pièce</value></data>
+  <data name="Entity_PartRevision" xml:space="preserve"><value>Indice</value></data>
+  <data name="Entity_PartCharacteristic" xml:space="preserve"><value>Caractéristique</value></data>
+  <data name="Entity_RoutingOperation" xml:space="preserve"><value>Opération</value></data>
+  <data name="Entity_PartDocument" xml:space="preserve"><value>Document</value></data>
+  <data name="Entity_PartLink" xml:space="preserve"><value>Lien</value></data>
+  <data name="Action_Created" xml:space="preserve"><value>Création</value></data>
+  <data name="Action_Updated" xml:space="preserve"><value>Modification</value></data>
+  <data name="Action_Archived" xml:space="preserve"><value>Archivage</value></data>
+  <data name="Action_Restored" xml:space="preserve"><value>Restauration</value></data>
+  <data name="Action_Deleted" xml:space="preserve"><value>Suppression</value></data>
+  <data name="Action_PutInForce" xml:space="preserve"><value>Mise en vigueur</value></data>
+  <data name="Action_DocumentAdded" xml:space="preserve"><value>Ajout de document</value></data>
+  <data name="Action_DocumentRemoved" xml:space="preserve"><value>Retrait de document</value></data>
+  <data name="Action_Imported" xml:space="preserve"><value>Import</value></data>
+  <data name="Customer" xml:space="preserve"><value>Client</value></data>
+  <data name="Material" xml:space="preserve"><value>Matière</value></data>
+  <data name="Family" xml:space="preserve"><value>Famille</value></data>
+  <data name="Tags" xml:space="preserve"><value>Étiquettes</value></data>
+  <data name="Machine" xml:space="preserve"><value>Machine</value></data>
+  <data name="NewCustomerQuick" xml:space="preserve"><value>Nouveau client</value></data>
+  <data name="NewMaterialQuick" xml:space="preserve"><value>Nouvelle matière</value></data>
+  <data name="NewFamilyQuick" xml:space="preserve"><value>Nouvelle famille</value></data>
+  <data name="NewTagQuick" xml:space="preserve"><value>Nouvelle étiquette</value></data>
+  <data name="CustomerCode" xml:space="preserve"><value>Code client</value></data>
+  <data name="CustomerName" xml:space="preserve"><value>Nom du client</value></data>
+  <data name="MaterialDesignation" xml:space="preserve"><value>Désignation</value></data>
+  <data name="MaterialGrade" xml:space="preserve"><value>Nuance / norme</value></data>
+  <data name="MaterialFamily" xml:space="preserve"><value>Famille de matière</value></data>
+  <data name="SearchCustomer" xml:space="preserve"><value>Tapez le code ou le nom du client</value></data>
+  <data name="PartsTitle" xml:space="preserve"><value>Pièces</value></data>
+  <data name="PartsSubtitle" xml:space="preserve"><value>{0} pièce(s)</value></data>
+  <data name="SearchParts" xml:space="preserve"><value>Référence, désignation, réf. client, client, matière…</value></data>
+  <data name="Filters" xml:space="preserve"><value>Filtres</value></data>
+  <data name="FiltersCount" xml:space="preserve"><value>Filtres ({0})</value></data>
+  <data name="ClearFilters" xml:space="preserve"><value>Effacer les filtres</value></data>
+  <data name="FilterStatus" xml:space="preserve"><value>Statut</value></data>
+  <data name="FilterDrawing" xml:space="preserve"><value>Plan</value></data>
+  <data name="FilterDrawingAll" xml:space="preserve"><value>Tous</value></data>
+  <data name="FilterDrawingWith" xml:space="preserve"><value>Avec plan</value></data>
+  <data name="FilterDrawingWithout" xml:space="preserve"><value>Sans plan</value></data>
+  <data name="FilterArchived" xml:space="preserve"><value>Inclure les archivées</value></data>
+  <data name="FilterQuality" xml:space="preserve"><value>Contrôle qualité : {0}</value></data>
+  <data name="Quality_NoDrawing" xml:space="preserve"><value>sans plan</value></data>
+  <data name="Quality_NoMaterial" xml:space="preserve"><value>sans matière</value></data>
+  <data name="Quality_NoInForceRevision" xml:space="preserve"><value>sans indice en vigueur</value></data>
+  <data name="Quality_PaperDrawingOnly" xml:space="preserve"><value>plan uniquement papier</value></data>
+  <data name="Quality_PendingDraft" xml:space="preserve"><value>brouillons en attente</value></data>
+  <data name="Columns" xml:space="preserve"><value>Colonnes</value></data>
+  <data name="ColThumbnail" xml:space="preserve"><value>Vignette</value></data>
+  <data name="ColReference" xml:space="preserve"><value>Référence</value></data>
+  <data name="ColDesignation" xml:space="preserve"><value>Désignation</value></data>
+  <data name="ColCustomer" xml:space="preserve"><value>Client</value></data>
+  <data name="ColCustomerReference" xml:space="preserve"><value>Réf. client</value></data>
+  <data name="ColIndex" xml:space="preserve"><value>Indice</value></data>
+  <data name="ColMaterial" xml:space="preserve"><value>Matière</value></data>
+  <data name="ColStatus" xml:space="preserve"><value>Statut</value></data>
+  <data name="ColUpdatedAt" xml:space="preserve"><value>Modifiée le</value></data>
+  <data name="ColFamily" xml:space="preserve"><value>Famille</value></data>
+  <data name="ColTags" xml:space="preserve"><value>Étiquettes</value></data>
+  <data name="ColStock" xml:space="preserve"><value>Stock</value></data>
+  <data name="NoParts" xml:space="preserve"><value>Aucune pièce</value></data>
+  <data name="NoPartsMatch" xml:space="preserve"><value>Aucune pièce ne correspond</value></data>
+  <data name="NoPartsHint" xml:space="preserve"><value>Essayez avec moins de mots, ou effacez les filtres.</value></data>
+  <data name="NoPartsYet" xml:space="preserve"><value>L'annuaire est vide. Créez la première pièce ou importez un fichier Excel.</value></data>
+  <data name="NewPart" xml:space="preserve"><value>Nouvelle pièce</value></data>
+  <data name="ArchivedChip" xml:space="preserve"><value>Archivée</value></data>
+  <data name="SortBy" xml:space="preserve"><value>Trier par {0}</value></data>
+  <data name="EditPart" xml:space="preserve"><value>Modifier la pièce</value></data>
+  <data name="DuplicatePart" xml:space="preserve"><value>Dupliquer une pièce</value></data>
+  <data name="SectionIdentification" xml:space="preserve"><value>Identification</value></data>
+  <data name="SectionFirstRevision" xml:space="preserve"><value>Premier indice</value></data>
+  <data name="SectionMaterial" xml:space="preserve"><value>Matière et brut</value></data>
+  <data name="InternalReference" xml:space="preserve"><value>Référence interne</value></data>
+  <data name="InternalReferenceHelp" xml:space="preserve"><value>Proposée automatiquement, modifiable.</value></data>
+  <data name="SuggestReference" xml:space="preserve"><value>Proposer une référence</value></data>
+  <data name="Designation" xml:space="preserve"><value>Désignation</value></data>
+  <data name="CustomerReference" xml:space="preserve"><value>Référence client / n° de plan</value></data>
+  <data name="Status" xml:space="preserve"><value>Statut</value></data>
+  <data name="Description" xml:space="preserve"><value>Description</value></data>
+  <data name="FirstIndex" xml:space="preserve"><value>Indice</value></data>
+  <data name="FirstIndexHelp" xml:space="preserve"><value>Reprend l'indice du plan client (A, B, 01, -…).</value></data>
+  <data name="PutInForce" xml:space="preserve"><value>Mettre directement en vigueur</value></data>
+  <data name="PutInForceHelp" xml:space="preserve"><value>Sinon, l'indice est créé en brouillon.</value></data>
+  <data name="ChangeDescription" xml:space="preserve"><value>Description du changement</value></data>
+  <data name="MaterialNote" xml:space="preserve"><value>Note matière</value></data>
+  <data name="MaterialNoteHelp" xml:space="preserve"><value>Ex. « matière fournie par le client »</value></data>
+  <data name="BlankShape" xml:space="preserve"><value>Forme du brut</value></data>
+  <data name="BlankDimensions" xml:space="preserve"><value>Dimensions du brut / débit</value></data>
+  <data name="BlankDimensionsHelp" xml:space="preserve"><value>Ex. Ø60 × 125</value></data>
+  <data name="DuplicateInfo" xml:space="preserve"><value>Les spécifications, caractéristiques libres et la gamme de {0} (indice {1}) seront reprises. Les documents ne sont pas copiés.</value></data>
+  <data name="PartCreated" xml:space="preserve"><value>Pièce créée.</value></data>
+  <data name="PartSaved" xml:space="preserve"><value>Pièce enregistrée.</value></data>
+  <data name="DisplayedRevision" xml:space="preserve"><value>Indice affiché</value></data>
+  <data name="RevisionOption" xml:space="preserve"><value>Indice {0} · {1}</value></data>
+  <data name="NewRevision" xml:space="preserve"><value>Nouvel indice</value></data>
+  <data name="Duplicate" xml:space="preserve"><value>Dupliquer</value></data>
+  <data name="Print" xml:space="preserve"><value>Imprimer</value></data>
+  <data name="QrCode" xml:space="preserve"><value>QR code</value></data>
+  <data name="ArchivePart" xml:space="preserve"><value>Archiver</value></data>
+  <data name="RestorePart" xml:space="preserve"><value>Restaurer</value></data>
+  <data name="ArchivePartTitle" xml:space="preserve"><value>Archiver la pièce</value></data>
+  <data name="ArchivePartText" xml:space="preserve"><value>La pièce sera masquée des listes et de la recherche (elle reste consultable en cochant « Inclure les archivées »). Continuer ?</value></data>
+  <data name="PartArchived" xml:space="preserve"><value>Pièce archivée.</value></data>
+  <data name="PartRestored" xml:space="preserve"><value>Pièce restaurée.</value></data>
+  <data name="ArchivedPartBanner" xml:space="preserve"><value>Cette pièce est archivée.</value></data>
+  <data name="AlertSupersededTitle" xml:space="preserve"><value>Attention : indice {0} remplacé — l'indice en vigueur est {1}</value></data>
+  <data name="AlertDraftTitle" xml:space="preserve"><value>Indice {0} en brouillon — l'indice en vigueur est {1}</value></data>
+  <data name="AlertCancelledTitle" xml:space="preserve"><value>Indice {0} annulé — l'indice en vigueur est {1}</value></data>
+  <data name="AlertNoInForce" xml:space="preserve"><value>Aucun indice n'est en vigueur pour cette pièce : vérifiez avec le bureau avant usinage.</value></data>
+  <data name="GoToInForce" xml:space="preserve"><value>Voir l'indice {0}</value></data>
+  <data name="TabOverview" xml:space="preserve"><value>Vue d'ensemble</value></data>
+  <data name="TabSpecifications" xml:space="preserve"><value>Spécifications</value></data>
+  <data name="TabDocuments" xml:space="preserve"><value>Plans &amp; documents</value></data>
+  <data name="TabRouting" xml:space="preserve"><value>Gamme</value></data>
+  <data name="TabRevisions" xml:space="preserve"><value>Indices</value></data>
+  <data name="TabLinks" xml:space="preserve"><value>Liens</value></data>
+  <data name="TabStock" xml:space="preserve"><value>Stock</value></data>
+  <data name="TabDeliveries" xml:space="preserve"><value>Livraisons</value></data>
+  <data name="TabOrders" xml:space="preserve"><value>Commandes</value></data>
+  <data name="TabHistory" xml:space="preserve"><value>Historique</value></data>
+  <data name="SectionMainInfo" xml:space="preserve"><value>Informations principales</value></data>
+  <data name="SectionWorkshop" xml:space="preserve"><value>Consignes atelier</value></data>
+  <data name="SectionMainDrawing" xml:space="preserve"><value>Plan principal</value></data>
+  <data name="SectionDimensions" xml:space="preserve"><value>Dimensions et masse</value></data>
+  <data name="SectionTolerances" xml:space="preserve"><value>Tolérances et état de surface</value></data>
+  <data name="SectionTreatments" xml:space="preserve"><value>Traitements</value></data>
+  <data name="SectionToolingInspection" xml:space="preserve"><value>Outillages et contrôle</value></data>
+  <data name="SectionCharacteristics" xml:space="preserve"><value>Caractéristiques libres</value></data>
+  <data name="NoCharacteristics" xml:space="preserve"><value>Aucune caractéristique libre.</value></data>
+  <data name="NoWorkshopNotes" xml:space="preserve"><value>Aucune consigne particulière.</value></data>
+  <data name="EditRevision" xml:space="preserve"><value>Modifier l'indice</value></data>
+  <data name="EditSpecifications" xml:space="preserve"><value>Modifier les spécifications</value></data>
+  <data name="CreatedBy" xml:space="preserve"><value>Créée le {0} par {1}</value></data>
+  <data name="UpdatedBy" xml:space="preserve"><value>Modifiée le {0} par {1}</value></data>
+  <data name="Unknown" xml:space="preserve"><value>inconnu</value></data>
+  <data name="HistoryEmpty" xml:space="preserve"><value>Aucune modification enregistrée.</value></data>
+  <data name="HistoryBy" xml:space="preserve"><value>par {0}</value></data>
+  <data name="HistorySystem" xml:space="preserve"><value>système</value></data>
+  <data name="ViewCustomer" xml:space="preserve"><value>Voir la fiche client</value></data>
+  <data name="RoutingEmpty" xml:space="preserve"><value>Aucune opération de gamme.</value></data>
+  <data name="EditRouting" xml:space="preserve"><value>Modifier la gamme</value></data>
+  <data name="TotalTimes" xml:space="preserve"><value>Temps totaux : réglage {0} min · unitaire {1} min</value></data>
+  <data name="OperationSubcontractor" xml:space="preserve"><value>Sous-traitant : {0}</value></data>
+  <data name="OperationProgram" xml:space="preserve"><value>Programme CN : {0}</value></data>
+  <data name="OperationTooling" xml:space="preserve"><value>Outillage : {0}</value></data>
+  <data name="SetupShort" xml:space="preserve"><value>Réglage</value></data>
+  <data name="CycleShort" xml:space="preserve"><value>Unitaire</value></data>
+  <data name="Minutes" xml:space="preserve"><value>{0} min</value></data>
+  <data name="RevisionsTimeline" xml:space="preserve"><value>Chronologie des indices</value></data>
+  <data name="EffectiveOn" xml:space="preserve"><value>En vigueur le {0}</value></data>
+  <data name="CreatedOn" xml:space="preserve"><value>Créé le {0} par {1}</value></data>
+  <data name="View" xml:space="preserve"><value>Voir</value></data>
+  <data name="PutInForceAction" xml:space="preserve"><value>Mettre en vigueur</value></data>
+  <data name="CancelRevision" xml:space="preserve"><value>Annuler l'indice</value></data>
+  <data name="PutInForceTitle" xml:space="preserve"><value>Mettre l'indice {0} en vigueur</value></data>
+  <data name="PutInForceText" xml:space="preserve"><value>L'indice {0} deviendra l'indice à utiliser pour fabriquer. L'indice en vigueur actuel ({1}) passera à « remplacé ». Continuer ?</value></data>
+  <data name="PutInForceTextFirst" xml:space="preserve"><value>L'indice {0} deviendra l'indice à utiliser pour fabriquer. Continuer ?</value></data>
+  <data name="PutInForceDone" xml:space="preserve"><value>Indice {0} mis en vigueur.</value></data>
+  <data name="CancelRevisionTitle" xml:space="preserve"><value>Annuler l'indice {0}</value></data>
+  <data name="CancelRevisionText" xml:space="preserve"><value>L'indice {0} sera marqué « annulé » (il reste consultable). Continuer ?</value></data>
+  <data name="RevisionCancelled" xml:space="preserve"><value>Indice annulé.</value></data>
+  <data name="Compare" xml:space="preserve"><value>Comparer</value></data>
+  <data name="CompareTitle" xml:space="preserve"><value>Comparer deux indices</value></data>
+  <data name="CompareLeft" xml:space="preserve"><value>Indice de référence</value></data>
+  <data name="CompareRight" xml:space="preserve"><value>Indice comparé</value></data>
+  <data name="CompareNoChange" xml:space="preserve"><value>Aucune différence entre ces deux indices.</value></data>
+  <data name="CompareChanges" xml:space="preserve"><value>{0} différence(s)</value></data>
+  <data name="CompareFields" xml:space="preserve"><value>Spécifications</value></data>
+  <data name="CompareCharacteristics" xml:space="preserve"><value>Caractéristiques libres</value></data>
+  <data name="CompareOperations" xml:space="preserve"><value>Gamme</value></data>
+  <data name="CompareDocuments" xml:space="preserve"><value>Documents</value></data>
+  <data name="DiffAdded" xml:space="preserve"><value>Ajouté</value></data>
+  <data name="DiffRemoved" xml:space="preserve"><value>Retiré</value></data>
+  <data name="DiffChanged" xml:space="preserve"><value>Modifié</value></data>
+  <data name="NewRevisionTitle" xml:space="preserve"><value>Nouvel indice</value></data>
+  <data name="NewRevisionSource" xml:space="preserve"><value>Partir de l'indice</value></data>
+  <data name="NewRevisionEmpty" xml:space="preserve"><value>Indice vide (sans reprise)</value></data>
+  <data name="NewRevisionIndex" xml:space="preserve"><value>Nouvel indice</value></data>
+  <data name="NewRevisionOrigin" xml:space="preserve"><value>Origine du changement</value></data>
+  <data name="NewRevisionDocuments" xml:space="preserve"><value>Documents à reprendre</value></data>
+  <data name="NewRevisionDocumentsHelp" xml:space="preserve"><value>Cochez les documents toujours valables pour le nouvel indice (un nouveau plan client remplace généralement l'ancien).</value></data>
+  <data name="NewRevisionNoDocuments" xml:space="preserve"><value>L'indice de départ n'a aucun document.</value></data>
+  <data name="NewRevisionCreated" xml:space="preserve"><value>Indice {0} créé en brouillon. Joignez le nouveau plan puis mettez-le en vigueur.</value></data>
+  <data name="Create" xml:space="preserve"><value>Créer</value></data>
+  <data name="CompareShowAll" xml:space="preserve"><value>Afficher aussi les champs identiques</value></data>
+  <data name="EditRevisionTitle" xml:space="preserve"><value>Indice {0} — spécifications et gamme</value></data>
+  <data name="EditRevisionInForceWarning" xml:space="preserve"><value>Cet indice est {0} : la modification reste possible mais elle sera tracée dans l'historique.</value></data>
+  <data name="SectionRevision" xml:space="preserve"><value>Indice</value></data>
+  <data name="SectionCharacteristicsEdit" xml:space="preserve"><value>Caractéristiques libres</value></data>
+  <data name="SectionRoutingEdit" xml:space="preserve"><value>Gamme de fabrication</value></data>
+  <data name="AddCharacteristic" xml:space="preserve"><value>Ajouter une caractéristique</value></data>
+  <data name="AddOperation" xml:space="preserve"><value>Ajouter une opération</value></data>
+  <data name="RemoveLine" xml:space="preserve"><value>Retirer</value></data>
+  <data name="MoveUp" xml:space="preserve"><value>Monter</value></data>
+  <data name="MoveDown" xml:space="preserve"><value>Descendre</value></data>
+  <data name="Renumber" xml:space="preserve"><value>Renuméroter 10, 20, 30…</value></data>
+  <data name="RevisionSaved" xml:space="preserve"><value>Indice enregistré.</value></data>
+  <data name="CharacteristicName" xml:space="preserve"><value>Caractéristique</value></data>
+  <data name="CharacteristicValue" xml:space="preserve"><value>Valeur</value></data>
+  <data name="CharacteristicUnit" xml:space="preserve"><value>Unité</value></data>
+  <data name="OperationNumber" xml:space="preserve"><value>N°</value></data>
+  <data name="OperationType" xml:space="preserve"><value>Opération</value></data>
+  <data name="OperationDescription" xml:space="preserve"><value>Description</value></data>
+  <data name="OperationSetup" xml:space="preserve"><value>Réglage (min)</value></data>
+  <data name="OperationCycle" xml:space="preserve"><value>Unitaire (min)</value></data>
+  <data name="OperationProgramField" xml:space="preserve"><value>Programme CN</value></data>
+  <data name="OperationToolingField" xml:space="preserve"><value>Outillage</value></data>
+  <data name="OperationSubcontractorField" xml:space="preserve"><value>Sous-traitant</value></data>
+  <data name="DragToReorder" xml:space="preserve"><value>Glisser pour réordonner</value></data>
+  <data name="CustomerPartsTitle" xml:space="preserve"><value>Pièces du client</value></data>
+  <data name="CustomerPartsOpenList" xml:space="preserve"><value>Ouvrir dans la liste des pièces (filtres, tri, export)</value></data>
+  <data name="NewPartForCustomer" xml:space="preserve"><value>Nouvelle pièce pour ce client</value></data>
+  <data name="NoCustomerParts" xml:space="preserve"><value>Aucune pièce pour ce client.</value></data>
+  <data name="SearchHitSubtitle" xml:space="preserve"><value>{0} · Ind. {1}</value></data>
 </root>

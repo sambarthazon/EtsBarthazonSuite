@@ -1,0 +1,143 @@
+@inject IRevisionService Revisions
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" lg="5">
+        <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-2">@CatalogTexts.RevisionsTimeline</MudText>
+        <div class="d-flex flex-column gap-2">
+            @foreach (var r in Part.Revisions)
+            {
+                <MudPaper Class="@($"pa-3 bz-card {(r.Id == DisplayedRevisionId ? "bz-selected-card" : null)}")" Elevation="0">
+                    <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+                        <div class="d-flex align-center gap-2">
+                            <MudText Typo="Typo.h6" HtmlTag="span">@r.Index</MudText>
+                            <StatusChip Text="@r.Status.Label()" Tone="@r.Status.Tone()" />
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 bz-no-print">
+                            @if (r.Id != DisplayedRevisionId)
+                            {
+                                <MudButton Href="@RevisionHref(r.Index)" Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Visibility">@CatalogTexts.View</MudButton>
+                            }
+                            @if (CanEdit && r.Status is RevisionStatus.Draft or RevisionStatus.Superseded)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.Verified" OnClick="() => PutInForceAsync(r)">@CatalogTexts.PutInForceAction</MudButton>
+                                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Block" Color="Color.Error" OnClick="() => CancelAsync(r)" aria-label="@CatalogTexts.CancelRevision" title="@CatalogTexts.CancelRevision" />
+                            }
+                        </div>
+                    </div>
+                    <MudText Typo="Typo.caption" Class="bz-muted d-block">
+                        @r.ChangeOrigin.Label()
+                        @if (r.EffectiveDate is { } date) { <span> · @string.Format(CultureInfo.CurrentCulture, CatalogTexts.EffectiveOn, date.ToString("d", CultureInfo.CurrentCulture))</span> }
+                        · @string.Format(CultureInfo.CurrentCulture, CatalogTexts.CreatedOn, r.CreatedAt.ToLocalTime().ToString("d", CultureInfo.CurrentCulture), r.CreatedBy ?? CatalogTexts.Unknown)
+                    </MudText>
+                    @if (!string.IsNullOrWhiteSpace(r.ChangeDescription))
+                    {
+                        <MudText Typo="Typo.body2" Class="mt-1" Style="white-space:pre-line">@r.ChangeDescription</MudText>
+                    }
+                </MudPaper>
+            }
+        </div>
+    </MudItem>
+    <MudItem xs="12" lg="7">
+        <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-2">@CatalogTexts.CompareTitle</MudText>
+        @if (Part.Revisions.Count < 2)
+        {
+            <MudText Class="bz-muted">—</MudText>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap gap-2 align-center mb-3">
+                <MudSelect T="Guid" @bind-Value="_left" Label="@CatalogTexts.CompareLeft" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:160px" ToStringFunc="Label">
+                    @foreach (var r in Part.Revisions) { <MudSelectItem T="Guid" Value="r.Id">@Label(r.Id)</MudSelectItem> }
+                </MudSelect>
+                <MudIcon Icon="@Icons.Material.Filled.CompareArrows" />
+                <MudSelect T="Guid" @bind-Value="_right" Label="@CatalogTexts.CompareRight" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:160px" ToStringFunc="Label">
+                    @foreach (var r in Part.Revisions) { <MudSelectItem T="Guid" Value="r.Id">@Label(r.Id)</MudSelectItem> }
+                </MudSelect>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CompareAsync" StartIcon="@Icons.Material.Filled.Difference">@CatalogTexts.Compare</MudButton>
+            </div>
+            @if (_comparison is not null)
+            {
+                <RevisionCompareView Comparison="_comparison" />
+            }
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private Guid _left;
+    private Guid _right;
+    private RevisionComparison? _comparison;
+
+    [Parameter, EditorRequired] public PartDetails Part { get; set; } = default!;
+
+    [Parameter] public Guid DisplayedRevisionId { get; set; }
+
+    /// <summary>Appelé après une modification du cycle de vie (rechargement de la fiche).</summary>
+    [Parameter] public EventCallback<string?> OnChanged { get; set; }
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Part.Revisions.Count >= 2 && (_left == Guid.Empty || Part.Revisions.All(r => r.Id != _left)))
+        {
+            // Par défaut : l'indice précédent comparé à l'indice affiché.
+            var ordered = Part.Revisions.OrderBy(r => r.Sequence).ToList();
+            var displayed = ordered.FindIndex(r => r.Id == DisplayedRevisionId);
+            _right = displayed >= 0 ? ordered[displayed].Id : ordered[^1].Id;
+            _left = displayed > 0 ? ordered[displayed - 1].Id : ordered[0].Id == _right ? ordered[1].Id : ordered[0].Id;
+            await CompareAsync();
+        }
+    }
+
+    private string Label(Guid id)
+    {
+        var r = Part.Revisions.FirstOrDefault(x => x.Id == id);
+        return r is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, CatalogTexts.RevisionOption, r.Index, r.Status.Label());
+    }
+
+    private string RevisionHref(string index) => $"pieces/{Uri.EscapeDataString(Part.InternalReference)}?indice={Uri.EscapeDataString(index)}";
+
+    private async Task CompareAsync()
+    {
+        var result = await Revisions.CompareAsync(Part.Id, _left, _right);
+        _comparison = result.IsSuccess ? result.Value : null;
+    }
+
+    private async Task PutInForceAsync(RevisionSummary revision)
+    {
+        var current = Part.InForceRevision;
+        var text = current is null
+            ? string.Format(CultureInfo.CurrentCulture, CatalogTexts.PutInForceTextFirst, revision.Index)
+            : string.Format(CultureInfo.CurrentCulture, CatalogTexts.PutInForceText, revision.Index, current.Index);
+        if (!await Dialogs.ConfirmAsync(string.Format(CultureInfo.CurrentCulture, CatalogTexts.PutInForceTitle, revision.Index), text, CatalogTexts.PutInForceAction))
+        {
+            return;
+        }
+
+        if (Notifier.Handle(await Revisions.PutInForceAsync(Part.Id, revision.Id), string.Format(CultureInfo.CurrentCulture, CatalogTexts.PutInForceDone, revision.Index)))
+        {
+            await OnChanged.InvokeAsync(revision.Index);
+        }
+    }
+
+    private async Task CancelAsync(RevisionSummary revision)
+    {
+        if (!await Dialogs.ConfirmAsync(
+                string.Format(CultureInfo.CurrentCulture, CatalogTexts.CancelRevisionTitle, revision.Index),
+                string.Format(CultureInfo.CurrentCulture, CatalogTexts.CancelRevisionText, revision.Index),
+                CatalogTexts.CancelRevision,
+                danger: true))
+        {
+            return;
+        }
+
+        if (Notifier.Handle(await Revisions.CancelAsync(Part.Id, revision.Id), CatalogTexts.RevisionCancelled))
+        {
+            await OnChanged.InvokeAsync(null);
+        }
+    }
+}

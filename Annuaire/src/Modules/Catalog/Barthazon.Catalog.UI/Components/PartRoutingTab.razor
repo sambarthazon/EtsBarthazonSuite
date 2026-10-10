@@ -1,0 +1,53 @@
+@if (Revision.Operations.Count == 0)
+{
+    <EmptyState Title="@CatalogTexts.RoutingEmpty" Icon="@Icons.Material.Outlined.Route">
+        @if (EditHref is not null)
+        {
+            <MudButton Href="@EditHref" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit">@CatalogTexts.EditRouting</MudButton>
+        }
+    </EmptyState>
+}
+else
+{
+    <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-3">
+        <MudText Typo="Typo.subtitle1">
+            <b>@string.Format(CultureInfo.CurrentCulture, CatalogTexts.TotalTimes, CatalogLabels.Number(Revision.TotalSetupTimeMin), CatalogLabels.Number(Revision.TotalCycleTimeMin))</b>
+        </MudText>
+        @if (EditHref is not null)
+        {
+            <MudButton Href="@EditHref" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit" Class="bz-no-print">@CatalogTexts.EditRouting</MudButton>
+        }
+    </div>
+    <div class="d-flex flex-column gap-2">
+        @foreach (var op in Revision.Operations)
+        {
+            <MudPaper Class="pa-3 bz-card" Elevation="0">
+                <div class="d-flex flex-wrap gap-3 align-start">
+                    <MudAvatar Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Large"><b>@op.Number</b></MudAvatar>
+                    <div class="flex-grow-1" style="min-width:200px">
+                        <MudText Typo="Typo.subtitle1"><b>@op.Type.Label()</b>@(op.MachineName is null ? null : $" · {op.MachineName}")</MudText>
+                        @if (op.Description is not null)
+                        {
+                            <MudText Typo="Typo.body2" Style="white-space:pre-line">@op.Description</MudText>
+                        }
+                        <div class="d-flex flex-wrap gap-3 mt-1 bz-muted" style="font-size:.9rem">
+                            @if (op.NcProgramReference is not null) { <span>@string.Format(CultureInfo.CurrentCulture, CatalogTexts.OperationProgram, op.NcProgramReference)</span> }
+                            @if (op.Tooling is not null) { <span>@string.Format(CultureInfo.CurrentCulture, CatalogTexts.OperationTooling, op.Tooling)</span> }
+                            @if (op.Subcontractor is not null) { <span>@string.Format(CultureInfo.CurrentCulture, CatalogTexts.OperationSubcontractor, op.Subcontractor)</span> }
+                        </div>
+                    </div>
+                    <div class="text-right" style="min-width:110px">
+                        @if (op.SetupTimeMin is not null) { <div><span class="bz-muted">@CatalogTexts.SetupShort</span> <b>@string.Format(CultureInfo.CurrentCulture, CatalogTexts.Minutes, CatalogLabels.Number(op.SetupTimeMin))</b></div> }
+                        @if (op.CycleTimeMin is not null) { <div><span class="bz-muted">@CatalogTexts.CycleShort</span> <b>@string.Format(CultureInfo.CurrentCulture, CatalogTexts.Minutes, CatalogLabels.Number(op.CycleTimeMin))</b></div> }
+                    </div>
+                </div>
+            </MudPaper>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public RevisionDetails Revision { get; set; } = default!;
+
+    [Parameter] public string? EditHref { get; set; }
+}

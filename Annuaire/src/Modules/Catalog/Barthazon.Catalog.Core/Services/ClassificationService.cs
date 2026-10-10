@@ -28,7 +28,7 @@ public interface IClassificationService
     Task<Result> DeleteTagAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
-internal sealed class ClassificationService(IUnitOfWorkFactory<ICatalogUnitOfWork> unitOfWorkFactory, IAccessGuard accessGuard) : IClassificationService
+internal sealed class ClassificationService(IUnitOfWorkFactory<ICatalogUnitOfWork> unitOfWorkFactory, IAccessGuard accessGuard, CatalogReferentialObserver reindexer) : IClassificationService
 {
     public async Task<Result<IReadOnlyList<FamilyItem>>> ListFamiliesAsync(bool includeArchived, CancellationToken cancellationToken = default)
     {
@@ -91,6 +91,11 @@ internal sealed class ClassificationService(IUnitOfWorkFactory<ICatalogUnitOfWor
 
         family.Description = Inputs.Clean(input.Description);
         var saved = await uow.SaveChangesAsync(cancellationToken);
+        if (saved.IsSuccess && id is not null)
+        {
+            await reindexer.ReindexAsync(familyId: family.Id, cancellationToken: cancellationToken);
+        }
+
         return saved.IsSuccess
             ? new FamilyItem(family.Id, family.Name, family.Description, family.IsArchived, family.Version, 0)
             : Result<FamilyItem>.Failure(saved.Errors);
@@ -208,6 +213,11 @@ internal sealed class ClassificationService(IUnitOfWorkFactory<ICatalogUnitOfWor
         }
 
         var saved = await uow.SaveChangesAsync(cancellationToken);
+        if (saved.IsSuccess && id is not null)
+        {
+            await reindexer.ReindexAsync(tagId: tag.Id, cancellationToken: cancellationToken);
+        }
+
         return saved.IsSuccess ? new TagItem(tag.Id, tag.Label, tag.Color, tag.IsArchived, tag.Version, 0) : Result<TagItem>.Failure(saved.Errors);
     }
 

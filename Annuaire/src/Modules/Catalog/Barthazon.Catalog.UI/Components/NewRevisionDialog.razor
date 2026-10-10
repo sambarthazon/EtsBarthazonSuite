@@ -1,0 +1,115 @@
+@inject IRevisionService Revisions
+@inject IPartService Parts
+@inject Notifier Notifier
+
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudSelect T="Guid?" Value="_input.SourceRevisionId" ValueChanged="OnSourceChangedAsync" Label="@CatalogTexts.NewRevisionSource" Variant="Variant.Outlined"
+                   ToStringFunc="SourceLabel">
+            @foreach (var r in Part.Revisions)
+            {
+                <MudSelectItem T="Guid?" Value="r.Id">@SourceLabel(r.Id)</MudSelectItem>
+            }
+            <MudSelectItem T="Guid?" Value="null">@CatalogTexts.NewRevisionEmpty</MudSelectItem>
+        </MudSelect>
+        <MudGrid Spacing="2" Class="mt-1">
+            <MudItem xs="12" sm="5">
+                <MudTextField @bind-Value="_input.Index" Label="@CatalogTexts.NewRevisionIndex" Required="true" RequiredError="@SharedTexts.RequiredField" MaxLength="10"
+                              Variant="Variant.Outlined" AutoFocus="true" Error="_form.HasError(IndexField)" ErrorText="@_form.ErrorFor(IndexField)" />
+            </MudItem>
+            <MudItem xs="12" sm="7">
+                <MudSelect @bind-Value="_input.ChangeOrigin" Label="@CatalogTexts.NewRevisionOrigin" Variant="Variant.Outlined" ToStringFunc="o => o.Label()">
+                    @foreach (var origin in Enum.GetValues<ChangeOrigin>().Where(o => o != ChangeOrigin.Creation))
+                    {
+                        <MudSelectItem Value="origin">@origin.Label()</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+        <MudTextField @bind-Value="_input.ChangeDescription" Label="@CatalogTexts.ChangeDescription" Lines="3" Variant="Variant.Outlined" Class="mt-3" />
+
+        @if (_input.SourceRevisionId is not null)
+        {
+            <MudText Typo="Typo.subtitle2" Class="mt-4">@CatalogTexts.NewRevisionDocuments</MudText>
+            <MudText Typo="Typo.caption" Class="bz-muted d-block mb-1">@CatalogTexts.NewRevisionDocumentsHelp</MudText>
+            @if (_sourceDocuments.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="bz-muted">@CatalogTexts.NewRevisionNoDocuments</MudText>
+            }
+            @foreach (var document in _sourceDocuments)
+            {
+                <MudCheckBox T="bool" Value="_input.DocumentIdsToCopy.Contains(document.Id)" ValueChanged="v => ToggleDocument(document.Id, v)" Color="Color.Primary">
+                    <b>@document.Type.Label()</b> · @document.Title @(document.Kind == DocumentKind.Paper ? $"({DocumentKind.Paper.Label()})" : null)
+                </MudCheckBox>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="_saving">@CatalogTexts.Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private const string IndexField = "Index";
+    private readonly FormState _form = new();
+    private readonly NewRevisionInput _input = new();
+    private IReadOnlyList<DocumentDto> _sourceDocuments = [];
+    private bool _saving;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public PartDetails Part { get; set; } = default!;
+
+    [Parameter] public Guid? SourceRevisionId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _input.Index = IndexSuggester.Next(Part.Revisions.OrderBy(r => r.Sequence).Select(r => r.Index));
+        await OnSourceChangedAsync(SourceRevisionId ?? Part.CurrentRevisionId);
+    }
+
+    private string SourceLabel(Guid? id)
+    {
+        var revision = Part.Revisions.FirstOrDefault(r => r.Id == id);
+        return revision is null ? CatalogTexts.NewRevisionEmpty : string.Format(CultureInfo.CurrentCulture, CatalogTexts.RevisionOption, revision.Index, revision.Status.Label());
+    }
+
+    private async Task OnSourceChangedAsync(Guid? sourceId)
+    {
+        _input.SourceRevisionId = sourceId;
+        _input.DocumentIdsToCopy.Clear();
+        _sourceDocuments = [];
+        if (sourceId is { } id && await Parts.GetRevisionAsync(Part.Id, id) is { IsSuccess: true } source)
+        {
+            _sourceDocuments = source.Value.Documents;
+            _input.DocumentIdsToCopy.AddRange(_sourceDocuments.Where(d => d.Type != DocumentType.Drawing).Select(d => d.Id));
+        }
+    }
+
+    private void ToggleDocument(Guid id, bool selected)
+    {
+        if (selected)
+        {
+            _input.DocumentIdsToCopy.Add(id);
+        }
+        else
+        {
+            _input.DocumentIdsToCopy.Remove(id);
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        _saving = true;
+        var result = await Revisions.CreateAsync(Part.Id, _input);
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            Notifier.Success(string.Format(CultureInfo.CurrentCulture, CatalogTexts.NewRevisionCreated, result.Value.Index));
+            Dialog!.Close(DialogResult.Ok(result.Value.Index));
+        }
+    }
+}

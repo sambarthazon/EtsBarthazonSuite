@@ -1,0 +1,216 @@
+@page "/pieces/{Reference}"
+@inject IPartService Parts
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+@inject IDialogService Dialogs
+@inject BrowserInterop Browser
+
+@if (_part is null || _revision is null)
+{
+    @if (_notFound)
+    {
+        <EmptyState Title="@CatalogTexts.NoPartsMatch" Icon="@Icons.Material.Outlined.SearchOff">
+            <MudButton Href="pieces" Variant="Variant.Filled" Color="Color.Primary">@CatalogTexts.PartsTitle</MudButton>
+        </EmptyState>
+    }
+    else
+    {
+        <MudSkeleton Height="120px" SkeletonType="SkeletonType.Rectangle" Class="mb-3" />
+        <MudSkeleton Height="320px" SkeletonType="SkeletonType.Rectangle" />
+    }
+}
+else
+{
+    <PageTitle>@_part.InternalReference — @_part.Designation</PageTitle>
+
+    <header class="bz-part-header bz-card pa-3 mb-3">
+        <div class="d-flex flex-wrap gap-3 align-center">
+            <PartThumbnail DocumentId="_part.MainPhotoDocumentId" Size="72" />
+            <div class="flex-grow-1" style="min-width:200px">
+                <div class="d-flex flex-wrap align-center gap-2">
+                    <MudText Typo="Typo.h4" HtmlTag="h1" Class="bz-part-reference">@_part.InternalReference</MudText>
+                    <PartStatusChip Status="_part.Status" />
+                    @if (_part.IsArchived)
+                    {
+                        <StatusChip Text="@CatalogTexts.ArchivedChip" Tone="StatusTone.Disabled" />
+                    }
+                    <PartHeaderExtras Part="_part" />
+                </div>
+                <MudText Typo="Typo.h6" HtmlTag="p" Style="font-weight:500">@_part.Designation</MudText>
+                <MudText Typo="Typo.body2" Class="bz-muted">
+                    <a href="@($"clients/{Uri.EscapeDataString(_part.CustomerCode)}")">@_part.CustomerCode — @_part.CustomerName</a>
+                    @if (_part.CustomerReference is not null) { <span> · @CatalogTexts.CustomerReference : <b>@_part.CustomerReference</b></span> }
+                </MudText>
+            </div>
+            <div class="d-flex flex-column gap-2 align-end">
+                <MudSelect T="Guid" Value="_revision.Id" ValueChanged="SelectRevision" Label="@CatalogTexts.DisplayedRevision" Variant="Variant.Outlined" Margin="Margin.Dense"
+                           ToStringFunc="RevisionLabel" Style="min-width:220px" Class="bz-revision-select">
+                    @foreach (var r in _part.Revisions)
+                    {
+                        <MudSelectItem T="Guid" Value="r.Id">@RevisionLabel(r.Id)</MudSelectItem>
+                    }
+                </MudSelect>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3 bz-no-print">
+            @if (CanEdit)
+            {
+                <MudButton Href="@($"{PartHref}/modifier")" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">@SharedTexts.Edit</MudButton>
+                <MudButton Href="@EditRevisionHref" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Tune">@CatalogTexts.EditRevision</MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.NoteAdd" OnClick="NewRevisionAsync">@CatalogTexts.NewRevision</MudButton>
+                <MudButton Href="@($"pieces/nouvelle?dupliquer={Uri.EscapeDataString(_part.InternalReference)}")" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ContentCopy">@CatalogTexts.Duplicate</MudButton>
+            }
+            <PartPrintActions Part="_part" Revision="_revision" />
+            @if (CanEdit)
+            {
+                <MudButton Variant="Variant.Text" StartIcon="@(_part.IsArchived ? Icons.Material.Filled.Unarchive : Icons.Material.Filled.Archive)" OnClick="ToggleArchiveAsync">
+                    @(_part.IsArchived ? CatalogTexts.RestorePart : CatalogTexts.ArchivePart)
+                </MudButton>
+            }
+        </div>
+    </header>
+
+    @if (_part.IsArchived)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3">@CatalogTexts.ArchivedPartBanner</MudAlert>
+    }
+
+    <RevisionAlert Displayed="_part.Revisions.FirstOrDefault(r => r.Id == _revision.Id)" InForce="_part.InForceRevision"
+                   InForceHref="@($"{PartHref}?indice={Uri.EscapeDataString(_part.InForceRevision?.Index ?? string.Empty)}")" />
+
+    <MudHidden Breakpoint="Breakpoint.SmAndDown">
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-4" @bind-ActivePanelIndex="_activeTab" Border="true">
+            @foreach (var tab in Tabs)
+            {
+                <MudTabPanel Text="@tab.Title" Icon="@tab.Icon" ID="@tab.Key">@tab.Content</MudTabPanel>
+            }
+        </MudTabs>
+    </MudHidden>
+    <MudHidden Breakpoint="Breakpoint.MdAndUp">
+        <MudExpansionPanels MultiExpansion="true" Elevation="0" Outlined="true">
+            @foreach (var tab in Tabs)
+            {
+                <MudExpansionPanel Text="@tab.Title" Expanded="@(tab.Key == "overview")">@tab.Content</MudExpansionPanel>
+            }
+        </MudExpansionPanels>
+    </MudHidden>
+
+    <MudText Typo="Typo.caption" Class="bz-muted d-block mt-4">
+        @string.Format(CultureInfo.CurrentCulture, CatalogTexts.CreatedBy, _part.CreatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), _part.CreatedBy ?? CatalogTexts.Unknown)
+        · @string.Format(CultureInfo.CurrentCulture, CatalogTexts.UpdatedBy, _part.UpdatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), _part.UpdatedBy ?? CatalogTexts.Unknown)
+    </MudText>
+}
+
+@code {
+    private PartDetails? _part;
+    private RevisionDetails? _revision;
+    private bool _notFound;
+    private int _activeTab;
+
+    [Parameter] public string Reference { get; set; } = string.Empty;
+
+    [SupplyParameterFromQuery(Name = "indice")] public string? Index { get; set; }
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    private string PartHref => $"pieces/{Uri.EscapeDataString(_part!.InternalReference)}";
+
+    private string EditRevisionHref => $"{PartHref}/indices/{Uri.EscapeDataString(_revision!.Index)}/modifier";
+
+    private IEnumerable<PartTab> Tabs =>
+    [
+        new("overview", CatalogTexts.TabOverview, Icons.Material.Filled.Dashboard, @<PartOverviewTab Part="_part!" Revision="_revision!" />),
+        new("specs", CatalogTexts.TabSpecifications, Icons.Material.Filled.Straighten, @<PartSpecificationsTab Revision="_revision!" />),
+        new("documents", $"{CatalogTexts.TabDocuments} ({_revision!.Documents.Count})", Icons.Material.Filled.Description, @<PartDocumentsTab Part="_part" Revision="_revision" OnChanged="ReloadAsync" />),
+        new("routing", $"{CatalogTexts.TabRouting} ({_revision!.Operations.Count})", Icons.Material.Filled.Route, @<PartRoutingTab Revision="_revision!" EditHref="@(CanEdit ? EditRevisionHref + "#gamme" : null)" />),
+        new("revisions", $"{CatalogTexts.TabRevisions} ({_part!.Revisions.Count})", Icons.Material.Filled.History, @<PartRevisionsTab Part="_part!" DisplayedRevisionId="_revision!.Id" OnChanged="OnRevisionsChangedAsync" />),
+        new("links", CatalogTexts.TabLinks, Icons.Material.Filled.Link, @<PartLinksTab Part="_part" Revision="_revision" />),
+        new("stock", CatalogTexts.TabStock, Icons.Material.Filled.Inventory, @<PartStockTab PartId="_part!.Id" />),
+        new("deliveries", CatalogTexts.TabDeliveries, Icons.Material.Filled.LocalShipping, @<PartDeliveriesTab PartId="_part!.Id" />),
+        new("orders", CatalogTexts.TabOrders, Icons.Material.Filled.ShoppingCart, @<PartOrdersTab PartId="_part!.Id" />),
+        new("history", CatalogTexts.TabHistory, Icons.Material.Filled.ManageHistory, @<PartHistoryTab PartId="_part!.Id" />),
+    ];
+
+    protected override Task OnParametersSetAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        var result = await Parts.GetByReferenceAsync(Reference);
+        if (result.IsFailure)
+        {
+            _notFound = result.HasError(ErrorKind.NotFound);
+            Notifier.Handle(result);
+            return;
+        }
+
+        _part = result.Value;
+        if (!string.Equals(_part.InternalReference, Reference, StringComparison.Ordinal))
+        {
+            // Référence saisie approximativement (minuscules, sans tiret…) : adresse canonique.
+            Navigation.NavigateTo($"pieces/{Uri.EscapeDataString(_part.InternalReference)}{(Index is null ? null : $"?indice={Uri.EscapeDataString(Index)}")}", replace: true);
+            return;
+        }
+
+        var revisionId = _part.FindRevision(Index)?.Id ?? _part.CurrentRevisionId ?? _part.Revisions.First().Id;
+        var revision = await Parts.GetRevisionAsync(_part.Id, revisionId);
+        _revision = revision.IsSuccess ? revision.Value : null;
+        await RememberRecentAsync();
+    }
+
+    private async Task RememberRecentAsync()
+    {
+        // Pièces consultées récemment : mémorisées dans le navigateur (par appareil).
+        const string key = "bz-recent-parts";
+        var stored = await Browser.GetStorageAsync(key) ?? string.Empty;
+        var recent = stored.Split('|', StringSplitOptions.RemoveEmptyEntries).Where(r => r != _part!.InternalReference).Prepend(_part!.InternalReference).Take(12);
+        await Browser.SetStorageAsync(key, string.Join('|', recent));
+    }
+
+    private string RevisionLabel(Guid id)
+    {
+        var r = _part?.Revisions.FirstOrDefault(x => x.Id == id);
+        return r is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, CatalogTexts.RevisionOption, r.Index, r.Status.Label());
+    }
+
+    private void SelectRevision(Guid id)
+    {
+        var r = _part!.Revisions.First(x => x.Id == id);
+        Navigation.NavigateTo(id == _part.CurrentRevisionId ? PartHref : $"{PartHref}?indice={Uri.EscapeDataString(r.Index)}");
+    }
+
+    private async Task NewRevisionAsync()
+    {
+        var parameters = new DialogParameters<NewRevisionDialog> { { d => d.Part, _part! }, { d => d.SourceRevisionId, _revision!.Id } };
+        var dialog = await Dialogs.ShowAsync<NewRevisionDialog>(CatalogTexts.NewRevisionTitle, parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false, Data: string index })
+        {
+            Navigation.NavigateTo($"{PartHref}?indice={Uri.EscapeDataString(index)}");
+        }
+    }
+
+    private async Task OnRevisionsChangedAsync(string? index)
+    {
+        if (index is not null && !string.Equals(index, Index, StringComparison.OrdinalIgnoreCase))
+        {
+            Navigation.NavigateTo($"{PartHref}?indice={Uri.EscapeDataString(index)}");
+            return;
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task ToggleArchiveAsync()
+    {
+        var archive = !_part!.IsArchived;
+        if (archive && !await Dialogs.ConfirmAsync(CatalogTexts.ArchivePartTitle, CatalogTexts.ArchivePartText, CatalogTexts.ArchivePart))
+        {
+            return;
+        }
+
+        if (Notifier.Handle(await Parts.SetArchivedAsync(_part.Id, archive), archive ? CatalogTexts.PartArchived : CatalogTexts.PartRestored))
+        {
+            await ReloadAsync();
+        }
+    }
+}

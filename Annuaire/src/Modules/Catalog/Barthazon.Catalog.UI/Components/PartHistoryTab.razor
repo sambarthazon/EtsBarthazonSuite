@@ -1,0 +1,64 @@
+@inject IPartService Parts
+
+@if (_entries is null)
+{
+    <MudSkeleton Height="120px" SkeletonType="SkeletonType.Rectangle" />
+}
+else if (_entries.Count == 0)
+{
+    <EmptyState Title="@CatalogTexts.HistoryEmpty" Icon="@Icons.Material.Outlined.History" />
+}
+else
+{
+    <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Start" Class="pt-0">
+        @foreach (var entry in _entries)
+        {
+            <MudTimelineItem Size="Size.Small" Color="@ColorFor(entry.Action)">
+                <MudText Typo="Typo.subtitle2">
+                    <b>@CatalogLabels.ActionLabel(entry.Action)</b> · @CatalogLabels.EntityLabel(entry.EntityType)
+                </MudText>
+                <MudText Typo="Typo.caption" Class="bz-muted">
+                    @entry.At.ToLocalTime().ToString("g", CultureInfo.CurrentCulture) · @string.Format(CultureInfo.CurrentCulture, CatalogTexts.HistoryBy, entry.UserName ?? CatalogTexts.HistorySystem)
+                </MudText>
+                @if (entry.Note is not null)
+                {
+                    <MudText Typo="Typo.body2">@entry.Note</MudText>
+                }
+                @if (entry.Changes.Count > 0 && entry.Action != "Created")
+                {
+                    <ul class="mt-1 mb-0" style="padding-left:18px">
+                        @foreach (var change in entry.Changes)
+                        {
+                            <li>
+                                <span class="bz-muted">@CatalogLabels.FieldLabel(change.Field) :</span>
+                                <s>@(CatalogLabels.ValueLabel(change.Field, change.OldValue) ?? "—")</s>
+                                →
+                                <b>@(CatalogLabels.ValueLabel(change.Field, change.NewValue) ?? "—")</b>
+                            </li>
+                        }
+                    </ul>
+                }
+            </MudTimelineItem>
+        }
+    </MudTimeline>
+}
+
+@code {
+    private IReadOnlyList<HistoryEntry>? _entries;
+
+    [Parameter] public Guid PartId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await Parts.GetHistoryAsync(PartId);
+        _entries = result.IsSuccess ? result.Value : [];
+    }
+
+    private static Color ColorFor(string action) => action switch
+    {
+        "Created" => Color.Success,
+        "PutInForce" => Color.Primary,
+        "Archived" or "Deleted" or "DocumentRemoved" => Color.Error,
+        _ => Color.Default,
+    };
+}

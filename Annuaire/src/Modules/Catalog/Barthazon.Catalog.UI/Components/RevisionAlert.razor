@@ -1,0 +1,38 @@
+@* Bandeau impossible à manquer quand l'indice affiché n'est pas celui en vigueur. *@
+@if (Displayed is not null && Displayed.Status != RevisionStatus.InForce)
+{
+    <div class="bz-revision-alert mb-3" role="alert" aria-live="assertive">
+        <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Size="Size.Large" />
+        <div class="flex-grow-1">
+            @if (InForce is null)
+            {
+                @CatalogTexts.AlertNoInForce
+            }
+            else
+            {
+                @string.Format(CultureInfo.CurrentCulture, TitleFormat, Displayed.Index, InForce.Index)
+            }
+        </div>
+        @if (InForce is not null)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Error" Href="@InForceHref" StartIcon="@Icons.Material.Filled.ArrowForward" Class="bz-no-print">
+                @string.Format(CultureInfo.CurrentCulture, CatalogTexts.GoToInForce, InForce.Index)
+            </MudButton>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public RevisionSummary? Displayed { get; set; }
+
+    [Parameter] public RevisionSummary? InForce { get; set; }
+
+    [Parameter] public string InForceHref { get; set; } = string.Empty;
+
+    private string TitleFormat => Displayed?.Status switch
+    {
+        RevisionStatus.Draft => CatalogTexts.AlertDraftTitle,
+        RevisionStatus.Cancelled => CatalogTexts.AlertCancelledTitle,
+        _ => CatalogTexts.AlertSupersededTitle,
+    };
+}

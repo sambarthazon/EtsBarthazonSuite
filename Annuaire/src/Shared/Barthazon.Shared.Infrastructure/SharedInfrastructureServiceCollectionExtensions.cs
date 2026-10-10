@@ -62,6 +62,7 @@ public static class SharedInfrastructureServiceCollectionExtensions
         services.AddSingleton<DatabaseInitializer>();
         services.AddSingleton<IAuditReader, AuditReader>();
         services.AddSingleton<IFileStorage>(new FileSystemFileStorage(files));
+        services.AddSingleton(new FileStorageLimits(files.MaxFileSizeBytes));
         services.AddSingleton<IFeatureFlags, ConfigurationFeatureFlags>();
         services.AddSingleton<IQrCodeGenerator, QrCodeGenerator>();
         services.AddSingleton<ApplicationSettingsCache>();

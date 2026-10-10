@@ -1,0 +1,49 @@
+@inject IClassificationService Classification
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+
+<PickerField OnQuickCreate="QuickCreateAsync" CanQuickCreate="CanCreate" QuickCreateLabel="@CatalogTexts.NewTagQuick">
+    <MudSelect T="Guid" MultiSelection="true" SelectedValues="Values" SelectedValuesChanged="OnChangedAsync" Label="@CatalogTexts.Tags"
+               Variant="Variant.Outlined" Margin="Margin" ToStringFunc="Display" Clearable="true">
+        @foreach (var tag in _tags)
+        {
+            <MudSelectItem T="Guid" Value="tag.Id"><TagChip Label="@tag.Label" Color="tag.Color" /></MudSelectItem>
+        }
+    </MudSelect>
+</PickerField>
+
+@code {
+    private IReadOnlyList<TagItem> _tags = [];
+
+    [Parameter] public IReadOnlyCollection<Guid> Values { get; set; } = [];
+
+    [Parameter] public EventCallback<IReadOnlyCollection<Guid>> ValuesChanged { get; set; }
+
+    [Parameter] public bool AllowQuickCreate { get; set; } = true;
+
+    [Parameter] public Margin Margin { get; set; } = Margin.Normal;
+
+    private bool CanCreate => AllowQuickCreate && CurrentUser.Role >= UserRole.Editor;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await Classification.ListTagsAsync(includeArchived: true);
+        _tags = result.IsSuccess ? result.Value.Where(t => !t.IsArchived || Values.Contains(t.Id)).ToList() : [];
+    }
+
+    private string Display(Guid id) => _tags.FirstOrDefault(t => t.Id == id)?.Label ?? string.Empty;
+
+    private Task OnChangedAsync(IReadOnlyCollection<Guid> values) => ValuesChanged.InvokeAsync(values);
+
+    private async Task QuickCreateAsync()
+    {
+        var dialog = await Dialogs.ShowAsync<TagDialog>(CatalogTexts.NewTagQuick, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false, Data: TagItem created })
+        {
+            await LoadAsync();
+            await OnChangedAsync(Values.Append(created.Id).ToList());
+        }
+    }
+}

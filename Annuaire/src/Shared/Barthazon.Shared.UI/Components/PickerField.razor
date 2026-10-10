@@ -1,0 +1,24 @@
+@* Sélecteur + bouton de création rapide (sans quitter le formulaire). *@
+<div class="d-flex align-start gap-1 @Class">
+    <div class="flex-grow-1" style="min-width:0">@ChildContent</div>
+    @if (CanQuickCreate && OnQuickCreate.HasDelegate)
+    {
+        <MudTooltip Text="@(QuickCreateLabel ?? SharedTexts.QuickCreate)">
+            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline" Color="Color.Primary" OnClick="OnQuickCreate"
+                           aria-label="@(QuickCreateLabel ?? SharedTexts.QuickCreate)" Class="mt-2" />
+        </MudTooltip>
+    }
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public EventCallback OnQuickCreate { get; set; }
+
+    /// <summary>Affiche le bouton de création rapide (droit éditeur).</summary>
+    [Parameter] public bool CanQuickCreate { get; set; } = true;
+
+    [Parameter] public string? QuickCreateLabel { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+}

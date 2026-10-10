@@ -6,6 +6,7 @@ using Barthazon.Referential.Core.Resources;
 using Barthazon.Shared.Kernel.Persistence;
 using Barthazon.Shared.Kernel.Results;
 using Barthazon.Shared.Kernel.Security;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Barthazon.Referential.Core.Services;
 
@@ -28,7 +29,7 @@ internal sealed class MaterialService(
     IUnitOfWorkFactory<IReferentialUnitOfWork> unitOfWorkFactory,
     IAccessGuard accessGuard,
     UsageCounter usageCounter,
-    IEnumerable<IReferentialChangeObserver> observers) : IMaterialService, IMaterialLookup
+    IServiceProvider serviceProvider) : IMaterialService, IMaterialLookup
 {
     public async Task<Result<IReadOnlyList<MaterialItem>>> ListAsync(bool includeArchived, CancellationToken cancellationToken = default)
     {
@@ -100,7 +101,8 @@ internal sealed class MaterialService(
             return Result<MaterialItem>.Failure(saved.Errors);
         }
 
-        foreach (var observer in observers)
+        // Résolus à l'appel : les observateurs (autres modules) dépendent eux-mêmes de ce service.
+        foreach (var observer in serviceProvider.GetServices<IReferentialChangeObserver>())
         {
             await observer.OnMaterialChangedAsync(id, cancellationToken);
         }

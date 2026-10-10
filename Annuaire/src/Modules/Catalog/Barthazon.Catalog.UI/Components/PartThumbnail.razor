@@ -1,0 +1,16 @@
+@if (DocumentId is { } id)
+{
+    <img class="bz-thumb" src="@($"fichiers/{id}?apercu=1")" alt="" loading="lazy" style="@SizeStyle" />
+}
+else
+{
+    <span class="bz-thumb" aria-hidden="true" style="@SizeStyle"><svg viewBox="0 0 24 24">@((MarkupString)Icons.Material.Outlined.PrecisionManufacturing)</svg></span>
+}
+
+@code {
+    [Parameter] public Guid? DocumentId { get; set; }
+
+    [Parameter] public int Size { get; set; } = 48;
+
+    private string SizeStyle => $"width:{Size}px;height:{Size}px";
+}

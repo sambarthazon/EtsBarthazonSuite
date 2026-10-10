@@ -1,0 +1,17 @@
+@* Indice + statut (ex. « Ind. C · En vigueur »). *@
+@if (Index is null)
+{
+    <span class="bz-muted">—</span>
+}
+else
+{
+    <StatusChip Text="@(Compact ? Index : $"{Index} · {Status?.Label()}")" Tone="@(Status?.Tone() ?? StatusTone.Neutral)" Tooltip="@Status?.Label()" />
+}
+
+@code {
+    [Parameter] public string? Index { get; set; }
+
+    [Parameter] public RevisionStatus? Status { get; set; }
+
+    [Parameter] public bool Compact { get; set; }
+}

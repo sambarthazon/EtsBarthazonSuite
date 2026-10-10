@@ -1,0 +1,52 @@
+@inject IPartService Parts
+@inject ICustomerLookup Customers
+@inject ICurrentUser CurrentUser
+
+@* Pièces du client : liste compacte + lien vers la liste générale filtrée sur ce client (mêmes filtres). *@
+<div class="d-flex flex-wrap gap-2 mb-3">
+    @if (_code is not null)
+    {
+        <MudButton Href="@($"pieces?client={Uri.EscapeDataString(_code)}")" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.FilterList">@CatalogTexts.CustomerPartsOpenList</MudButton>
+        @if (CurrentUser.Role >= UserRole.Editor)
+        {
+            <MudButton Href="@($"pieces/nouvelle?client={Uri.EscapeDataString(_code)}")" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">@CatalogTexts.NewPartForCustomer</MudButton>
+        }
+    }
+</div>
+<AdaptiveList T="PartListItem" Items="_items" Loading="_items is null" Dense="true" ItemHref="@(p => $"pieces/{Uri.EscapeDataString(p.InternalReference)}")" AriaLabel="@CatalogTexts.CustomerPartsTitle">
+    <HeaderContent>
+        <MudTh>@CatalogTexts.ColReference</MudTh>
+        <MudTh>@CatalogTexts.ColDesignation</MudTh>
+        <MudTh>@CatalogTexts.ColCustomerReference</MudTh>
+        <MudTh>@CatalogTexts.ColIndex</MudTh>
+        <MudTh>@CatalogTexts.ColStatus</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="p">
+        <MudTd><a href="@($"pieces/{Uri.EscapeDataString(p.InternalReference)}")"><b>@p.InternalReference</b></a></MudTd>
+        <MudTd>@p.Designation</MudTd>
+        <MudTd>@p.CustomerReference</MudTd>
+        <MudTd><RevisionChip Index="@p.CurrentIndex" Status="p.CurrentRevisionStatus" Compact="true" /></MudTd>
+        <MudTd><PartStatusChip Status="p.Status" /></MudTd>
+    </RowTemplate>
+    <CardTemplate Context="p">
+        <div class="d-flex justify-space-between gap-2">
+            <div><b>@p.InternalReference</b> — @p.Designation<div class="bz-muted" style="font-size:.85rem">@p.CustomerReference</div></div>
+            <RevisionChip Index="@p.CurrentIndex" Status="p.CurrentRevisionStatus" Compact="true" />
+        </div>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@CatalogTexts.NoCustomerParts" Icon="@Icons.Material.Outlined.Inventory2" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<PartListItem>? _items;
+    private string? _code;
+
+    [Parameter] public Guid CustomerId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _code = (await Customers.GetAsync(CustomerId))?.Code;
+        var result = await Parts.SearchAsync(new PartSearchRequest { CustomerId = CustomerId, PageSize = 500 });
+        _items = result.IsSuccess ? result.Value.Items : [];
+    }
+}

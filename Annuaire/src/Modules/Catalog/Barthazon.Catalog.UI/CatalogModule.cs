@@ -2,6 +2,7 @@ using System.Reflection;
 using Barthazon.Catalog.Core;
 using Barthazon.Catalog.UI.Components;
 using Barthazon.Catalog.UI.Resources;
+using Barthazon.Catalog.UI.Services;
 using Barthazon.Shared.Kernel.Modules;
 using Barthazon.Shared.Kernel.Security;
 using Barthazon.Shared.UI.Services;
@@ -45,6 +46,10 @@ public sealed class CatalogModule : IModule
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddCatalogCore();
+        services.AddScoped<IGlobalSearchProvider, PartGlobalSearchProvider>();
+
+        // Section « Pièces du client » de la fiche client (module Référentiel).
+        services.AddUiExtension(new UiExtension(UiSlots.CustomerDetails, typeof(CustomerPartsSection), CatalogTexts.CustomerPartsTitle, 10));
 
         // Onglets « Familles » et « Étiquettes » de la page Référentiels.
         services.AddUiExtension(new UiExtension(UiSlots.ReferentialTabs, typeof(FamiliesPanel), CatalogTexts.TabFamilies, 10, Icons.Material.Filled.Category));

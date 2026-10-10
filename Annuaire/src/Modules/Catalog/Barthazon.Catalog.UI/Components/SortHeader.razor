@@ -1,0 +1,23 @@
+@* En-tête de colonne triable (tri reflété dans l'URL par la page). *@
+<button type="button" class="bz-sort-header @(Active ? "active" : null)" @onclick="() => OnSort.InvokeAsync(Sort)"
+        aria-sort="@(Active ? (Descending ? "descending" : "ascending") : "none")" title="@string.Format(CultureInfo.CurrentCulture, CatalogTexts.SortBy, Text)">
+    <span>@Text</span>
+    @if (Active)
+    {
+        <MudIcon Icon="@(Descending ? Icons.Material.Filled.ArrowDownward : Icons.Material.Filled.ArrowUpward)" Size="Size.Small" />
+    }
+</button>
+
+@code {
+    [Parameter, EditorRequired] public string Text { get; set; } = string.Empty;
+
+    [Parameter] public PartSort Sort { get; set; }
+
+    [Parameter] public PartSort Current { get; set; }
+
+    [Parameter] public bool Descending { get; set; }
+
+    [Parameter] public EventCallback<PartSort> OnSort { get; set; }
+
+    private bool Active => Sort == Current;
+}

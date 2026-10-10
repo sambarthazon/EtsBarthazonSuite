@@ -1,0 +1,63 @@
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-3">@CatalogTexts.SectionDimensions</MudText>
+            <div class="bz-fields">
+                <FieldView Label="@CatalogLabels.FieldLabel("LengthMm")" Value="@CatalogLabels.Number(Revision.LengthMm)" />
+                <FieldView Label="@CatalogLabels.FieldLabel("WidthMm")" Value="@CatalogLabels.Number(Revision.WidthMm)" />
+                <FieldView Label="@CatalogLabels.FieldLabel("HeightMm")" Value="@CatalogLabels.Number(Revision.HeightMm)" />
+                <FieldView Label="@CatalogLabels.FieldLabel("DiameterMm")" Value="@CatalogLabels.Number(Revision.DiameterMm)" />
+                <FieldView Label="@CatalogLabels.FieldLabel("MassKg")" Value="@CatalogLabels.Number(Revision.MassKg)" />
+            </div>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-3">@CatalogTexts.SectionTolerances</MudText>
+            <div class="bz-fields">
+                <FieldView Label="@CatalogLabels.FieldLabel("GeneralTolerance")" Value="@Revision.GeneralTolerance" />
+                <FieldView Label="@CatalogLabels.FieldLabel("SurfaceRoughness")" Value="@Revision.SurfaceRoughness" />
+            </div>
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-3 mt-4">@CatalogTexts.SectionTreatments</MudText>
+            <div class="bz-fields">
+                <FieldView Label="@CatalogLabels.FieldLabel("HeatTreatment")" Value="@Revision.HeatTreatment" />
+                <FieldView Label="@CatalogLabels.FieldLabel("SurfaceTreatment")" Value="@Revision.SurfaceTreatment" />
+                <FieldView Label="@CatalogLabels.FieldLabel("Hardness")" Value="@Revision.Hardness" />
+            </div>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-3">@CatalogTexts.SectionToolingInspection</MudText>
+            <FieldView Label="@CatalogLabels.FieldLabel("Tooling")" Value="@Revision.Tooling" />
+            <FieldView Label="@CatalogLabels.FieldLabel("InspectionNotes")" Value="@Revision.InspectionNotes" Class="mt-3" />
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-3">@CatalogTexts.SectionCharacteristics</MudText>
+            @if (Revision.Characteristics.Count == 0)
+            {
+                <MudText Class="bz-muted">@CatalogTexts.NoCharacteristics</MudText>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Elevation="0" Hover="true">
+                    <tbody>
+                        @foreach (var c in Revision.Characteristics)
+                        {
+                            <tr>
+                                <th scope="row" style="width:45%">@c.Name</th>
+                                <td><b>@c.Value</b> @c.Unit</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter, EditorRequired] public RevisionDetails Revision { get; set; } = default!;
+}

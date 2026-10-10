@@ -37,3 +37,9 @@ public sealed class FileTooLargeException : Exception
     {
     }
 }
+
+/// <summary>Limites d'envoi de fichiers (configuration « FileStorage »).</summary>
+public sealed record FileStorageLimits(long MaxFileSizeBytes)
+{
+    public int MaxFileSizeMb => (int)(MaxFileSizeBytes / 1024 / 1024);
+}

@@ -1,0 +1,51 @@
+@inject IClassificationService Classification
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+
+<PickerField OnQuickCreate="QuickCreateAsync" CanQuickCreate="CanCreate" QuickCreateLabel="@CatalogTexts.NewFamilyQuick">
+    <MudSelect T="Guid?" Value="Value" ValueChanged="v => ValueChanged.InvokeAsync(v)" Label="@CatalogTexts.Family" Variant="Variant.Outlined"
+               Clearable="true" Margin="Margin" ToStringFunc="Display" Error="Error" ErrorText="@ErrorText">
+        @foreach (var family in _families)
+        {
+            <MudSelectItem T="Guid?" Value="family.Id">@family.Name</MudSelectItem>
+        }
+    </MudSelect>
+</PickerField>
+
+@code {
+    private IReadOnlyList<FamilyItem> _families = [];
+
+    [Parameter] public Guid? Value { get; set; }
+
+    [Parameter] public EventCallback<Guid?> ValueChanged { get; set; }
+
+    [Parameter] public bool Error { get; set; }
+
+    [Parameter] public string? ErrorText { get; set; }
+
+    [Parameter] public bool AllowQuickCreate { get; set; } = true;
+
+    [Parameter] public Margin Margin { get; set; } = Margin.Normal;
+
+    private bool CanCreate => AllowQuickCreate && CurrentUser.Role >= UserRole.Editor;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await Classification.ListFamiliesAsync(includeArchived: true);
+        _families = result.IsSuccess ? result.Value.Where(f => !f.IsArchived || f.Id == Value).ToList() : [];
+    }
+
+    private string Display(Guid? id) => id is null ? string.Empty : _families.FirstOrDefault(f => f.Id == id)?.Name ?? string.Empty;
+
+    private async Task QuickCreateAsync()
+    {
+        var dialog = await Dialogs.ShowAsync<FamilyDialog>(CatalogTexts.NewFamilyQuick, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false, Data: FamilyItem created })
+        {
+            await LoadAsync();
+            await ValueChanged.InvokeAsync(created.Id);
+        }
+    }
+}

@@ -1,0 +1,13 @@
+@* Champ numérique décimal (virgule française), avec erreur de validation renvoyée par le service. *@
+<MudNumericField T="decimal?" Value="Value" ValueChanged="ValueChanged" Label="@CatalogLabels.FieldLabel(Field)" Variant="Variant.Outlined"
+                 HideSpinButtons="true" Min="0m" Culture="CultureInfo.CurrentCulture" Error="Form.HasError(Field)" ErrorText="@Form.ErrorFor(Field)" />
+
+@code {
+    [Parameter] public decimal? Value { get; set; }
+
+    [Parameter] public EventCallback<decimal?> ValueChanged { get; set; }
+
+    [Parameter, EditorRequired] public string Field { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired] public FormState Form { get; set; } = default!;
+}

@@ -27,6 +27,12 @@ public interface IUnitOfWork : IAsyncDisposable
     /// <summary>Enregistre les modifications. Renvoie un échec <see cref="Results.ErrorKind.Conflict"/> en cas de conflit de concurrence.</summary>
     Task<Results.Result> SaveChangesAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Version connue par l'appelant pour une entité chargée dans cette unité de travail (concurrence optimiste) :
+    /// si elle a changé en base entre-temps, l'enregistrement échoue avec un conflit.
+    /// </summary>
+    void SetExpectedVersion(Domain.IAuditable entity, long expectedVersion);
+
     /// <summary>Ajoute une entrée explicite au journal (ex. « mise en vigueur »), enregistrée avec les modifications.</summary>
     void AddAuditNote(string entityType, Guid entityId, string action, string? detail = null, string? parentType = null, Guid? parentId = null);
 }

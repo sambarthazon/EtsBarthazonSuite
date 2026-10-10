@@ -21,6 +21,27 @@ public interface ITagRepository : IRepository<Tag>
     void Remove(Tag tag);
 }
 
+public interface IPartLinkRepository : IRepository<PartLink>
+{
+    /// <summary>Liens dont la pièce est source ou cible.</summary>
+    Task<IReadOnlyList<PartLink>> ListForPartAsync(Guid partId, CancellationToken cancellationToken = default);
+
+    Task<bool> ExistsAsync(Guid sourcePartId, Guid targetPartId, Contracts.PartLinkType type, CancellationToken cancellationToken = default);
+
+    void Remove(PartLink link);
+}
+
+public interface IFavoriteRepository
+{
+    Task<IReadOnlyList<Guid>> ListPartIdsAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<Favorite?> GetAsync(Guid userId, Guid partId, CancellationToken cancellationToken = default);
+
+    void Add(Favorite favorite);
+
+    void Remove(Favorite favorite);
+}
+
 /// <summary>Unité de travail de l'annuaire.</summary>
 public interface ICatalogUnitOfWork : IUnitOfWork
 {
@@ -29,4 +50,8 @@ public interface ICatalogUnitOfWork : IUnitOfWork
     ITagRepository Tags { get; }
 
     IPartRepository Parts { get; }
+
+    IPartLinkRepository Links { get; }
+
+    IFavoriteRepository Favorites { get; }
 }

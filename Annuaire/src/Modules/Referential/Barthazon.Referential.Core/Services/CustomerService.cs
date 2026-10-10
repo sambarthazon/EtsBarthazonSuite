@@ -7,6 +7,7 @@ using Barthazon.Shared.Kernel.Persistence;
 using Barthazon.Shared.Kernel.Results;
 using Barthazon.Shared.Kernel.Security;
 using Barthazon.Shared.Kernel.Text;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Barthazon.Referential.Core.Services;
 
@@ -28,7 +29,7 @@ internal sealed partial class CustomerService(
     IUnitOfWorkFactory<IReferentialUnitOfWork> unitOfWorkFactory,
     IAccessGuard accessGuard,
     UsageCounter usageCounter,
-    IEnumerable<IReferentialChangeObserver> observers) : ICustomerService, ICustomerLookup
+    IServiceProvider serviceProvider) : ICustomerService, ICustomerLookup
 {
     public async Task<Result<IReadOnlyList<CustomerListItem>>> ListAsync(string? query, bool includeArchived, CancellationToken cancellationToken = default)
     {
@@ -121,7 +122,8 @@ internal sealed partial class CustomerService(
             return Result<CustomerDetails>.Failure(saved.Errors);
         }
 
-        foreach (var observer in observers)
+        // Résolus à l'appel : les observateurs (autres modules) dépendent eux-mêmes de ce service.
+        foreach (var observer in serviceProvider.GetServices<IReferentialChangeObserver>())
         {
             await observer.OnCustomerChangedAsync(customer.Id, cancellationToken);
         }

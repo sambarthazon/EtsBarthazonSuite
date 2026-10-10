@@ -1,6 +1,8 @@
 using System.Reflection;
 using Barthazon.Referential.Core;
 using Barthazon.Referential.UI.Resources;
+using Barthazon.Referential.UI.Services;
+using Barthazon.Shared.UI.Services;
 using Barthazon.Shared.Kernel.Modules;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,5 +42,6 @@ public sealed class ReferentialModule : IModule
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddReferentialCore();
+        services.AddScoped<IGlobalSearchProvider, CustomerGlobalSearchProvider>();
     }
 }

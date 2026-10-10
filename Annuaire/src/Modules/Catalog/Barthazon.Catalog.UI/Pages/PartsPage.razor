@@ -1,0 +1,385 @@
+@page "/pieces"
+@using Barthazon.Catalog.Core.Persistence
+@inject IPartService Parts
+@inject ICustomerLookup Customers
+@inject IMaterialLookup Materials
+@inject IMachineLookup Machines
+@inject IClassificationService Classification
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+@inject BrowserInterop Browser
+@inject Notifier Notifier
+
+<PageHeader Title="@CatalogTexts.PartsTitle" Subtitle="@(_result is null ? null : string.Format(CultureInfo.CurrentCulture, CatalogTexts.PartsSubtitle, _result.TotalCount))">
+    <Actions>
+        @if (CanEdit)
+        {
+            <MudButton Href="pieces/nouvelle" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">@CatalogTexts.NewPart</MudButton>
+        }
+        <PartListActions Request="_request" />
+    </Actions>
+</PageHeader>
+
+<div class="d-flex flex-wrap align-center gap-3 mb-3">
+    <MudTextField T="string" Value="Q" ValueChanged="v => NavigateAsync(q: v ?? string.Empty, page: 1)" Placeholder="@CatalogTexts.SearchParts"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Immediate="true" DebounceInterval="300" Clearable="true" Style="max-width:560px;min-width:240px" Class="flex-grow-1"
+                  aria-label="@CatalogTexts.SearchParts" InputId="bz-parts-search" />
+    <MudButton Variant="@(ActiveFilterCount > 0 ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterList"
+               OnClick="() => _filtersOpen = !_filtersOpen" aria-expanded="@_filtersOpen.ToString().ToLowerInvariant()">
+        @(ActiveFilterCount > 0 ? string.Format(CultureInfo.CurrentCulture, CatalogTexts.FiltersCount, ActiveFilterCount) : CatalogTexts.Filters)
+    </MudButton>
+    <MudHidden Breakpoint="Breakpoint.SmAndDown">
+        <MudMenu Icon="@Icons.Material.Filled.ViewColumn" aria-label="@CatalogTexts.Columns" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+            <ActivatorContent><MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ViewColumn">@CatalogTexts.Columns</MudButton></ActivatorContent>
+            <ChildContent>
+                @foreach (var column in AllColumns)
+                {
+                    <MudMenuItem AutoClose="false" OnClick="() => ToggleColumnAsync(column.Key)">
+                        <MudCheckBox T="bool" Value="_columns.Contains(column.Key)" ReadOnly="true" Label="@column.Label" Dense="true" />
+                    </MudMenuItem>
+                }
+            </ChildContent>
+        </MudMenu>
+    </MudHidden>
+</div>
+
+@if (Quality != PartQualityIssue.None)
+{
+    <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined" OnClose="() => NavigateAsync(qualite: string.Empty, page: 1)" Class="mb-3">
+        @string.Format(CultureInfo.CurrentCulture, CatalogTexts.FilterQuality, CatalogLabels.Get("Quality_" + Quality))
+    </MudChip>
+}
+
+<MudCollapse Expanded="_filtersOpen">
+    <MudPaper Class="pa-4 mb-3 bz-card" Elevation="0">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect T="string" Value="Client" ValueChanged="v => NavigateAsync(client: v ?? string.Empty, page: 1)" Label="@CatalogTexts.Customer" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                    @foreach (var c in _customers)
+                    {
+                        <MudSelectItem T="string" Value="c.Code">@c.Display</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect T="Guid?" Value="Famille" ValueChanged="v => NavigateAsync(famille: v?.ToString() ?? string.Empty, page: 1)" Label="@CatalogTexts.Family" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                           ToStringFunc="id => _families.FirstOrDefault(f => f.Id == id)?.Name ?? string.Empty">
+                    @foreach (var f in _families)
+                    {
+                        <MudSelectItem T="Guid?" Value="f.Id">@f.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect T="Guid?" Value="Matiere" ValueChanged="v => NavigateAsync(matiere: v?.ToString() ?? string.Empty, page: 1)" Label="@CatalogTexts.Material" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                           ToStringFunc="id => _materials.FirstOrDefault(m => m.Id == id)?.Display ?? string.Empty">
+                    @foreach (var m in _materials)
+                    {
+                        <MudSelectItem T="Guid?" Value="m.Id">@m.Display</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect T="PartStatus" MultiSelection="true" SelectedValues="Statuses" SelectedValuesChanged="v => NavigateAsync(statut: string.Join(',', v), page: 1)"
+                           Label="@CatalogTexts.FilterStatus" Variant="Variant.Outlined" Margin="Margin.Dense" ToStringFunc="s => s.Label()" Clearable="true">
+                    @foreach (var s in Enum.GetValues<PartStatus>())
+                    {
+                        <MudSelectItem T="PartStatus" Value="s">@s.Label()</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect T="Guid" MultiSelection="true" SelectedValues="TagIds" SelectedValuesChanged="v => NavigateAsync(etiquettes: string.Join(',', v), page: 1)"
+                           Label="@CatalogTexts.Tags" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                           ToStringFunc="id => _tags.FirstOrDefault(t => t.Id == id)?.Label ?? string.Empty">
+                    @foreach (var t in _tags)
+                    {
+                        <MudSelectItem T="Guid" Value="t.Id"><TagChip Label="@t.Label" Color="t.Color" /></MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect T="Guid?" Value="Machine" ValueChanged="v => NavigateAsync(machine: v?.ToString() ?? string.Empty, page: 1)" Label="@CatalogTexts.Machine" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                           ToStringFunc="id => _machines.FirstOrDefault(m => m.Id == id)?.Name ?? string.Empty">
+                    @foreach (var m in _machines)
+                    {
+                        <MudSelectItem T="Guid?" Value="m.Id">@m.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect T="string" Value="@(Plan ?? string.Empty)" ValueChanged="v => NavigateAsync(plan: v, page: 1)" Label="@CatalogTexts.FilterDrawing" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">@CatalogTexts.FilterDrawingAll</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("avec")">@CatalogTexts.FilterDrawingWith</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("sans")">@CatalogTexts.FilterDrawingWithout</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" Class="d-flex align-center">
+                <MudSwitch T="bool" Value="IncludeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@CatalogTexts.FilterArchived" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" Class="d-flex align-center">
+                <StockFilterPlaceholder />
+            </MudItem>
+            <MudItem xs="12" Class="d-flex justify-end">
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.FilterListOff" OnClick="ClearFilters" Disabled="ActiveFilterCount == 0 && string.IsNullOrEmpty(Q)">@CatalogTexts.ClearFilters</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudCollapse>
+
+<AdaptiveList T="PartListItem" Items="_result?.Items" Loading="_loading" ItemHref="PartHref" AriaLabel="@CatalogTexts.PartsTitle">
+    <HeaderContent>
+        @if (Show("thumb")) { <MudTh Style="width:64px"><span class="sr-only">@CatalogTexts.ColThumbnail</span></MudTh> }
+        <MudTh><SortHeader Text="@CatalogTexts.ColReference" Sort="PartSort.Reference" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh>
+        @if (Show("designation")) { <MudTh><SortHeader Text="@CatalogTexts.ColDesignation" Sort="PartSort.Designation" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh> }
+        @if (Show("customer")) { <MudTh><SortHeader Text="@CatalogTexts.ColCustomer" Sort="PartSort.Customer" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh> }
+        @if (Show("customerRef")) { <MudTh><SortHeader Text="@CatalogTexts.ColCustomerReference" Sort="PartSort.CustomerReference" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh> }
+        @if (Show("index")) { <MudTh><SortHeader Text="@CatalogTexts.ColIndex" Sort="PartSort.Index" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh> }
+        @if (Show("material")) { <MudTh><SortHeader Text="@CatalogTexts.ColMaterial" Sort="PartSort.Material" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh> }
+        @if (Show("family")) { <MudTh>@CatalogTexts.ColFamily</MudTh> }
+        @if (Show("tags")) { <MudTh>@CatalogTexts.ColTags</MudTh> }
+        @if (Show("status")) { <MudTh><SortHeader Text="@CatalogTexts.ColStatus" Sort="PartSort.Status" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh> }
+        @if (Show("updated")) { <MudTh><SortHeader Text="@CatalogTexts.ColUpdatedAt" Sort="PartSort.UpdatedAt" Current="Sort" Descending="Descending" OnSort="SortAsync" /></MudTh> }
+        @if (Show("stock")) { <MudTh>@CatalogTexts.ColStock</MudTh> }
+    </HeaderContent>
+    <RowTemplate Context="p">
+        @if (Show("thumb")) { <MudTd><PartThumbnail DocumentId="p.ThumbnailDocumentId" /></MudTd> }
+        <MudTd Class="@(p.IsArchived ? "bz-list-row-archived" : null)" Style="white-space:nowrap">
+            <a href="@PartHref(p)"><b><Highlight Text="@p.InternalReference" Query="@Q" /></b></a>
+            @if (p.IsArchived) { <StatusChip Text="@CatalogTexts.ArchivedChip" Tone="StatusTone.Disabled" Class="ml-1" /> }
+        </MudTd>
+        @if (Show("designation")) { <MudTd><Highlight Text="@p.Designation" Query="@Q" /></MudTd> }
+        @if (Show("customer")) { <MudTd><span title="@p.CustomerName"><Highlight Text="@p.CustomerCode" Query="@Q" /></span></MudTd> }
+        @if (Show("customerRef")) { <MudTd Style="white-space:nowrap"><Highlight Text="@p.CustomerReference" Query="@Q" /></MudTd> }
+        @if (Show("index")) { <MudTd><RevisionChip Index="@p.CurrentIndex" Status="p.CurrentRevisionStatus" Compact="true" /></MudTd> }
+        @if (Show("material")) { <MudTd><Highlight Text="@p.MaterialDisplay" Query="@Q" /></MudTd> }
+        @if (Show("family")) { <MudTd>@p.FamilyName</MudTd> }
+        @if (Show("tags")) { <MudTd><div class="d-flex flex-wrap gap-1">@foreach (var t in p.Tags) { <TagChip Label="@t.Label" Color="t.Color" Query="@Q" /> }</div></MudTd> }
+        @if (Show("status")) { <MudTd><PartStatusChip Status="p.Status" /></MudTd> }
+        @if (Show("updated")) { <MudTd>@p.UpdatedAt.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</MudTd> }
+        @if (Show("stock")) { <MudTd><StockCell PartId="p.Id" /></MudTd> }
+    </RowTemplate>
+    <CardTemplate Context="p">
+        <div class="d-flex gap-3 align-start @(p.IsArchived ? "bz-list-row-archived" : null)">
+            <PartThumbnail DocumentId="p.ThumbnailDocumentId" Size="56" />
+            <div style="min-width:0" class="flex-grow-1">
+                <div class="d-flex justify-space-between align-start gap-2">
+                    <MudText Typo="Typo.subtitle1"><b><Highlight Text="@p.InternalReference" Query="@Q" /></b></MudText>
+                    <RevisionChip Index="@p.CurrentIndex" Status="p.CurrentRevisionStatus" Compact="true" />
+                </div>
+                <MudText Typo="Typo.body2"><Highlight Text="@p.Designation" Query="@Q" /></MudText>
+                <MudText Typo="Typo.caption" Class="bz-muted d-block"><Highlight Text="@p.CustomerCode" Query="@Q" />@(p.CustomerReference is null ? null : " · ")<Highlight Text="@p.CustomerReference" Query="@Q" /></MudText>
+                <div class="d-flex flex-wrap gap-1 mt-1"><PartStatusChip Status="p.Status" /></div>
+            </div>
+        </div>
+    </CardTemplate>
+    <EmptyContent>
+        @if (ActiveFilterCount == 0 && string.IsNullOrWhiteSpace(Q))
+        {
+            <EmptyState Title="@CatalogTexts.NoParts" Text="@CatalogTexts.NoPartsYet" Icon="@Icons.Material.Outlined.Inventory2">
+                @if (CanEdit)
+                {
+                    <MudButton Href="pieces/nouvelle" Variant="Variant.Filled" Color="Color.Primary">@CatalogTexts.NewPart</MudButton>
+                }
+            </EmptyState>
+        }
+        else
+        {
+            <EmptyState Title="@CatalogTexts.NoPartsMatch" Text="@CatalogTexts.NoPartsHint" Icon="@Icons.Material.Outlined.SearchOff">
+                <MudButton Variant="Variant.Outlined" OnClick="ClearFilters">@CatalogTexts.ClearFilters</MudButton>
+            </EmptyState>
+        }
+    </EmptyContent>
+</AdaptiveList>
+
+@if (_result is { } r && r.TotalCount > PageSize)
+{
+    <div class="d-flex justify-center mt-4">
+        <MudPagination Count="@((r.TotalCount + PageSize - 1) / PageSize)" Selected="PageNumber" SelectedChanged="p => NavigateAsync(page: p)" Color="Color.Primary" />
+    </div>
+}
+
+@code {
+    private const int PageSize = 50;
+    private const string ColumnsStorageKey = "bz-parts-columns";
+
+    private static readonly string[] DefaultColumns = ["thumb", "designation", "customer", "customerRef", "index", "material", "status", "updated", "stock"];
+
+    private PagedResult<PartListItem>? _result;
+    private PartSearchRequest _request = new();
+    private bool _loading = true;
+    private bool _filtersOpen;
+    private HashSet<string> _columns = [.. DefaultColumns];
+    private IReadOnlyList<CustomerSummary> _customers = [];
+    private IReadOnlyList<FamilyItem> _families = [];
+    private IReadOnlyList<MaterialSummary> _materials = [];
+    private IReadOnlyList<TagItem> _tags = [];
+    private IReadOnlyList<MachineSummary> _machines = [];
+
+    [SupplyParameterFromQuery(Name = "q")] public string? Q { get; set; }
+
+    [SupplyParameterFromQuery(Name = "client")] public string? Client { get; set; }
+
+    [SupplyParameterFromQuery(Name = "famille")] public Guid? Famille { get; set; }
+
+    [SupplyParameterFromQuery(Name = "matiere")] public Guid? Matiere { get; set; }
+
+    [SupplyParameterFromQuery(Name = "statut")] public string? Statut { get; set; }
+
+    [SupplyParameterFromQuery(Name = "etiquettes")] public string? Etiquettes { get; set; }
+
+    [SupplyParameterFromQuery(Name = "machine")] public Guid? Machine { get; set; }
+
+    [SupplyParameterFromQuery(Name = "plan")] public string? Plan { get; set; }
+
+    [SupplyParameterFromQuery(Name = "archives")] public string? Archives { get; set; }
+
+    [SupplyParameterFromQuery(Name = "qualite")] public string? Qualite { get; set; }
+
+    [SupplyParameterFromQuery(Name = "tri")] public string? Tri { get; set; }
+
+    [SupplyParameterFromQuery(Name = "ordre")] public string? Ordre { get; set; }
+
+    [SupplyParameterFromQuery(Name = "page")] public int? PageParameter { get; set; }
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    private int PageNumber => Math.Max(1, PageParameter ?? 1);
+
+    private PartSort Sort => Enum.TryParse<PartSort>(Tri, ignoreCase: true, out var sort) ? sort : PartSort.Reference;
+
+    private bool Descending => string.Equals(Ordre, "desc", StringComparison.OrdinalIgnoreCase);
+
+    private bool IncludeArchived => Archives == "1";
+
+    private PartQualityIssue Quality => Enum.TryParse<PartQualityIssue>(Qualite, ignoreCase: true, out var quality) ? quality : PartQualityIssue.None;
+
+    private IReadOnlyCollection<PartStatus> Statuses => (Statut ?? string.Empty)
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(s => Enum.TryParse<PartStatus>(s, true, out var v) ? (PartStatus?)v : null).OfType<PartStatus>().ToList();
+
+    private IReadOnlyCollection<Guid> TagIds => (Etiquettes ?? string.Empty)
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(s => Guid.TryParse(s, out var g) ? (Guid?)g : null).OfType<Guid>().ToList();
+
+    private int ActiveFilterCount =>
+        (string.IsNullOrEmpty(Client) ? 0 : 1) + (Famille is null ? 0 : 1) + (Matiere is null ? 0 : 1) + (Statuses.Count > 0 ? 1 : 0)
+        + (TagIds.Count > 0 ? 1 : 0) + (Machine is null ? 0 : 1) + (string.IsNullOrEmpty(Plan) ? 0 : 1) + (IncludeArchived ? 1 : 0)
+        + (Quality == PartQualityIssue.None ? 0 : 1);
+
+    private IEnumerable<(string Key, string Label)> AllColumns =>
+    [
+        ("thumb", CatalogTexts.ColThumbnail), ("designation", CatalogTexts.ColDesignation), ("customer", CatalogTexts.ColCustomer),
+        ("customerRef", CatalogTexts.ColCustomerReference), ("index", CatalogTexts.ColIndex), ("material", CatalogTexts.ColMaterial),
+        ("family", CatalogTexts.ColFamily), ("tags", CatalogTexts.ColTags), ("status", CatalogTexts.ColStatus),
+        ("updated", CatalogTexts.ColUpdatedAt), ("stock", CatalogTexts.ColStock),
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _customers = await Customers.ListAsync(includeArchived: true);
+        _materials = await Materials.ListAsync();
+        _machines = await Machines.ListAsync();
+        var families = await Classification.ListFamiliesAsync(false);
+        _families = families.IsSuccess ? families.Value : [];
+        var tags = await Classification.ListTagsAsync(false);
+        _tags = tags.IsSuccess ? tags.Value : [];
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _filtersOpen = _filtersOpen || ActiveFilterCount > 0;
+        var customerId = string.IsNullOrEmpty(Client) ? null : _customers.FirstOrDefault(c => string.Equals(c.Code, Client, StringComparison.OrdinalIgnoreCase))?.Id;
+        _request = new PartSearchRequest
+        {
+            Query = Q,
+            CustomerId = customerId ?? (string.IsNullOrEmpty(Client) ? null : Guid.Empty),
+            FamilyId = Famille,
+            MaterialId = Matiere,
+            Statuses = Statuses.ToList(),
+            TagIds = TagIds.ToList(),
+            MachineId = Machine,
+            HasDrawing = Plan switch { "avec" => true, "sans" => false, _ => null },
+            IncludeArchived = IncludeArchived,
+            Quality = Quality,
+            Sort = Sort,
+            Descending = Descending,
+            PageIndex = PageNumber - 1,
+            PageSize = PageSize,
+        };
+        _loading = true;
+        var result = await Parts.SearchAsync(_request);
+        if (Notifier.Handle(result))
+        {
+            _result = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var stored = await Browser.GetStorageAsync(ColumnsStorageKey);
+            if (!string.IsNullOrWhiteSpace(stored))
+            {
+                _columns = stored.Split(',', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private Task OnArchivedChangedAsync(bool value) => NavigateAsync(archives: value ? "1" : string.Empty, page: 1);
+
+    private bool Show(string column) => _columns.Contains(column);
+
+    private async Task ToggleColumnAsync(string column)
+    {
+        if (!_columns.Remove(column))
+        {
+            _columns.Add(column);
+        }
+
+        await Browser.SetStorageAsync(ColumnsStorageKey, string.Join(',', _columns));
+    }
+
+    private static string PartHref(PartListItem p) => $"pieces/{Uri.EscapeDataString(p.InternalReference)}";
+
+    private Task SortAsync(PartSort sort) =>
+        NavigateAsync(tri: sort.ToString().ToLowerInvariant(), ordre: sort == Sort && !Descending ? "desc" : string.Empty, page: 1);
+
+    private void ClearFilters() => Navigation.NavigateTo("pieces");
+
+    /// <summary>Met à jour l'URL (lien partageable, bouton retour) ; une chaîne vide retire le paramètre.</summary>
+    private Task NavigateAsync(
+        string? q = null, string? client = null, string? famille = null, string? matiere = null, string? statut = null, string? etiquettes = null,
+        string? machine = null, string? plan = null, string? archives = null, string? qualite = null, string? tri = null, string? ordre = null, int? page = null)
+    {
+        var parameters = new Dictionary<string, object?>
+        {
+            ["q"] = Pick(q, Q),
+            ["client"] = Pick(client, Client),
+            ["famille"] = Pick(famille, Famille?.ToString()),
+            ["matiere"] = Pick(matiere, Matiere?.ToString()),
+            ["statut"] = Pick(statut, Statut),
+            ["etiquettes"] = Pick(etiquettes, Etiquettes),
+            ["machine"] = Pick(machine, Machine?.ToString()),
+            ["plan"] = Pick(plan, Plan),
+            ["archives"] = Pick(archives, Archives),
+            ["qualite"] = Pick(qualite, Qualite),
+            ["tri"] = Pick(tri, Tri),
+            ["ordre"] = Pick(ordre, Ordre),
+            ["page"] = (page ?? PageNumber) is var p && p > 1 ? p.ToString(CultureInfo.InvariantCulture) : null,
+        };
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(parameters));
+        return Task.CompletedTask;
+    }
+
+    private static string? Pick(string? value, string? current)
+    {
+        var chosen = value ?? current;
+        return string.IsNullOrEmpty(chosen) ? null : chosen;
+    }
+}

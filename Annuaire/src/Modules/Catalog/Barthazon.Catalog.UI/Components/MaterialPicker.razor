@@ -1,0 +1,55 @@
+@inject IMaterialLookup Materials
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+
+<PickerField OnQuickCreate="QuickCreateAsync" CanQuickCreate="CanCreate" QuickCreateLabel="@CatalogTexts.NewMaterialQuick">
+    <MudSelect T="Guid?" Value="Value" ValueChanged="OnChangedAsync" Label="@(Label ?? CatalogTexts.Material)" Variant="Variant.Outlined"
+               Clearable="true" Error="Error" ErrorText="@ErrorText" Margin="Margin" ToStringFunc="Display" AnchorOrigin="Origin.BottomCenter">
+        @foreach (var material in _materials)
+        {
+            <MudSelectItem T="Guid?" Value="material.Id">@material.Display <span class="bz-muted">· @material.Family.Label()</span></MudSelectItem>
+        }
+    </MudSelect>
+</PickerField>
+
+@code {
+    private IReadOnlyList<MaterialSummary> _materials = [];
+
+    [Parameter] public Guid? Value { get; set; }
+
+    [Parameter] public EventCallback<Guid?> ValueChanged { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+
+    [Parameter] public bool Error { get; set; }
+
+    [Parameter] public string? ErrorText { get; set; }
+
+    [Parameter] public bool AllowQuickCreate { get; set; } = true;
+
+    [Parameter] public Margin Margin { get; set; } = Margin.Normal;
+
+    private bool CanCreate => AllowQuickCreate && CurrentUser.Role >= UserRole.Editor;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var all = await Materials.ListAsync(includeArchived: true);
+        _materials = all.Where(m => !m.IsArchived || m.Id == Value).ToList();
+    }
+
+    private string Display(Guid? id) => id is null ? string.Empty : _materials.FirstOrDefault(m => m.Id == id)?.Display ?? string.Empty;
+
+    private Task OnChangedAsync(Guid? id) => ValueChanged.InvokeAsync(id);
+
+    private async Task QuickCreateAsync()
+    {
+        var dialog = await Dialogs.ShowAsync<QuickMaterialDialog>(CatalogTexts.NewMaterialQuick, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false, Data: MaterialSummary created })
+        {
+            await LoadAsync();
+            await OnChangedAsync(created.Id);
+        }
+    }
+}

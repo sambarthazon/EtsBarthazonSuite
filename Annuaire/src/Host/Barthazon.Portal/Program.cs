@@ -2,6 +2,7 @@ using System.Globalization;
 using Barthazon.Portal.Components;
 using Barthazon.Portal.Endpoints;
 using Barthazon.Portal.Hosting;
+using Barthazon.Portal.Hosting.Demo;
 using Barthazon.Shared.Infrastructure;
 using Barthazon.Shared.Infrastructure.Hosting;
 using Barthazon.Shared.Infrastructure.Persistence;
@@ -51,9 +52,15 @@ foreach (var module in modules)
 var security = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
 builder.Services.AddPortalAuthentication(security);
 
+builder.Services.AddSingleton<DemoDataSeeder>();
+
 var app = builder.Build();
 
 await app.Services.GetRequiredService<DatabaseInitializer>().InitializeAsync();
+if (app.Configuration.GetValue("Seed:DemoData", false))
+{
+    await app.Services.GetRequiredService<DemoDataSeeder>().SeedAsync();
+}
 
 if (!app.Environment.IsDevelopment())
 {
@@ -74,6 +81,7 @@ app.UseAntiforgery();
 
 app.MapStaticAssets().AllowAnonymous();
 app.MapAccountEndpoints();
+app.MapFileEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddAdditionalAssemblies(modules.Select(m => m.UiAssembly).OfType<System.Reflection.Assembly>().Distinct().ToArray());

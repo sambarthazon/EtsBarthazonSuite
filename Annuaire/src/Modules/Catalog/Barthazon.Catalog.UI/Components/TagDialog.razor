@@ -45,7 +45,7 @@
         if (result.IsSuccess)
         {
             Notifier.Success(CatalogTexts.Saved);
-            Dialog!.Close(DialogResult.Ok(true));
+            Dialog!.Close(DialogResult.Ok(result.Value));
         }
     }
 }

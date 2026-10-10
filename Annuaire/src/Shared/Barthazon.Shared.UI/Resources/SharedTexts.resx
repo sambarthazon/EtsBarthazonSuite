@@ -64,4 +64,6 @@
   <data name="NoData" xml:space="preserve"><value>Aucune donnée</value></data>
   <data name="ClearFilters" xml:space="preserve"><value>Effacer les filtres</value></data>
   <data name="RequiredField" xml:space="preserve"><value>Champ obligatoire</value></data>
+  <data name="QuickCreate" xml:space="preserve"><value>Créer sans quitter le formulaire</value></data>
+  <data name="None" xml:space="preserve"><value>(aucun)</value></data>
 </root>

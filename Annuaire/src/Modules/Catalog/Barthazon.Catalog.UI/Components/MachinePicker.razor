@@ -1,0 +1,33 @@
+@inject IMachineLookup Machines
+
+<MudSelect T="Guid?" Value="Value" ValueChanged="v => ValueChanged.InvokeAsync(v)" Label="@(Label ?? CatalogTexts.Machine)" Variant="Variant.Outlined"
+           Clearable="true" Margin="Margin" ToStringFunc="Display" Error="Error" ErrorText="@ErrorText" Dense="true">
+    @foreach (var machine in _machines)
+    {
+        <MudSelectItem T="Guid?" Value="machine.Id">@machine.Name <span class="bz-muted">· @machine.Type.Label()</span></MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    private IReadOnlyList<MachineSummary> _machines = [];
+
+    [Parameter] public Guid? Value { get; set; }
+
+    [Parameter] public EventCallback<Guid?> ValueChanged { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+
+    [Parameter] public bool Error { get; set; }
+
+    [Parameter] public string? ErrorText { get; set; }
+
+    [Parameter] public Margin Margin { get; set; } = Margin.Dense;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var all = await Machines.ListAsync(includeArchived: true);
+        _machines = all.Where(m => (!m.IsArchived && m.IsActive) || m.Id == Value).ToList();
+    }
+
+    private string Display(Guid? id) => id is null ? string.Empty : _machines.FirstOrDefault(m => m.Id == id)?.Name ?? string.Empty;
+}

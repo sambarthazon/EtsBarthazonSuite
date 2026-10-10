@@ -1,0 +1,13 @@
+@* Aperçu du plan principal (complété au jalon J5). *@
+@if (Document is null)
+{
+    <MudText Class="bz-muted">—</MudText>
+}
+else
+{
+    <MudText>@Document.Title</MudText>
+}
+
+@code {
+    [Parameter] public DocumentDto? Document { get; set; }
+}

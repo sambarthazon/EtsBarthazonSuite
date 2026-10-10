@@ -34,6 +34,12 @@ public abstract class EfUnitOfWork : IUnitOfWork
         }
     }
 
+    public void SetExpectedVersion(Kernel.Domain.IAuditable entity, long expectedVersion)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        Context.Entry(entity).Property(nameof(Kernel.Domain.IAuditable.Version)).OriginalValue = expectedVersion;
+    }
+
     public void AddAuditNote(string entityType, Guid entityId, string action, string? detail = null, string? parentType = null, Guid? parentId = null) =>
         Context.AddAuditNote(entityType, entityId, action, detail, parentType, parentId);
 

@@ -12,4 +12,37 @@
   <data name="TagLabelExists" xml:space="preserve"><value>Une étiquette porte déjà ce libellé.</value></data>
   <data name="TagNotFound" xml:space="preserve"><value>Étiquette introuvable.</value></data>
   <data name="ItemInUse" xml:space="preserve"><value>Cet élément est utilisé par {0} pièce(s) : il ne peut pas être supprimé, seulement archivé.</value></data>
+  <data name="PartNotFound" xml:space="preserve"><value>Pièce introuvable.</value></data>
+  <data name="RevisionNotFound" xml:space="preserve"><value>Indice introuvable.</value></data>
+  <data name="DocumentNotFound" xml:space="preserve"><value>Document introuvable.</value></data>
+  <data name="ReferenceRequired" xml:space="preserve"><value>La référence interne est obligatoire.</value></data>
+  <data name="ReferenceInvalid" xml:space="preserve"><value>La référence ne peut pas contenir les caractères / \ ? # %.</value></data>
+  <data name="ReferenceReserved" xml:space="preserve"><value>Ce mot est réservé et ne peut pas servir de référence.</value></data>
+  <data name="ReferenceExists" xml:space="preserve"><value>Cette référence interne est déjà utilisée.</value></data>
+  <data name="DesignationRequired" xml:space="preserve"><value>La désignation est obligatoire.</value></data>
+  <data name="CustomerRequired" xml:space="preserve"><value>Le client est obligatoire.</value></data>
+  <data name="CustomerUnknown" xml:space="preserve"><value>Client inconnu.</value></data>
+  <data name="FamilyUnknown" xml:space="preserve"><value>Famille inconnue.</value></data>
+  <data name="MaterialUnknown" xml:space="preserve"><value>Matière inconnue.</value></data>
+  <data name="MachineUnknown" xml:space="preserve"><value>Machine inconnue.</value></data>
+  <data name="IndexRequired" xml:space="preserve"><value>L'indice est obligatoire.</value></data>
+  <data name="IndexExists" xml:space="preserve"><value>Cet indice existe déjà pour cette pièce.</value></data>
+  <data name="IndexTooLong" xml:space="preserve"><value>L'indice fait au plus 10 caractères.</value></data>
+  <data name="CannotPutCancelledInForce" xml:space="preserve"><value>Un indice annulé ne peut pas être mis en vigueur.</value></data>
+  <data name="AlreadyInForce" xml:space="preserve"><value>Cet indice est déjà en vigueur.</value></data>
+  <data name="CannotCancelInForce" xml:space="preserve"><value>L'indice en vigueur ne peut pas être annulé : mettez d'abord un autre indice en vigueur.</value></data>
+  <data name="AlreadyCancelled" xml:space="preserve"><value>Cet indice est déjà annulé.</value></data>
+  <data name="NegativeValue" xml:space="preserve"><value>La valeur doit être positive.</value></data>
+  <data name="CharacteristicNameRequired" xml:space="preserve"><value>Le nom de la caractéristique est obligatoire.</value></data>
+  <data name="OperationNumberInvalid" xml:space="preserve"><value>Le numéro d'opération doit être positif.</value></data>
+  <data name="OperationNumberDuplicate" xml:space="preserve"><value>Ce numéro d'opération est déjà utilisé.</value></data>
+  <data name="DuplicateCustomerReferenceWarning" xml:space="preserve"><value>Attention : la référence client « {0} » existe déjà chez ce client (pièce {1}).</value></data>
+  <data name="DocumentTitleRequired" xml:space="preserve"><value>Le titre du document est obligatoire.</value></data>
+  <data name="PaperLocationRequired" xml:space="preserve"><value>Indiquez où se trouve le document papier.</value></data>
+  <data name="FileRequired" xml:space="preserve"><value>Choisissez un fichier.</value></data>
+  <data name="FileTooLarge" xml:space="preserve"><value>Le fichier dépasse la taille maximale autorisée ({0} Mo).</value></data>
+  <data name="LinkToItself" xml:space="preserve"><value>Une pièce ne peut pas être liée à elle-même.</value></data>
+  <data name="LinkExists" xml:space="preserve"><value>Ce lien existe déjà.</value></data>
+  <data name="LinkNotFound" xml:space="preserve"><value>Lien introuvable.</value></data>
+  <data name="QuantityInvalid" xml:space="preserve"><value>La quantité doit être positive.</value></data>
 </root>

@@ -1,0 +1,212 @@
+@page "/pieces/nouvelle"
+@page "/pieces/{Reference}/modifier"
+@inject IPartService Parts
+@inject ICustomerLookup Customers
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+
+<PageHeader Title="@Title" Subtitle="@(IsNew ? null : $"{_input.InternalReference} — {_input.Designation}")" BackHref="@BackHref" />
+
+<UnsavedChangesGuard IsDirty="() => !_saving && _form.IsDirty(_input)" ShowBanner="true" />
+<FormErrors State="_form" OnReload="ReloadAsync" />
+
+@if (_source is not null)
+{
+    <MudAlert Severity="Severity.Info" Class="mb-3" Icon="@Icons.Material.Filled.ContentCopy">
+        @string.Format(CultureInfo.CurrentCulture, CatalogTexts.DuplicateInfo, _source.InternalReference, _source.Revisions.FirstOrDefault(r => r.Id == _source.CurrentRevisionId)?.Index)
+    </MudAlert>
+}
+
+@if (!_loaded)
+{
+    <MudSkeleton Height="320px" SkeletonType="SkeletonType.Rectangle" />
+}
+else
+{
+    <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true" novalidate>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" lg="7">
+                <MudPaper Class="pa-4 bz-card" Elevation="0">
+                    <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@CatalogTexts.SectionIdentification</MudText>
+                    <div class="d-flex gap-2 align-start">
+                        <MudTextField @bind-Value="_input.InternalReference" Label="@CatalogTexts.InternalReference" HelperText="@CatalogTexts.InternalReferenceHelp"
+                                      Required="true" RequiredError="@SharedTexts.RequiredField" MaxLength="50" Variant="Variant.Outlined" Immediate="true"
+                                      Error="_form.HasError(nameof(PartInput.InternalReference))" ErrorText="@_form.ErrorFor(nameof(PartInput.InternalReference))" />
+                        @if (IsNew)
+                        {
+                            <MudTooltip Text="@CatalogTexts.SuggestReference">
+                                <MudIconButton Icon="@Icons.Material.Filled.AutoFixHigh" OnClick="SuggestAsync" Class="mt-2" aria-label="@CatalogTexts.SuggestReference" />
+                            </MudTooltip>
+                        }
+                    </div>
+                    <MudTextField @bind-Value="_input.Designation" Label="@CatalogTexts.Designation" Required="true" RequiredError="@SharedTexts.RequiredField" MaxLength="200"
+                                  Variant="Variant.Outlined" Class="mt-3" AutoFocus="IsNew"
+                                  Error="_form.HasError(nameof(PartInput.Designation))" ErrorText="@_form.ErrorFor(nameof(PartInput.Designation))" />
+                    <div class="mt-3">
+                        <CustomerPicker Value="_input.CustomerId" ValueChanged="OnCustomerChangedAsync" Required="true"
+                                        Error="_form.HasError(nameof(PartInput.CustomerId))" ErrorText="@_form.ErrorFor(nameof(PartInput.CustomerId))" />
+                    </div>
+                    <MudTextField T="string" Value="_input.CustomerReference" ValueChanged="OnCustomerReferenceChangedAsync" Label="@CatalogTexts.CustomerReference" MaxLength="100"
+                                  Variant="Variant.Outlined" Class="mt-3" DebounceInterval="400" Immediate="true" />
+                    @if (_duplicateWarning is not null)
+                    {
+                        <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">@_duplicateWarning</MudAlert>
+                    }
+                    <MudGrid Spacing="2" Class="mt-1">
+                        <MudItem xs="12" sm="6"><FamilyPicker @bind-Value="_input.FamilyId" /></MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudSelect @bind-Value="_input.Status" Label="@CatalogTexts.Status" Variant="Variant.Outlined" ToStringFunc="s => s.Label()">
+                                @foreach (var status in Enum.GetValues<PartStatus>())
+                                {
+                                    <MudSelectItem Value="status">@status.Label()</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                    </MudGrid>
+                    <div class="mt-3"><TagPicker Values="_input.TagIds" ValuesChanged="v => _input.TagIds = v.ToList()" /></div>
+                    <MudTextField @bind-Value="_input.Description" Label="@CatalogTexts.Description" Lines="3" MaxLength="4000" Variant="Variant.Outlined" Class="mt-3" />
+                </MudPaper>
+            </MudItem>
+            @if (IsNew)
+            {
+                <MudItem xs="12" lg="5">
+                    <MudPaper Class="pa-4 bz-card" Elevation="0">
+                        <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@CatalogTexts.SectionFirstRevision</MudText>
+                        <MudTextField @bind-Value="_create.FirstIndex" Label="@CatalogTexts.FirstIndex" HelperText="@CatalogTexts.FirstIndexHelp" Required="true" RequiredError="@SharedTexts.RequiredField"
+                                      MaxLength="10" Variant="Variant.Outlined" Style="max-width:200px"
+                                      Error="_form.HasError(nameof(PartCreateInput.FirstIndex))" ErrorText="@_form.ErrorFor(nameof(PartCreateInput.FirstIndex))" />
+                        <MudSwitch @bind-Value="_create.PutInForce" Color="Color.Success" Label="@CatalogTexts.PutInForce" Class="mt-3" />
+                        <MudText Typo="Typo.caption" Class="bz-muted d-block">@CatalogTexts.PutInForceHelp</MudText>
+                        <MudTextField @bind-Value="_create.ChangeDescription" Label="@CatalogTexts.ChangeDescription" Lines="2" Variant="Variant.Outlined" Class="mt-3" />
+                    </MudPaper>
+                    <MudPaper Class="pa-4 bz-card mt-3" Elevation="0">
+                        <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@CatalogTexts.SectionMaterial</MudText>
+                        <MaterialPicker @bind-Value="_create.MaterialId" Error="_form.HasError(nameof(PartCreateInput.MaterialId))" ErrorText="@_form.ErrorFor(nameof(PartCreateInput.MaterialId))" />
+                        <MudTextField @bind-Value="_create.MaterialNote" Label="@CatalogTexts.MaterialNote" HelperText="@CatalogTexts.MaterialNoteHelp" Variant="Variant.Outlined" Class="mt-3" />
+                        <MudGrid Spacing="2" Class="mt-1">
+                            <MudItem xs="12" sm="6">
+                                <MudSelect T="BlankShape?" @bind-Value="_create.BlankShape" Label="@CatalogTexts.BlankShape" Variant="Variant.Outlined" Clearable="true" ToStringFunc="s => s?.Label() ?? string.Empty">
+                                    @foreach (var shape in Enum.GetValues<BlankShape>())
+                                    {
+                                        <MudSelectItem T="BlankShape?" Value="shape">@shape.Label()</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_create.BlankDimensions" Label="@CatalogTexts.BlankDimensions" HelperText="@CatalogTexts.BlankDimensionsHelp" Variant="Variant.Outlined" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+        <div class="d-flex gap-2 justify-end mt-4">
+            <MudButton Href="@BackHref" Variant="Variant.Text">@SharedTexts.Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" Disabled="_saving">@SharedTexts.Save</MudButton>
+        </div>
+    </form>
+}
+
+@code {
+    private readonly FormState _form = new();
+    private PartCreateInput _create = new();
+    private PartInput _input = new();
+    private PartDetails? _source;
+    private Guid _id;
+    private bool _loaded;
+    private bool _saving;
+    private string? _duplicateWarning;
+
+    [Parameter] public string? Reference { get; set; }
+
+    [SupplyParameterFromQuery(Name = "dupliquer")] public string? DuplicateFrom { get; set; }
+
+    [SupplyParameterFromQuery(Name = "client")] public string? CustomerCode { get; set; }
+
+    private bool IsNew => Reference is null;
+
+    private string Title => IsNew ? (DuplicateFrom is null ? CatalogTexts.NewPart : CatalogTexts.DuplicatePart) : CatalogTexts.EditPart;
+
+    private string BackHref => IsNew ? (DuplicateFrom is null ? "pieces" : $"pieces/{Uri.EscapeDataString(DuplicateFrom)}") : $"pieces/{Uri.EscapeDataString(Reference!)}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsNew)
+        {
+            _create = new PartCreateInput { InternalReference = await Parts.SuggestReferenceAsync() };
+            if (DuplicateFrom is not null && await Parts.GetByReferenceAsync(DuplicateFrom) is { IsSuccess: true } source)
+            {
+                _source = source.Value;
+                _create.Designation = _source.Designation;
+                _create.CustomerId = _source.CustomerId;
+                _create.FamilyId = _source.FamilyId;
+                _create.Status = _source.Status;
+                _create.TagIds = _source.Tags.Select(t => t.Id).ToList();
+                _create.Description = _source.Description;
+                _create.DuplicateFromPartId = _source.Id;
+                _create.DuplicateFromRevisionId = _source.CurrentRevisionId;
+                _create.PutInForce = false;
+            }
+
+            if (CustomerCode is not null && _create.CustomerId is null)
+            {
+                _create.CustomerId = (await Customers.GetByCodeAsync(CustomerCode))?.Id;
+            }
+
+            _input = _create;
+            _form.Snapshot(_input);
+            _loaded = true;
+            return;
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        var result = await Parts.GetByReferenceAsync(Reference!);
+        if (!Notifier.Handle(result))
+        {
+            Navigation.NavigateTo("pieces");
+            return;
+        }
+
+        _id = result.Value.Id;
+        _input = PartInput.From(result.Value);
+        _form.Clear();
+        _form.Snapshot(_input);
+        _loaded = true;
+    }
+
+    private async Task SuggestAsync() => _input.InternalReference = await Parts.SuggestReferenceAsync();
+
+    private async Task OnCustomerChangedAsync(Guid? customerId)
+    {
+        _input.CustomerId = customerId;
+        await CheckDuplicateAsync();
+    }
+
+    private async Task OnCustomerReferenceChangedAsync(string? value)
+    {
+        _input.CustomerReference = value;
+        await CheckDuplicateAsync();
+    }
+
+    private async Task CheckDuplicateAsync() =>
+        _duplicateWarning = await Parts.CheckCustomerReferenceAsync(_input.CustomerId, _input.CustomerReference, IsNew ? null : _id);
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = IsNew ? await Parts.CreateAsync(_create) : await Parts.UpdateAsync(_id, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(IsNew ? CatalogTexts.PartCreated : CatalogTexts.PartSaved);
+            Navigation.NavigateTo($"pieces/{Uri.EscapeDataString(result.Value.InternalReference)}");
+            return;
+        }
+
+        _saving = false;
+    }
+}

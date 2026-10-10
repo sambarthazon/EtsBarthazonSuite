@@ -376,3 +376,39 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
 .bz-tag-warning { color: var(--bz-warning); }
 .bz-tag-error { color: var(--bz-error); }
 .bz-tag-info { color: var(--bz-info); }
+
+/* En-têtes de colonnes triables. */
+.bz-sort-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 6px 0;
+    font: inherit;
+    font-weight: 600;
+    color: inherit;
+    cursor: pointer;
+    min-height: 36px;
+}
+.bz-sort-header.active { color: var(--bz-primary); }
+.bz-list-row-archived { opacity: 0.6; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Comparaison d'indices. */
+.bz-compare { overflow-x: auto; }
+.bz-compare table { width: 100%; border-collapse: collapse; background: var(--bz-surface); border: 1px solid var(--bz-lines); border-radius: var(--bz-radius); }
+.bz-compare th, .bz-compare td { padding: 8px 10px; border-bottom: 1px solid var(--bz-lines); text-align: left; vertical-align: top; white-space: pre-line; }
+.bz-compare thead th { font-size: 1.1rem; }
+.bz-compare tbody th { font-weight: 600; color: var(--bz-text-secondary); width: 30%; }
+.bz-compare-section th { background: var(--bz-surface-alt); color: var(--bz-text) !important; text-transform: uppercase; font-size: .78rem; letter-spacing: .04em; }
+.bz-diff-changed td:last-child, .bz-diff-added td:last-child { background: var(--bz-highlight); font-weight: 600; }
+.bz-diff-removed td:nth-child(2) { text-decoration: line-through; color: var(--bz-error); }
+.bz-diff-badge { display: inline-block; margin-left: 6px; font-size: .72rem; font-weight: 700; color: var(--bz-accent); text-transform: uppercase; }
+.bz-selected-card { border-color: var(--bz-primary) !important; border-width: 2px !important; }
+
+/* En-tête fixe de la fiche pièce (ordinateur). */
+@media (min-width: 960px) {
+    .bz-part-header { position: sticky; top: 72px; z-index: 5; }
+}
+.bz-part-reference { margin: 0 !important; }

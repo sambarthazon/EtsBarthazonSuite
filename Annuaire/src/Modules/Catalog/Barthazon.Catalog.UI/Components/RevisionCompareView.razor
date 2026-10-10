@@ -1,0 +1,70 @@
+@* Comparaison côte à côte de deux indices : champs modifiés surlignés, éléments ajoutés / retirés. *@
+<MudAlert Severity="@(Comparison.ChangeCount == 0 ? Severity.Success : Severity.Info)" Dense="true" Class="mb-3">
+    @(Comparison.ChangeCount == 0 ? CatalogTexts.CompareNoChange : string.Format(CultureInfo.CurrentCulture, CatalogTexts.CompareChanges, Comparison.ChangeCount))
+</MudAlert>
+
+<div class="bz-compare">
+    <table>
+        <thead>
+            <tr>
+                <th scope="col"></th>
+                <th scope="col">@Comparison.Left.Index</th>
+                <th scope="col">@Comparison.Right.Index</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="bz-compare-section"><th colspan="3">@CatalogTexts.CompareFields</th></tr>
+            @foreach (var field in Comparison.Fields.Where(f => f.IsChanged || ShowAll))
+            {
+                <tr class="@(field.IsChanged ? "bz-diff-changed" : null)">
+                    <th scope="row">@CatalogLabels.FieldLabel(field.Field)</th>
+                    <td>@(CatalogLabels.ValueLabel(field.Field, field.Left) ?? "—")</td>
+                    <td>@(CatalogLabels.ValueLabel(field.Field, field.Right) ?? "—")</td>
+                </tr>
+            }
+            @Items(CatalogTexts.CompareCharacteristics, Comparison.Characteristics)
+            @Items(CatalogTexts.CompareOperations, Comparison.Operations)
+            @Items(CatalogTexts.CompareDocuments, Comparison.Documents)
+        </tbody>
+    </table>
+</div>
+<MudSwitch T="bool" @bind-Value="ShowAll" Label="@CatalogTexts.CompareShowAll" Color="Color.Primary" Class="mt-2 bz-no-print" />
+
+@code {
+    [Parameter, EditorRequired] public RevisionComparison Comparison { get; set; } = default!;
+
+    private bool ShowAll { get; set; }
+
+    private RenderFragment Items(string title, IReadOnlyList<ItemDiff> items) => __builder =>
+    {
+        var visible = items.Where(i => i.State != DiffState.Same || ShowAll).ToList();
+        if (visible.Count == 0)
+        {
+            return;
+        }
+
+        <tr class="bz-compare-section"><th colspan="3">@title</th></tr>
+        @foreach (var item in visible)
+        {
+            <tr class="@($"bz-diff-{item.State.ToString().ToLowerInvariant()}")">
+                <th scope="row">@item.Key@(KindLabel(item.Kind)) <span class="bz-diff-badge">@StateLabel(item.State)</span></th>
+                <td>@(item.Left ?? "—")</td>
+                <td>@(item.Right ?? "—")</td>
+            </tr>
+        }
+    };
+
+    private static string? KindLabel(string? kind) =>
+        kind is null ? null
+        : Enum.TryParse<OperationType>(kind, out var operation) ? $" · {operation.Label()}"
+        : Enum.TryParse<DocumentType>(kind, out var document) ? $" · {document.Label()}"
+        : null;
+
+    private static string? StateLabel(DiffState state) => state switch
+    {
+        DiffState.Added => CatalogTexts.DiffAdded,
+        DiffState.Removed => CatalogTexts.DiffRemoved,
+        DiffState.Changed => CatalogTexts.DiffChanged,
+        _ => null,
+    };
+}
