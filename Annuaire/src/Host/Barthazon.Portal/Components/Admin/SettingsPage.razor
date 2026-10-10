@@ -1,0 +1,42 @@
+@page "/admin/parametres"
+@attribute [Authorize(Roles = "Administrator")]
+@using Barthazon.Shared.Kernel.Settings
+@inject IApplicationSettingsStore Settings
+@inject Notifier Notifier
+
+<PageHeader Title="@PortalTexts.SettingsTitle" BackHref="admin" BackText="@PortalTexts.AdminTitle" />
+<FormErrors State="_form" />
+<MudPaper Class="pa-4 bz-card" Elevation="0" Style="max-width:720px">
+    <MudTextField @bind-Value="_name" Label="@PortalTexts.SettingsName" Variant="Variant.Outlined" Required="true" RequiredError="@SharedTexts.RequiredField"
+                  Error="_form.HasError(NameField)" ErrorText="@_form.ErrorFor(NameField)" />
+    <MudTextField @bind-Value="_pattern" Label="@PortalTexts.SettingsPattern" HelperText="@PortalTexts.SettingsPatternHelp" Variant="Variant.Outlined" Class="mt-3"
+                  Error="_form.HasError(PatternField)" ErrorText="@_form.ErrorFor(PatternField)" />
+    <MudTextField @bind-Value="_url" Label="@PortalTexts.SettingsUrl" HelperText="@PortalTexts.SettingsUrlHelp" Variant="Variant.Outlined" Class="mt-3" InputType="InputType.Url"
+                  Error="_form.HasError(UrlField)" ErrorText="@_form.ErrorFor(UrlField)" />
+    <div class="d-flex justify-end mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync">@SharedTexts.Save</MudButton>
+    </div>
+</MudPaper>
+
+@code {
+    private const string NameField = nameof(ApplicationSettings.ApplicationName);
+    private const string PatternField = nameof(ApplicationSettings.ReferencePattern);
+    private const string UrlField = nameof(ApplicationSettings.PublicBaseUrl);
+    private readonly FormState _form = new();
+    private string _name = string.Empty;
+    private string _pattern = string.Empty;
+    private string _url = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var current = await Settings.GetAsync();
+        (_name, _pattern, _url) = (current.ApplicationName, current.ReferencePattern, current.PublicBaseUrl);
+    }
+
+    private async Task SaveAsync()
+    {
+        var result = await Settings.SaveAsync(new ApplicationSettings(_name, _url, _pattern));
+        _form.Apply(result);
+        Notifier.Handle(result, PortalTexts.SettingsSaved);
+    }
+}

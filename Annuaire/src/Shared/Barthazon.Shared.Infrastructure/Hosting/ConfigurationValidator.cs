@@ -5,6 +5,7 @@ using Barthazon.Shared.Infrastructure.Persistence;
 using Barthazon.Shared.Infrastructure.Security;
 using Barthazon.Shared.Infrastructure.Settings;
 using Microsoft.Data.Sqlite;
+using Barthazon.Shared.Infrastructure.Resources;
 using Microsoft.Extensions.Configuration;
 
 namespace Barthazon.Shared.Infrastructure.Hosting;
@@ -30,11 +31,11 @@ public static class ConfigurationValidator
         var database = configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>() ?? new DatabaseOptions();
         if (!database.IsSqlite && !database.IsPostgres)
         {
-            errors.Add($"Database:Provider « {database.Provider} » inconnu (valeurs possibles : Sqlite, Postgres).");
+            errors.Add(Format(InfrastructureTexts.ProviderUnknown, database.Provider));
         }
         else if (string.IsNullOrWhiteSpace(database.ConnectionString))
         {
-            errors.Add("Database:ConnectionString est vide.");
+            errors.Add(InfrastructureTexts.ConnectionStringEmpty);
         }
         else if (database.IsSqlite)
         {
@@ -43,37 +44,37 @@ public static class ConfigurationValidator
                 var dataSource = new SqliteConnectionStringBuilder(database.ConnectionString).DataSource;
                 if (string.IsNullOrWhiteSpace(dataSource))
                 {
-                    errors.Add("Database:ConnectionString doit indiquer le fichier de base (Data Source=...).");
+                    errors.Add(InfrastructureTexts.DataSourceMissing);
                 }
                 else if (dataSource != ":memory:")
                 {
                     var path = Path.GetFullPath(dataSource, contentRoot);
-                    CheckWritableDirectory(Path.GetDirectoryName(path)!, "dossier de la base de données (Database:ConnectionString)", errors);
+                    CheckWritableDirectory(Path.GetDirectoryName(path)!, InfrastructureTexts.DirectoryDatabase, errors);
                     if (AppDbContextFactory.IsNetworkPath(path))
                     {
-                        warnings.Add("La base SQLite est sur un partage réseau : risque de corruption. Recommandé : disque local de la machine qui héberge l'application, avec sauvegarde vers le partage. Une seule instance du serveur doit fonctionner (mode de journalisation DELETE).");
+                        warnings.Add(InfrastructureTexts.DatabaseOnNetworkShare);
                     }
                 }
             }
             catch (ArgumentException ex)
             {
-                errors.Add($"Database:ConnectionString invalide : {ex.Message}");
+                errors.Add(Format(InfrastructureTexts.ConnectionStringInvalid, ex.Message));
             }
         }
 
         var files = configuration.GetSection(FileStorageOptions.SectionName).Get<FileStorageOptions>() ?? new FileStorageOptions();
         if (string.IsNullOrWhiteSpace(files.RootPath))
         {
-            errors.Add("FileStorage:RootPath est vide.");
+            errors.Add(InfrastructureTexts.FilesRootEmpty);
         }
         else
         {
-            CheckWritableDirectory(Path.GetFullPath(files.RootPath, contentRoot), "dossier des fichiers (FileStorage:RootPath)", errors);
+            CheckWritableDirectory(Path.GetFullPath(files.RootPath, contentRoot), InfrastructureTexts.DirectoryFiles, errors);
         }
 
         if (files.MaxFileSizeMb <= 0)
         {
-            errors.Add("FileStorage:MaxFileSizeMb doit être supérieur à 0.");
+            errors.Add(InfrastructureTexts.MaxFileSizeInvalid);
         }
 
         var backup = configuration.GetSection(BackupOptions.SectionName).Get<BackupOptions>() ?? new BackupOptions();
@@ -81,23 +82,23 @@ public static class ConfigurationValidator
         {
             if (backup.DailyTime is null)
             {
-                errors.Add($"Backup:DailyAt « {backup.DailyAt} » invalide (format attendu HH:mm, ex. 12:30).");
+                errors.Add(Format(InfrastructureTexts.BackupTimeInvalid, backup.DailyAt));
             }
 
             if (backup.RetentionDays <= 0)
             {
-                errors.Add("Backup:RetentionDays doit être supérieur à 0.");
+                errors.Add(InfrastructureTexts.RetentionInvalid);
             }
 
             if (string.IsNullOrWhiteSpace(backup.Directory))
             {
-                errors.Add("Backup:Directory est vide.");
+                errors.Add(InfrastructureTexts.BackupDirectoryEmpty);
             }
             else
             {
                 // Le partage réseau peut être momentanément indisponible : avertissement seulement.
                 var backupErrors = new List<string>();
-                CheckWritableDirectory(Path.GetFullPath(backup.Directory, contentRoot), "dossier des sauvegardes (Backup:Directory)", backupErrors);
+                CheckWritableDirectory(Path.GetFullPath(backup.Directory, contentRoot), InfrastructureTexts.DirectoryBackups, backupErrors);
                 warnings.AddRange(backupErrors);
             }
         }
@@ -105,13 +106,13 @@ public static class ConfigurationValidator
         var security = configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
         if (security.SessionDays <= 0)
         {
-            errors.Add("Security:SessionDays doit être supérieur à 0.");
+            errors.Add(InfrastructureTexts.SessionDaysInvalid);
         }
 
         var publicUrl = configuration["App:PublicBaseUrl"];
         if (!Uri.TryCreate(publicUrl, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            errors.Add($"App:PublicBaseUrl « {publicUrl} » invalide (ex. http://pc-bureau:5080). Elle sert aux QR codes.");
+            errors.Add(Format(InfrastructureTexts.PublicUrlInvalid, publicUrl));
         }
 
         var culture = configuration["App:Culture"] ?? "fr-FR";
@@ -121,17 +122,19 @@ public static class ConfigurationValidator
         }
         catch (CultureNotFoundException)
         {
-            errors.Add($"App:Culture « {culture} » inconnue.");
+            errors.Add(Format(InfrastructureTexts.CultureUnknown, culture));
         }
 
         var pattern = configuration["Catalog:ReferencePattern"] ?? "P-{0:0000}";
         if (!DbApplicationSettingsStore.IsValidReferencePattern(pattern))
         {
-            errors.Add($"Catalog:ReferencePattern « {pattern} » invalide (doit contenir {{0}}, ex. P-{{0:0000}}).");
+            errors.Add(Format(InfrastructureTexts.ReferencePatternInvalid, pattern));
         }
 
         return new ConfigurationReport(errors, warnings);
     }
+
+    private static string Format(string format, params object?[] args) => string.Format(CultureInfo.CurrentCulture, format, args);
 
     private static void CheckWritableDirectory(string directory, string description, List<string> errors)
     {
@@ -144,7 +147,7 @@ public static class ConfigurationValidator
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
-            errors.Add($"Le {description} « {directory} » est inaccessible en écriture : {ex.Message}");
+            errors.Add(Format(InfrastructureTexts.DirectoryNotWritable, description, directory, ex.Message));
         }
     }
 }

@@ -1,6 +1,6 @@
 @page "/pieces/import"
+@attribute [Authorize(Roles = "Editor,Administrator")]
 @inject IPartExchangeService Exchange
-@inject ICurrentUser CurrentUser
 @inject BrowserInterop Browser
 @inject Notifier Notifier
 
@@ -10,11 +10,7 @@
     </Actions>
 </PageHeader>
 
-@if (CurrentUser.Role < UserRole.Editor)
-{
-    <MudAlert Severity="Severity.Warning">@KernelForbidden</MudAlert>
-}
-else if (_result is not null)
+@if (_result is not null)
 {
     <MudPaper Class="pa-4 bz-card" Elevation="0">
         <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">3. @CatalogTexts.ImportStep3</MudText>
@@ -107,8 +103,6 @@ else
     private bool _createCustomers = true;
     private bool _createMaterials = true;
     private bool _createFamilies = true;
-
-    private static string KernelForbidden => Barthazon.Shared.Kernel.Resources.KernelTexts.EditForbidden;
 
     private async Task DownloadTemplateAsync()
     {

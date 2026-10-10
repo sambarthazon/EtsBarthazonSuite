@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ProviderUnknown" xml:space="preserve"><value>Database:Provider « {0} » inconnu (valeurs possibles : Sqlite, Postgres).</value></data>
+  <data name="ConnectionStringEmpty" xml:space="preserve"><value>Database:ConnectionString est vide.</value></data>
+  <data name="DataSourceMissing" xml:space="preserve"><value>Database:ConnectionString doit indiquer le fichier de base (Data Source=...).</value></data>
+  <data name="DatabaseOnNetworkShare" xml:space="preserve"><value>La base SQLite est sur un partage réseau : risque de corruption. Recommandé : disque local de la machine qui héberge l'application, avec sauvegarde vers le partage. Une seule instance du serveur doit fonctionner (mode de journalisation DELETE).</value></data>
+  <data name="ConnectionStringInvalid" xml:space="preserve"><value>Database:ConnectionString invalide : {0}</value></data>
+  <data name="FilesRootEmpty" xml:space="preserve"><value>FileStorage:RootPath est vide.</value></data>
+  <data name="MaxFileSizeInvalid" xml:space="preserve"><value>FileStorage:MaxFileSizeMb doit être supérieur à 0.</value></data>
+  <data name="BackupTimeInvalid" xml:space="preserve"><value>Backup:DailyAt « {0} » invalide (format attendu HH:mm, ex. 12:30).</value></data>
+  <data name="RetentionInvalid" xml:space="preserve"><value>Backup:RetentionDays doit être supérieur à 0.</value></data>
+  <data name="BackupDirectoryEmpty" xml:space="preserve"><value>Backup:Directory est vide.</value></data>
+  <data name="SessionDaysInvalid" xml:space="preserve"><value>Security:SessionDays doit être supérieur à 0.</value></data>
+  <data name="PublicUrlInvalid" xml:space="preserve"><value>App:PublicBaseUrl « {0} » invalide (ex. http://pc-bureau:5080). Elle sert aux QR codes.</value></data>
+  <data name="CultureUnknown" xml:space="preserve"><value>App:Culture « {0} » inconnue.</value></data>
+  <data name="ReferencePatternInvalid" xml:space="preserve"><value>Catalog:ReferencePattern « {0} » invalide (doit contenir {{0}}, ex. P-{{0:0000}}).</value></data>
+  <data name="DirectoryNotWritable" xml:space="preserve"><value>Le {0} « {1} » est inaccessible en écriture : {2}</value></data>
+  <data name="DirectoryDatabase" xml:space="preserve"><value>dossier de la base de données (Database:ConnectionString)</value></data>
+  <data name="DirectoryFiles" xml:space="preserve"><value>dossier des fichiers (FileStorage:RootPath)</value></data>
+  <data name="DirectoryBackups" xml:space="preserve"><value>dossier des sauvegardes (Backup:Directory)</value></data>
+  <data name="BackupDisabled" xml:space="preserve"><value>La sauvegarde automatique est désactivée (Backup:Enabled).</value></data>
+  <data name="SettingsNameRequired" xml:space="preserve"><value>Le nom de l'application est obligatoire.</value></data>
+  <data name="SettingsUrlInvalid" xml:space="preserve"><value>L'adresse publique doit être une adresse complète, par exemple http://pc-bureau:5080.</value></data>
+  <data name="SettingsPatternInvalid" xml:space="preserve"><value>Le modèle de référence doit contenir {0} (ex. P-{0:0000}).</value></data>
+</root>

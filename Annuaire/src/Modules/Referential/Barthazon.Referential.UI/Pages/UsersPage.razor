@@ -1,0 +1,59 @@
+@page "/admin/utilisateurs"
+@attribute [Authorize(Roles = "Administrator")]
+@inject IUserService Users
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+
+<PageHeader Title="@ReferentialTexts.UsersTitle" Subtitle="@ReferentialTexts.UsersSubtitle" BackHref="admin" BackText="@ReferentialTexts.AdministrationBack">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="() => EditAsync(null)">@ReferentialTexts.NewUser</MudButton>
+    </Actions>
+</PageHeader>
+
+<AdaptiveList T="UserItem" Items="_users" Loading="_users is null" OnItemClick="EditAsync" AriaLabel="@ReferentialTexts.UsersTitle">
+    <HeaderContent>
+        <MudTh>@ReferentialTexts.UserName</MudTh>
+        <MudTh>@ReferentialTexts.DisplayName</MudTh>
+        <MudTh>@ReferentialTexts.Role</MudTh>
+        <MudTh>@ReferentialTexts.ColStatus</MudTh>
+        <MudTh>@ReferentialTexts.LastLogin</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="u">
+        <MudTd><b>@u.UserName</b></MudTd>
+        <MudTd>@u.DisplayName</MudTd>
+        <MudTd>@u.Role.Label()</MudTd>
+        <MudTd><CustomerStatus IsActive="u.IsActive" IsArchived="false" /></MudTd>
+        <MudTd>@(u.LastLoginAt?.ToLocalTime().ToString("g", CultureInfo.CurrentCulture) ?? ReferentialTexts.Never)</MudTd>
+    </RowTemplate>
+    <CardTemplate Context="u">
+        <div class="d-flex justify-space-between align-center">
+            <div><b>@u.DisplayName</b> <span class="bz-muted">(@u.UserName)</span><div class="bz-muted" style="font-size:.85rem">@u.Role.Label()</div></div>
+            <CustomerStatus IsActive="u.IsActive" IsArchived="false" />
+        </div>
+    </CardTemplate>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<UserItem>? _users;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await Users.ListAsync();
+        if (Notifier.Handle(result))
+        {
+            _users = result.Value;
+        }
+    }
+
+    private async Task EditAsync(UserItem? user)
+    {
+        var dialog = await Dialogs.ShowAsync<UserDialog>(user is null ? ReferentialTexts.NewUser : ReferentialTexts.EditUser,
+            new DialogParameters<UserDialog> { { d => d.User, user } }, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await LoadAsync();
+        }
+    }
+}

@@ -1,0 +1,74 @@
+@page "/admin/donnees"
+@attribute [Authorize(Roles = "Administrator")]
+@using Barthazon.Shared.Infrastructure.Administration
+@inject AdministrationService Administration
+@inject BrowserInterop Browser
+@inject IDialogService Dialogs
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+
+<PageHeader Title="@PortalTexts.DataTitle" BackHref="admin" BackText="@PortalTexts.AdminTitle" />
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@PortalTexts.DataExport</MudText>
+            <MudText Class="mb-3">@PortalTexts.DataExportText</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportAsync" Disabled="_busy">@PortalTexts.DataExport</MudButton>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 bz-card" Elevation="0" Style="height:100%">
+            <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@PortalTexts.DataImport</MudText>
+            <MudAlert Severity="Severity.Warning" Class="mb-3">@PortalTexts.DataImportText</MudAlert>
+            <label class="mud-button-root mud-button mud-button-outlined mud-button-outlined-error mud-button-outlined-size-medium bz-camera-button" style="padding:6px 16px">
+                <MudIcon Icon="@Icons.Material.Filled.Upload" Class="mr-2" /> @PortalTexts.DataImport
+                <InputFile OnChange="ImportAsync" accept=".json" disabled="@_busy" aria-label="@PortalTexts.DataImport" />
+            </label>
+            @if (_busy)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-3" />
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _busy;
+
+    private async Task ExportAsync()
+    {
+        _busy = true;
+        var result = await Administration.ExportAllAsync();
+        if (Notifier.Handle(result))
+        {
+            await Browser.DownloadAsync(result.Value.FileName, result.Value.Content);
+        }
+
+        _busy = false;
+    }
+
+    private async Task ImportAsync(InputFileChangeEventArgs e)
+    {
+        if (!await Dialogs.ConfirmAsync(PortalTexts.DataImportConfirmTitle, string.Format(CultureInfo.CurrentCulture, PortalTexts.DataImportConfirmText, e.File.Name), PortalTexts.DataImport, danger: true))
+        {
+            return;
+        }
+
+        _busy = true;
+        using var memory = new MemoryStream();
+        await using (var stream = e.File.OpenReadStream(500L * 1024 * 1024))
+        {
+            await stream.CopyToAsync(memory);
+        }
+
+        memory.Position = 0;
+        var result = await Administration.ImportAllAsync(memory);
+        _busy = false;
+        if (Notifier.Handle(result))
+        {
+            Notifier.Success(string.Format(CultureInfo.CurrentCulture, PortalTexts.DataImportDone, result.Value.TotalRows));
+            Navigation.NavigateTo("connexion", forceLoad: true);
+        }
+    }
+}

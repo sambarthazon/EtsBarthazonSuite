@@ -1,4 +1,7 @@
+using Barthazon.Shared.Infrastructure.Administration;
 using Barthazon.Shared.Infrastructure.Auditing;
+using Barthazon.Shared.Infrastructure.DataTransfer;
+using Barthazon.Shared.Infrastructure.Hosting;
 using Barthazon.Shared.Infrastructure.Backup;
 using Barthazon.Shared.Infrastructure.Features;
 using Barthazon.Shared.Infrastructure.Files;
@@ -15,6 +18,7 @@ using Barthazon.Shared.Kernel.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Barthazon.Shared.Infrastructure;
 
@@ -68,6 +72,15 @@ public static class SharedInfrastructureServiceCollectionExtensions
         services.AddSingleton<ApplicationSettingsCache>();
         services.AddScoped<IApplicationSettingsStore, DbApplicationSettingsStore>();
         services.AddScoped<IAccessGuard>(sp => new AccessGuard(sp.GetRequiredService<ICurrentUser>(), security.AllowAnonymousRead));
+
+        // Exploitation : sauvegardes, export / import complet, administration, contrôle de santé.
+        services.AddSingleton<BackupService>();
+        services.AddSingleton<DataTransferService>();
+        services.AddScoped<AdministrationService>();
+        services.TryAddSingleton(new ConfigurationWarnings([]));
+        services.AddHealthChecks()
+            .AddCheck<DatabaseHealthCheck>("database")
+            .AddCheck<FileStorageHealthCheck>("files");
         return services;
     }
 

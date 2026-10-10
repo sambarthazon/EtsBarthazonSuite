@@ -1,0 +1,139 @@
+@page "/admin/journal"
+@attribute [Authorize(Roles = "Administrator")]
+@using System.Text.Json
+@using Barthazon.Catalog.UI.Components
+@using Barthazon.Shared.Infrastructure.Administration
+@using Barthazon.Shared.Kernel.Auditing
+@using Barthazon.Shared.Kernel.Persistence
+@inject AdministrationService Administration
+@inject Notifier Notifier
+
+<PageHeader Title="@PortalTexts.AuditTitle" Subtitle="@(_page is null ? null : string.Format(CultureInfo.CurrentCulture, PortalTexts.AuditTotal, _page.TotalCount))"
+            BackHref="admin" BackText="@PortalTexts.AdminTitle" />
+
+<MudPaper Class="pa-3 mb-3 bz-card" Elevation="0">
+    <div class="d-flex flex-wrap gap-3 align-center">
+        <MudDatePicker Date="_from" DateChanged="d => { _from = d; return LoadAsync(0); }" Label="@PortalTexts.AuditFrom" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="max-width:180px" />
+        <MudDatePicker Date="_to" DateChanged="d => { _to = d; return LoadAsync(0); }" Label="@PortalTexts.AuditTo" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="max-width:180px" />
+        <MudTextField T="string" Value="_user" ValueChanged="v => { _user = v; return LoadAsync(0); }" Label="@PortalTexts.AuditUser" Variant="Variant.Outlined" Margin="Margin.Dense" DebounceInterval="400" Clearable="true" Style="max-width:200px" />
+        <MudSelect T="string" Value="_entityType" ValueChanged="v => { _entityType = v; return LoadAsync(0); }" Label="@PortalTexts.AuditEntityType" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="max-width:220px"
+                   ToStringFunc="t => t is null ? PortalTexts.AuditAll : EntityLabel(t)">
+            @foreach (var type in EntityTypes)
+            {
+                <MudSelectItem T="string" Value="type">@EntityLabel(type)</MudSelectItem>
+            }
+        </MudSelect>
+    </div>
+</MudPaper>
+
+@if (_page is { } page)
+{
+    @if (page.Items.Count == 0)
+    {
+        <EmptyState Title="@PortalTexts.AuditEmpty" Icon="@Icons.Material.Outlined.History" />
+    }
+    else
+    {
+        <div style="overflow-x:auto">
+            <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="bz-card">
+                <thead><tr><th>@PortalTexts.AuditDate</th><th>@PortalTexts.AuditUser</th><th>@PortalTexts.AuditEntity</th><th>@PortalTexts.AuditAction</th><th>@PortalTexts.AuditDetails</th></tr></thead>
+                <tbody>
+                    @foreach (var entry in page.Items)
+                    {
+                        <tr>
+                            <td style="white-space:nowrap">@entry.At.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</td>
+                            <td>@entry.UserName</td>
+                            <td>@EntityLabel(entry.EntityType)</td>
+                            <td>@ActionLabel(entry.Action)</td>
+                            <td style="font-size:.85rem">@Details(entry)</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </div>
+        @if (page.TotalCount > PageSize)
+        {
+            <div class="d-flex justify-center mt-3">
+                <MudPagination Count="@((page.TotalCount + PageSize - 1) / PageSize)" Selected="_pageIndex + 1" SelectedChanged="p => LoadAsync(p - 1)" Color="Color.Primary" />
+            </div>
+        }
+    }
+}
+
+@code {
+    private const int PageSize = 100;
+    private static readonly string[] EntityTypes = ["Part", "PartRevision", "PartDocument", "PartLink", "Customer", "Material", "Machine", "PartFamily", "Tag", "User", "Settings"];
+    private PagedResult<AuditEntry>? _page;
+    private int _pageIndex;
+    private DateTime? _from;
+    private DateTime? _to;
+    private string? _user;
+    private string? _entityType;
+
+    protected override Task OnInitializedAsync() => LoadAsync(0);
+
+    private async Task LoadAsync(int pageIndex)
+    {
+        _pageIndex = pageIndex;
+        var query = new AuditQuery(
+            EntityType: _entityType,
+            UserName: string.IsNullOrWhiteSpace(_user) ? null : _user.Trim().ToLowerInvariant(),
+            From: _from is { } from ? new DateTimeOffset(from.Date) : null,
+            To: _to is { } to ? new DateTimeOffset(to.Date.AddDays(1)) : null,
+            Skip: pageIndex * PageSize,
+            Take: PageSize);
+        var result = await Administration.QueryAuditAsync(query);
+        if (Notifier.Handle(result))
+        {
+            _page = result.Value;
+        }
+    }
+
+    private static string EntityLabel(string type) =>
+        PortalTexts.ResourceManager.GetString("Entity_" + type, CultureInfo.CurrentUICulture) ?? CatalogLabels.EntityLabel(type);
+
+    private static string ActionLabel(string action) =>
+        PortalTexts.ResourceManager.GetString("Action_" + action, CultureInfo.CurrentUICulture) ?? CatalogLabels.ActionLabel(action);
+
+    private static RenderFragment Details(AuditEntry entry) => __builder =>
+    {
+        if (string.IsNullOrWhiteSpace(entry.Details))
+        {
+            return;
+        }
+
+        List<(string Field, string? Old, string? New)>? changes = null;
+        try
+        {
+            using var json = JsonDocument.Parse(entry.Details);
+            if (json.RootElement.ValueKind == JsonValueKind.Object)
+            {
+                changes = json.RootElement.EnumerateObject()
+                    .Where(p => p.Value.ValueKind == JsonValueKind.Object && p.Value.TryGetProperty("New", out _))
+                    .Select(p => (p.Name, Text(p.Value.GetProperty("Old")), Text(p.Value.GetProperty("New"))))
+                    .ToList();
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        if (changes is null)
+        {
+            <span>@entry.Details</span>
+            return;
+        }
+
+        foreach (var (field, old, value) in changes.Take(8))
+        {
+            <div><span class="bz-muted">@CatalogLabels.FieldLabel(field) :</span> @(entry.Action == AuditActions.Created ? null : $"{old ?? "—"} → ")<b>@(value ?? "—")</b></div>
+        }
+    };
+
+    private static string? Text(JsonElement element) => element.ValueKind switch
+    {
+        JsonValueKind.Null or JsonValueKind.Undefined => null,
+        JsonValueKind.String => element.GetString(),
+        _ => element.GetRawText(),
+    };
+}

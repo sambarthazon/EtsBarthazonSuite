@@ -38,7 +38,7 @@ public sealed class FileSystemFileStorage : IFileStorage
                     total += read;
                     if (total > maxSizeBytes)
                     {
-                        throw new FileTooLargeException($"Le fichier dépasse la taille maximale autorisée ({maxSizeBytes / 1024 / 1024} Mo).");
+                        throw new FileTooLargeException(maxSizeBytes.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     }
 
                     hash.AppendData(buffer, 0, read);

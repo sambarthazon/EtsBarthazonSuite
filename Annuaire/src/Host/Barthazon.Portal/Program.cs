@@ -4,13 +4,37 @@ using Barthazon.Portal.Endpoints;
 using Barthazon.Portal.Hosting;
 using Barthazon.Portal.Hosting.Demo;
 using Barthazon.Shared.Infrastructure;
+using Barthazon.Shared.Infrastructure.Backup;
 using Barthazon.Shared.Infrastructure.Hosting;
 using Barthazon.Shared.Infrastructure.Persistence;
 using Barthazon.Shared.Infrastructure.Security;
 using Barthazon.Shared.Kernel.Modules;
 using Barthazon.Shared.UI.Services;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Serilog;
+using Serilog.Events;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    // Service Windows : le dossier de travail est C:\Windows\System32, on se base sur le dossier de l'application.
+    ContentRootPath = Microsoft.Extensions.Hosting.WindowsServices.WindowsServiceHelpers.IsWindowsService() ? AppContext.BaseDirectory : null,
+});
+
+// Exécution en service Windows (PC du bureau) ou systemd (Raspberry Pi) ; sans effet en mode console.
+builder.Host.UseWindowsService(options => options.ServiceName = "Barthazon");
+builder.Host.UseSystemd();
+
+// Journaux : console + fichiers tournants (un par jour, 14 jours par défaut).
+var logDirectory = Path.GetFullPath(builder.Configuration["Logging:Directory"] ?? "logs", builder.Environment.ContentRootPath);
+var retainedDays = builder.Configuration.GetValue("Logging:RetainedDays", 14);
+builder.Host.UseSerilog((context, configuration) => configuration
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+    .WriteTo.File(Path.Combine(logDirectory, "barthazon-.log"), rollingInterval: RollingInterval.Day, retainedFileCountLimit: retainedDays, formatProvider: CultureInfo.InvariantCulture));
 
 // Validation de la configuration : en cas d'erreur, arrêt immédiat avec un message clair.
 var report = ConfigurationValidator.Validate(builder.Configuration, builder.Environment.ContentRootPath);
@@ -53,6 +77,7 @@ var security = builder.Configuration.GetSection(SecurityOptions.SectionName).Get
 builder.Services.AddPortalAuthentication(security);
 
 builder.Services.AddSingleton<DemoDataSeeder>();
+builder.Services.AddHostedService<BackupScheduler>();
 
 var app = builder.Build();
 
@@ -80,11 +105,30 @@ app.UseFirstRunRedirect();
 app.UseAntiforgery();
 
 app.MapStaticAssets().AllowAnonymous();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.ToDictionary(e => e.Key, e => new { status = e.Value.Status.ToString(), description = e.Value.Description }),
+        });
+    },
+}).AllowAnonymous();
 app.MapAccountEndpoints();
 app.MapFileEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddAdditionalAssemblies(modules.Select(m => m.UiAssembly).OfType<System.Reflection.Assembly>().Distinct().ToArray());
 
-await app.RunAsync();
-return 0;
+try
+{
+    await app.RunAsync();
+    return 0;
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}

@@ -89,6 +89,7 @@ public sealed class TestApplication : IAsyncDisposable
         services.AddSharedInfrastructure(configuration, root, [new ReferentialPersistence(), new CatalogPersistence()]);
         services.AddReferentialCore();
         services.AddCatalogCore();
+        services.AddSingleton<Barthazon.Shared.Infrastructure.Hosting.DatabaseHealthCheck>();
         configure?.Invoke(services);
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });

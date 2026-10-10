@@ -84,4 +84,24 @@
   <data name="NoMaterials" xml:space="preserve"><value>Aucune matière</value></data>
   <data name="NoMachines" xml:space="preserve"><value>Aucune machine</value></data>
   <data name="UsageCount" xml:space="preserve"><value>{0} utilisation(s)</value></data>
+  <data name="UsersTitle" xml:space="preserve"><value>Utilisateurs</value></data>
+  <data name="UsersSubtitle" xml:space="preserve"><value>Lecteur : consulte. Éditeur : crée et modifie pièces, indices, documents, clients et référentiels. Administrateur : en plus, comptes, paramètres, sauvegardes.</value></data>
+  <data name="NewUser" xml:space="preserve"><value>Nouvel utilisateur</value></data>
+  <data name="EditUser" xml:space="preserve"><value>Modifier l'utilisateur</value></data>
+  <data name="UserName" xml:space="preserve"><value>Identifiant</value></data>
+  <data name="UserNameHelp" xml:space="preserve"><value>Minuscules, sans espace (ex. jdupont).</value></data>
+  <data name="DisplayName" xml:space="preserve"><value>Nom affiché</value></data>
+  <data name="Role" xml:space="preserve"><value>Rôle</value></data>
+  <data name="UserActive" xml:space="preserve"><value>Compte actif</value></data>
+  <data name="Password" xml:space="preserve"><value>Mot de passe</value></data>
+  <data name="PasswordNew" xml:space="preserve"><value>Nouveau mot de passe</value></data>
+  <data name="PasswordHelpNew" xml:space="preserve"><value>8 caractères minimum.</value></data>
+  <data name="PasswordHelpEdit" xml:space="preserve"><value>Laisser vide pour ne pas changer.</value></data>
+  <data name="LastLogin" xml:space="preserve"><value>Dernière connexion</value></data>
+  <data name="Never" xml:space="preserve"><value>jamais</value></data>
+  <data name="UserSaved" xml:space="preserve"><value>Utilisateur enregistré.</value></data>
+  <data name="RoleReader" xml:space="preserve"><value>Lecteur</value></data>
+  <data name="RoleEditor" xml:space="preserve"><value>Éditeur</value></data>
+  <data name="RoleAdministrator" xml:space="preserve"><value>Administrateur</value></data>
+  <data name="AdministrationBack" xml:space="preserve"><value>Administration</value></data>
 </root>

@@ -11,4 +11,8 @@
   <data name="ConcurrencyConflict" xml:space="preserve"><value>Ces données ont été modifiées par quelqu'un d'autre pendant votre saisie. Rechargez la page pour voir la dernière version, puis refaites votre modification.</value></data>
   <data name="UniqueConflict" xml:space="preserve"><value>Une valeur doit être unique et existe déjà.</value></data>
   <data name="NotFound" xml:space="preserve"><value>Élément introuvable.</value></data>
+  <data name="BackupNotSupported" xml:space="preserve"><value>La sauvegarde automatique ne concerne que SQLite. Avec PostgreSQL, utilisez pg_dump (voir la documentation) ou l'export complet JSON.</value></data>
+  <data name="BackupFailed" xml:space="preserve"><value>Échec de la sauvegarde : {0}</value></data>
+  <data name="ImportNotAFile" xml:space="preserve"><value>Ce fichier n'est pas un export complet Barthazon.</value></data>
+  <data name="ImportFailed" xml:space="preserve"><value>Échec de l'import : {0}</value></data>
 </root>

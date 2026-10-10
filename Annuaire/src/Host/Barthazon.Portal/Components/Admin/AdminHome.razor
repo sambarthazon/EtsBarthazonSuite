@@ -1,0 +1,29 @@
+@page "/admin"
+@attribute [Authorize(Roles = "Administrator")]
+@using Barthazon.Shared.Infrastructure.Administration
+@inject AdministrationService Administration
+@inject Notifier Notifier
+
+<PageHeader Title="@PortalTexts.AdminTitle" Subtitle="@PortalTexts.AdminSubtitle" />
+
+<div class="bz-tiles mb-6">
+    @Tile("admin/utilisateurs", Icons.Material.Filled.People, PortalTexts.AdminUsers, PortalTexts.AdminUsersText)
+    @Tile("admin/parametres", Icons.Material.Filled.Settings, PortalTexts.AdminSettings, PortalTexts.AdminSettingsText)
+    @Tile("admin/sauvegardes", Icons.Material.Filled.Backup, PortalTexts.AdminBackups, PortalTexts.AdminBackupsText)
+    @Tile("admin/journal", Icons.Material.Filled.History, PortalTexts.AdminAudit, PortalTexts.AdminAuditText)
+    @Tile("admin/donnees", Icons.Material.Filled.ImportExport, PortalTexts.AdminData, PortalTexts.AdminDataText)
+</div>
+
+<MudText Typo="Typo.h5" HtmlTag="h2" Class="mb-3">@PortalTexts.AdminStatus</MudText>
+<SystemStatusPanel />
+
+@code {
+    private static RenderFragment Tile(string href, string icon, string title, string text) => __builder =>
+    {
+        <a class="bz-tile" href="@href">
+            <svg viewBox="0 0 24 24" aria-hidden="true">@((MarkupString)icon)</svg>
+            <span class="bz-tile-title">@title</span>
+            <span class="bz-tile-desc">@text</span>
+        </a>
+    };
+}

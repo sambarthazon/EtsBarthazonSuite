@@ -1,5 +1,6 @@
 @page "/pieces/nouvelle"
 @page "/pieces/{Reference}/modifier"
+@attribute [Authorize(Roles = "Editor,Administrator")]
 @inject IPartService Parts
 @inject ICustomerLookup Customers
 @inject NavigationManager Navigation

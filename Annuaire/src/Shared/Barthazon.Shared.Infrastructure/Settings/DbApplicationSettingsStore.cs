@@ -4,6 +4,7 @@ using Barthazon.Shared.Kernel.Results;
 using Barthazon.Shared.Kernel.Security;
 using Barthazon.Shared.Kernel.Settings;
 using Microsoft.EntityFrameworkCore;
+using Barthazon.Shared.Infrastructure.Resources;
 using Microsoft.Extensions.Configuration;
 
 namespace Barthazon.Shared.Infrastructure.Settings;
@@ -99,17 +100,17 @@ public sealed class DbApplicationSettingsStore(
         var errors = new List<Error>();
         if (string.IsNullOrWhiteSpace(settings.ApplicationName))
         {
-            errors.Add(Error.Validation("Le nom de l'application est obligatoire.", nameof(settings.ApplicationName)));
+            errors.Add(Error.Validation(InfrastructureTexts.SettingsNameRequired, nameof(settings.ApplicationName)));
         }
 
         if (!Uri.TryCreate(settings.PublicBaseUrl, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            errors.Add(Error.Validation("L'adresse publique doit être une adresse complète, par exemple http://pc-bureau:5080.", nameof(settings.PublicBaseUrl)));
+            errors.Add(Error.Validation(InfrastructureTexts.SettingsUrlInvalid, nameof(settings.PublicBaseUrl)));
         }
 
         if (!IsValidReferencePattern(settings.ReferencePattern))
         {
-            errors.Add(Error.Validation("Le modèle de référence doit contenir {0} (ex. P-{0:0000}).", nameof(settings.ReferencePattern)));
+            errors.Add(Error.Validation(InfrastructureTexts.SettingsPatternInvalid, nameof(settings.ReferencePattern)));
         }
 
         return errors;

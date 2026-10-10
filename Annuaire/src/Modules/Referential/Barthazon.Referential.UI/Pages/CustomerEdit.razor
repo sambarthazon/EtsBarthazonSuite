@@ -1,5 +1,6 @@
 @page "/clients/nouveau"
 @page "/clients/{Code}/modifier"
+@attribute [Authorize(Roles = "Editor,Administrator")]
 @inject ICustomerService Customers
 @inject NavigationManager Navigation
 @inject Notifier Notifier

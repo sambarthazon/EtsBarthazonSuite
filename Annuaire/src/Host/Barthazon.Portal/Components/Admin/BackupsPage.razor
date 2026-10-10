@@ -1,0 +1,67 @@
+@page "/admin/sauvegardes"
+@attribute [Authorize(Roles = "Administrator")]
+@using Barthazon.Shared.Infrastructure.Administration
+@using Barthazon.Shared.Infrastructure.Backup
+@inject AdministrationService Administration
+@inject BackupOptions Options
+@inject Notifier Notifier
+
+<PageHeader Title="@PortalTexts.BackupsTitle" Subtitle="@string.Format(CultureInfo.CurrentCulture, PortalTexts.BackupSchedule, Options.DailyAt, Options.RetentionDays)"
+            BackHref="admin" BackText="@PortalTexts.AdminTitle">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Backup" OnClick="BackupNowAsync" Disabled="_running">
+            @(_running ? PortalTexts.BackupRunning : PortalTexts.BackupNow)
+        </MudButton>
+    </Actions>
+</PageHeader>
+
+<SystemStatusPanel @ref="_status" />
+
+<MudText Typo="Typo.h6" HtmlTag="h2" Class="mt-4 mb-2">@PortalTexts.BackupFiles</MudText>
+@if (_files.Count == 0)
+{
+    <EmptyState Title="@PortalTexts.BackupNone" Icon="@Icons.Material.Outlined.Backup" />
+}
+else
+{
+    <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="bz-card">
+        <thead><tr><th>@PortalTexts.BackupFileName</th><th>@PortalTexts.BackupFileDate</th><th>@PortalTexts.BackupFileSize</th></tr></thead>
+        <tbody>
+            @foreach (var file in _files)
+            {
+                <tr><td>@file.Name</td><td>@file.CreatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</td><td>@($"{file.SizeBytes / 1024d / 1024:0.0} Mo")</td></tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+}
+
+@code {
+    private IReadOnlyList<BackupFile> _files = [];
+    private SystemStatusPanel? _status;
+    private bool _running;
+
+    protected override void OnInitialized() => Load();
+
+    private void Load()
+    {
+        var files = Administration.ListBackups();
+        _files = files.IsSuccess ? files.Value : [];
+    }
+
+    private async Task BackupNowAsync()
+    {
+        _running = true;
+        var result = await Administration.BackupNowAsync();
+        _running = false;
+        if (Notifier.Handle(result))
+        {
+            Notifier.Success(string.Format(CultureInfo.CurrentCulture, PortalTexts.BackupDone, result.Value.Name));
+        }
+
+        Load();
+        if (_status is not null)
+        {
+            await _status.RefreshAsync();
+        }
+    }
+}

@@ -1,0 +1,56 @@
+@inject IUserService Users
+@inject Notifier Notifier
+
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudTextField @bind-Value="_input.UserName" Label="@ReferentialTexts.UserName" HelperText="@ReferentialTexts.UserNameHelp" Variant="Variant.Outlined"
+                      ReadOnly="User is not null" Required="true" RequiredError="@SharedTexts.RequiredField" AutoFocus="User is null"
+                      Error="_form.HasError(nameof(UserInput.UserName))" ErrorText="@_form.ErrorFor(nameof(UserInput.UserName))" />
+        <MudTextField @bind-Value="_input.DisplayName" Label="@ReferentialTexts.DisplayName" Variant="Variant.Outlined" Class="mt-3" Required="true" RequiredError="@SharedTexts.RequiredField"
+                      Error="_form.HasError(nameof(UserInput.DisplayName))" ErrorText="@_form.ErrorFor(nameof(UserInput.DisplayName))" />
+        <MudSelect @bind-Value="_input.Role" Label="@ReferentialTexts.Role" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="r => r.Label()"
+                   Error="_form.HasError(nameof(UserInput.Role))" ErrorText="@_form.ErrorFor(nameof(UserInput.Role))">
+            @foreach (var role in Enum.GetValues<UserRole>())
+            {
+                <MudSelectItem Value="role">@role.Label()</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="_input.Password" Label="@(User is null ? ReferentialTexts.Password : ReferentialTexts.PasswordNew)" InputType="InputType.Password"
+                      HelperText="@(User is null ? ReferentialTexts.PasswordHelpNew : ReferentialTexts.PasswordHelpEdit)" Variant="Variant.Outlined" Class="mt-3"
+                      Error="_form.HasError(nameof(UserInput.Password))" ErrorText="@_form.ErrorFor(nameof(UserInput.Password))" UserAttributes="@(new Dictionary<string, object> { ["autocomplete"] = "new-password" })" />
+        <MudSwitch @bind-Value="_input.IsActive" Color="Color.Success" Label="@ReferentialTexts.UserActive" Class="mt-3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private UserInput _input = new();
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter] public UserItem? User { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (User is not null)
+        {
+            _input = new UserInput { UserName = User.UserName, DisplayName = User.DisplayName, Role = User.Role, IsActive = User.IsActive, Version = User.Version };
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        var result = User is null ? await Users.CreateAsync(_input) : await Users.UpdateAsync(User.Id, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(ReferentialTexts.UserSaved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

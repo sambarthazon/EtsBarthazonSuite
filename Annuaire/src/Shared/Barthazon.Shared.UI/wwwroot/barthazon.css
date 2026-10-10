@@ -254,7 +254,8 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
     gap: 12px 24px;
 }
 .bz-field-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--bz-text-secondary); font-weight: 600; }
-.bz-field-value { font-size: 1rem; white-space: pre-line; word-break: break-word; }
+.bz-field-value { font-size: 1rem; white-space: pre-line; overflow-wrap: anywhere; }
+.bz-field { min-width: 0; }
 .bz-field-value.bz-empty-value { color: var(--bz-disabled); }
 
 /* Vignettes. */
