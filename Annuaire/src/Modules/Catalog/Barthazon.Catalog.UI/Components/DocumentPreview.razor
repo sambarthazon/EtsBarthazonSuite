@@ -1,0 +1,35 @@
+@* Aperçu intégré : PDF (pdf.js) ou image ; sinon invitation à télécharger. *@
+@if (Document.Kind == DocumentKind.Paper)
+{
+    <div class="bz-paper-location">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.PaperLocationLabel, Document.PaperLocation)</div>
+}
+else if (Document.IsPdf)
+{
+    <PdfViewer Url="@($"fichiers/{Document.Id}?apercu=1")" MaxPages="MaxPages" />
+}
+else if (Document.IsImage)
+{
+    <img class="bz-image-preview" src="@($"fichiers/{Document.Id}?apercu=1")" alt="@Document.Title" />
+}
+else
+{
+    <MudAlert Severity="Severity.Info" Dense="true">@SharedTexts.NoPreview</MudAlert>
+}
+@if (ShowActions && Document.Kind == DocumentKind.File)
+{
+    <div class="d-flex gap-2 mt-2 bz-no-print">
+        @if (Document.CanPreview)
+        {
+            <MudButton Href="@($"fichiers/{Document.Id}?apercu=1")" Target="_blank" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.OpenInNew">@SharedTexts.OpenNewTab</MudButton>
+        }
+        <MudButton Href="@($"fichiers/{Document.Id}")" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Download">@SharedTexts.Download</MudButton>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public DocumentDto Document { get; set; } = default!;
+
+    [Parameter] public int MaxPages { get; set; } = 20;
+
+    [Parameter] public bool ShowActions { get; set; } = true;
+}

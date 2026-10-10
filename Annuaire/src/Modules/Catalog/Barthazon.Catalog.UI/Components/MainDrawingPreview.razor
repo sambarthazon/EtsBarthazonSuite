@@ -1,11 +1,12 @@
-@* Aperçu du plan principal (complété au jalon J5). *@
+@* Aperçu du plan principal de l'indice affiché (vue d'ensemble). *@
 @if (Document is null)
 {
-    <MudText Class="bz-muted">—</MudText>
+    <MudText Class="bz-muted">@CatalogTexts.NoMainDrawing</MudText>
 }
 else
 {
-    <MudText>@Document.Title</MudText>
+    <MudText Typo="Typo.subtitle2" Class="mb-2">@Document.Title</MudText>
+    <DocumentPreview Document="Document" MaxPages="1" />
 }
 
 @code {

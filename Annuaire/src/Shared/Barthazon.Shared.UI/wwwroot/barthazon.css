@@ -412,3 +412,32 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
     .bz-part-header { position: sticky; top: 72px; z-index: 5; }
 }
 .bz-part-reference { margin: 0 !important; }
+
+/* Visionneuse de documents. */
+.bz-pdf-viewer { width: 100%; }
+.bz-pdf-pages { display: flex; flex-direction: column; gap: 12px; }
+.bz-pdf-page { border: 1px solid var(--bz-lines); border-radius: var(--bz-radius-sm); background: var(--bz-print-background); box-shadow: 0 1px 3px var(--bz-shadow); }
+.bz-image-preview { max-width: 100%; max-height: 75vh; border-radius: var(--bz-radius-sm); border: 1px solid var(--bz-lines); display: block; margin: 0 auto; }
+
+/* Zone de dépôt de fichiers : le champ fichier couvre toute la zone (glisser-déposer natif). */
+.bz-dropzone {
+    position: relative;
+    border: 2px dashed var(--bz-text-secondary);
+    border-radius: var(--bz-radius);
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--bz-text-secondary);
+    background: var(--bz-surface-alt);
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.bz-dropzone:hover, .bz-dropzone:focus-within { border-color: var(--bz-primary); color: var(--bz-primary); }
+.bz-dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.bz-dropzone svg { width: 36px; height: 36px; fill: currentColor; }
+.bz-camera-button { position: relative; overflow: hidden; }
+.bz-camera-button input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.bz-paper-location { border-left: 4px solid var(--bz-accent); padding: 6px 10px; background: var(--bz-surface-alt); border-radius: var(--bz-radius-sm); font-weight: 600; }

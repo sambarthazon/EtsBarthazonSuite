@@ -192,9 +192,10 @@ public sealed record RevisionDetails(
 
     public decimal TotalCycleTimeMin => Operations.Sum(o => o.CycleTimeMin ?? 0);
 
-    /// <summary>Plan principal : premier plan numérique, sinon premier plan papier.</summary>
+    /// <summary>Plan principal : premier plan affichable (PDF, image), sinon plan papier, sinon autre plan numérique.</summary>
     public DocumentDto? MainDrawing =>
-        Documents.FirstOrDefault(d => d.Type == DocumentType.Drawing && d.Kind == DocumentKind.File)
+        Documents.FirstOrDefault(d => d.Type == DocumentType.Drawing && d.CanPreview)
+        ?? Documents.FirstOrDefault(d => d.Type == DocumentType.Drawing && d.Kind == DocumentKind.Paper)
         ?? Documents.FirstOrDefault(d => d.Type == DocumentType.Drawing);
 }
 

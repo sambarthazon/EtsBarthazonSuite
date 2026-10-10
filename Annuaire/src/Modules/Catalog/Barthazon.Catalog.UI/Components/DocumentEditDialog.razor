@@ -1,0 +1,67 @@
+@inject IDocumentService Documents
+@inject Notifier Notifier
+
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudTextField @bind-Value="_input.Title" Label="@CatalogTexts.DocumentTitle" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" AutoFocus="true"
+                      Error="_form.HasError(TitleField)" ErrorText="@_form.ErrorFor(TitleField)" />
+        <MudSelect @bind-Value="_input.Type" Label="@CatalogTexts.DocumentType" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="t => t.Label()">
+            @foreach (var type in Enum.GetValues<DocumentType>())
+            {
+                <MudSelectItem Value="type">@type.Label()</MudSelectItem>
+            }
+        </MudSelect>
+        @if (IsPaper)
+        {
+            <MudTextField @bind-Value="_input.PaperLocation" Label="@CatalogTexts.PaperLocation" HelperText="@CatalogTexts.PaperLocationHelp" Required="true" RequiredError="@SharedTexts.RequiredField"
+                          Variant="Variant.Outlined" Class="mt-3" Error="_form.HasError(LocationField)" ErrorText="@_form.ErrorFor(LocationField)" />
+        }
+        <MudTextField @bind-Value="_input.Notes" Label="@CatalogTexts.DocumentNotes" Variant="Variant.Outlined" Lines="2" Class="mt-3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private const string TitleField = nameof(PaperDocumentInput.Title);
+    private const string LocationField = nameof(PaperDocumentInput.PaperLocation);
+    private readonly FormState _form = new();
+    private PaperDocumentInput _input = new();
+    private bool _saving;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public Guid PartId { get; set; }
+
+    [Parameter] public Guid RevisionId { get; set; }
+
+    /// <summary>Document existant (null = nouveau document papier).</summary>
+    [Parameter] public DocumentDto? Document { get; set; }
+
+    private bool IsPaper => Document is null || Document.Kind == DocumentKind.Paper;
+
+    protected override void OnInitialized()
+    {
+        _input = Document is null
+            ? new PaperDocumentInput { Type = DocumentType.Drawing }
+            : new PaperDocumentInput { Title = Document.Title, Type = Document.Type, PaperLocation = Document.PaperLocation, Notes = Document.Notes };
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = Document is null
+            ? await Documents.AddPaperAsync(PartId, RevisionId, _input)
+            : await Documents.UpdateAsync(PartId, Document.Id, _input);
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            Notifier.Success(CatalogTexts.DocumentSaved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

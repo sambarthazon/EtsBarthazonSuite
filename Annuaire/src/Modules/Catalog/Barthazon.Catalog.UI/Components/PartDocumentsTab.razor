@@ -1,9 +1,207 @@
-@* Complété dans un jalon ultérieur. *@
+@inject IDocumentService Documents
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+@inject FileStorageLimits Limits
+
+@if (Part is not null && Revision is not null)
+{
+    @if (CanEdit)
+    {
+        <MudPaper Class="pa-4 bz-card mb-4 bz-no-print" Elevation="0">
+            <MudText Typo="Typo.h6" HtmlTag="h3" Class="mb-2">@CatalogTexts.AddDocuments</MudText>
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="4">
+                    <MudSelect @bind-Value="_uploadType" Label="@CatalogTexts.DocumentTypeForUpload" Variant="Variant.Outlined" ToStringFunc="t => t.Label()">
+                        @foreach (var type in Enum.GetValues<DocumentType>())
+                        {
+                            <MudSelectItem Value="type">@type.Label()</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <label class="mud-button-root mud-button mud-button-outlined mud-button-outlined-primary mud-button-outlined-size-medium bz-camera-button" style="padding:6px 16px">
+                            <MudIcon Icon="@Icons.Material.Filled.PhotoCamera" Class="mr-2" /> @CatalogTexts.TakePhoto
+                            <InputFile OnChange="OnPhotoAsync" accept="image/*" capture="environment" aria-label="@CatalogTexts.TakePhoto" />
+                        </label>
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Inventory2" OnClick="AddPaperAsync">@CatalogTexts.AddPaperDocument</MudButton>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" md="8">
+                    <div class="bz-dropzone">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">@((MarkupString)Icons.Material.Filled.CloudUpload)</svg>
+                        @if (_uploading is not null)
+                        {
+                            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Style="max-width:320px" />
+                            <span>@string.Format(CultureInfo.CurrentCulture, CatalogTexts.Uploading, _uploading)</span>
+                        }
+                        else
+                        {
+                            <b>@CatalogTexts.DropFiles</b>
+                            <span style="font-size:.85rem">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.DropFilesHelp, Limits.MaxFileSizeMb)</span>
+                        }
+                        <InputFile OnChange="OnFilesAsync" multiple aria-label="@CatalogTexts.DropFiles" disabled="@(_uploading is not null)" />
+                    </div>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    }
+
+    @if (Revision.Documents.Count == 0)
+    {
+        <EmptyState Title="@CatalogTexts.DocumentsEmpty" Icon="@Icons.Material.Outlined.Description" />
+    }
+
+    @foreach (var group in Revision.Documents.GroupBy(d => d.Type))
+    {
+        <MudText Typo="Typo.subtitle1" HtmlTag="h3" Class="mt-2 mb-2"><b>@group.Key.Label()</b> (@group.Count())</MudText>
+        <div class="d-flex flex-column gap-2 mb-3">
+            @foreach (var document in group)
+            {
+                <MudPaper Class="pa-3 bz-card" Elevation="0">
+                    <div class="d-flex flex-wrap gap-3 align-center">
+                        <MudAvatar Color="@(document.Kind == DocumentKind.Paper ? Color.Warning : Color.Primary)" Variant="Variant.Outlined">
+                            <MudIcon Icon="@DocumentIcon.For(document.Type, document.Kind)" />
+                        </MudAvatar>
+                        <div class="flex-grow-1" style="min-width:200px">
+                            <MudText Typo="Typo.subtitle1">
+                                <b>@document.Title</b>
+                                @if (document.Kind == DocumentKind.Paper) { <StatusChip Text="@CatalogTexts.PaperOnly" Tone="StatusTone.Warning" Class="ml-1" /> }
+                                @if (Part.MainPhotoDocumentId == document.Id) { <StatusChip Text="@CatalogTexts.MainPhoto" Tone="StatusTone.Info" Class="ml-1" /> }
+                            </MudText>
+                            @if (document.Kind == DocumentKind.Paper)
+                            {
+                                <div class="bz-paper-location mt-1">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.PaperLocationLabel, document.PaperLocation)</div>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.caption" Class="bz-muted">@document.FileName · @CatalogLabels.FileSize(document.SizeBytes)</MudText>
+                            }
+                            @if (document.Notes is not null) { <MudText Typo="Typo.body2">@document.Notes</MudText> }
+                            <MudText Typo="Typo.caption" Class="bz-muted d-block">@string.Format(CultureInfo.CurrentCulture, CatalogTexts.AddedOn, document.CreatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), document.CreatedBy ?? CatalogTexts.Unknown)</MudText>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 bz-no-print">
+                            @if (document.CanPreview)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Visibility" OnClick="() => PreviewAsync(document)">@CatalogTexts.Preview</MudButton>
+                            }
+                            @if (document.Kind == DocumentKind.File)
+                            {
+                                <MudIconButton Href="@($"fichiers/{document.Id}")" Icon="@Icons.Material.Filled.Download" aria-label="@SharedTexts.Download" title="@SharedTexts.Download" />
+                            }
+                            @if (CanEdit)
+                            {
+                                @if (document.Kind == DocumentKind.Paper)
+                                {
+                                    <label class="mud-button-root mud-button mud-button-text mud-button-text-primary mud-button-text-size-medium bz-camera-button" style="padding:6px 8px">
+                                        <MudIcon Icon="@Icons.Material.Filled.AttachFile" Class="mr-1" /> @CatalogTexts.AttachScan
+                                        <InputFile OnChange="e => OnAttachToPaperAsync(document, e)" accept="image/*,application/pdf" aria-label="@CatalogTexts.AttachScan" />
+                                    </label>
+                                }
+                                @if (document.IsImage && Part.MainPhotoDocumentId != document.Id)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Wallpaper" OnClick="() => SetMainPhotoAsync(document)" aria-label="@CatalogTexts.SetMainPhoto" title="@CatalogTexts.SetMainPhoto" />
+                                }
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => EditAsync(document)" aria-label="@CatalogTexts.EditDocument" title="@CatalogTexts.EditDocument" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => RemoveAsync(document)" aria-label="@CatalogTexts.RemoveDocument" title="@CatalogTexts.RemoveDocument" />
+                            }
+                        </div>
+                    </div>
+                </MudPaper>
+            }
+        </div>
+    }
+}
 
 @code {
+    private DocumentType _uploadType = DocumentType.Drawing;
+    private string? _uploading;
+
     [Parameter] public PartDetails? Part { get; set; }
 
     [Parameter] public RevisionDetails? Revision { get; set; }
 
     [Parameter] public EventCallback OnChanged { get; set; }
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    private Task OnFilesAsync(InputFileChangeEventArgs e) => UploadAsync(e.GetMultipleFiles(20), _uploadType);
+
+    private Task OnPhotoAsync(InputFileChangeEventArgs e) => UploadAsync([e.File], DocumentType.Photo);
+
+    private async Task UploadAsync(IReadOnlyList<IBrowserFile> files, DocumentType type)
+    {
+        var added = 0;
+        foreach (var file in files)
+        {
+            _uploading = file.Name;
+            StateHasChanged();
+            await using var stream = file.OpenReadStream(Limits.MaxFileSizeBytes + 1);
+            var title = type == DocumentType.Photo && file.Name.StartsWith("image", StringComparison.OrdinalIgnoreCase) ? CatalogTexts.TakePhoto : Path.GetFileNameWithoutExtension(file.Name);
+            var result = await Documents.AddFileAsync(Part!.Id, Revision!.Id, new FileDocumentInput { Title = title, Type = type }, file.Name, stream);
+            if (Notifier.Handle(result))
+            {
+                added++;
+            }
+        }
+
+        _uploading = null;
+        if (added > 0)
+        {
+            Notifier.Success(string.Format(CultureInfo.CurrentCulture, CatalogTexts.Uploaded, added));
+            await OnChanged.InvokeAsync();
+        }
+    }
+
+    private async Task OnAttachToPaperAsync(DocumentDto document, InputFileChangeEventArgs e)
+    {
+        _uploading = e.File.Name;
+        await using var stream = e.File.OpenReadStream(Limits.MaxFileSizeBytes + 1);
+        var result = await Documents.AttachFileToPaperAsync(Part!.Id, document.Id, e.File.Name, stream);
+        _uploading = null;
+        if (Notifier.Handle(result, CatalogTexts.DocumentSaved))
+        {
+            await OnChanged.InvokeAsync();
+        }
+    }
+
+    private async Task PreviewAsync(DocumentDto document) =>
+        await Dialogs.ShowAsync<DocumentPreviewDialog>(document.Title, new DialogParameters<DocumentPreviewDialog> { { d => d.Document, document } },
+            new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, FullScreen = false });
+
+    private async Task AddPaperAsync()
+    {
+        var parameters = new DialogParameters<DocumentEditDialog> { { d => d.PartId, Part!.Id }, { d => d.RevisionId, Revision!.Id } };
+        var dialog = await Dialogs.ShowAsync<DocumentEditDialog>(CatalogTexts.PaperDocumentTitle, parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await OnChanged.InvokeAsync();
+        }
+    }
+
+    private async Task EditAsync(DocumentDto document)
+    {
+        var parameters = new DialogParameters<DocumentEditDialog> { { d => d.PartId, Part!.Id }, { d => d.RevisionId, Revision!.Id }, { d => d.Document, document } };
+        var dialog = await Dialogs.ShowAsync<DocumentEditDialog>(CatalogTexts.EditDocument, parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await OnChanged.InvokeAsync();
+        }
+    }
+
+    private async Task RemoveAsync(DocumentDto document)
+    {
+        if (await Dialogs.ConfirmAsync(CatalogTexts.RemoveDocumentTitle, string.Format(CultureInfo.CurrentCulture, CatalogTexts.RemoveDocumentText, document.Title), CatalogTexts.RemoveDocument, danger: true)
+            && Notifier.Handle(await Documents.RemoveAsync(Part!.Id, document.Id), CatalogTexts.DocumentRemoved))
+        {
+            await OnChanged.InvokeAsync();
+        }
+    }
+
+    private async Task SetMainPhotoAsync(DocumentDto document)
+    {
+        if (Notifier.Handle(await Documents.SetMainPhotoAsync(Part!.Id, document.Id), CatalogTexts.MainPhotoSet))
+        {
+            await OnChanged.InvokeAsync();
+        }
+    }
 }

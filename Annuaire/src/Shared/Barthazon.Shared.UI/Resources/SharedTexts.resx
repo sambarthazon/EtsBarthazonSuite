@@ -66,4 +66,11 @@
   <data name="RequiredField" xml:space="preserve"><value>Champ obligatoire</value></data>
   <data name="QuickCreate" xml:space="preserve"><value>Créer sans quitter le formulaire</value></data>
   <data name="None" xml:space="preserve"><value>(aucun)</value></data>
+  <data name="PdfLoading" xml:space="preserve"><value>Chargement du plan…</value></data>
+  <data name="PdfError" xml:space="preserve"><value>Impossible d'afficher ce PDF ici. Utilisez « Ouvrir » ou « Télécharger ».</value></data>
+  <data name="PdfPage" xml:space="preserve"><value>Page {0} / {1}</value></data>
+  <data name="PdfMorePages" xml:space="preserve"><value>Seules les {0} premières pages sont affichées ({1} au total).</value></data>
+  <data name="OpenNewTab" xml:space="preserve"><value>Ouvrir</value></data>
+  <data name="Download" xml:space="preserve"><value>Télécharger</value></data>
+  <data name="NoPreview" xml:space="preserve"><value>Pas d'aperçu pour ce type de fichier : téléchargez-le pour l'ouvrir avec le logiciel adapté.</value></data>
 </root>

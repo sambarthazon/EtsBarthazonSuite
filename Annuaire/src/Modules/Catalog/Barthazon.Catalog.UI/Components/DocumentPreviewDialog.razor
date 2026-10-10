@@ -1,0 +1,14 @@
+<MudDialog>
+    <DialogContent>
+        <DocumentPreview Document="Document" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Close()">@SharedTexts.Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public DocumentDto Document { get; set; } = default!;
+}

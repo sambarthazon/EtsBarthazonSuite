@@ -1,0 +1,78 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@* Visionneuse PDF (pdf.js embarqué, aucune ressource Internet). *@
+<div class="bz-pdf-viewer" style="@Style">
+    @if (_loading)
+    {
+        <div class="d-flex align-center gap-2 pa-4 bz-muted"><MudProgressCircular Size="Size.Small" Indeterminate="true" /> @SharedTexts.PdfLoading</div>
+    }
+    @if (_error)
+    {
+        <MudAlert Severity="Severity.Warning" Dense="true">@SharedTexts.PdfError</MudAlert>
+    }
+    <div @ref="_container" class="bz-pdf-pages"></div>
+    @if (_pageCount > MaxPages)
+    {
+        <MudText Typo="Typo.caption" Class="bz-muted">@string.Format(CultureInfo.CurrentCulture, SharedTexts.PdfMorePages, MaxPages, _pageCount)</MudText>
+    }
+</div>
+
+@code {
+    private ElementReference _container;
+    private IJSObjectReference? _module;
+    private string? _renderedUrl;
+    private bool _loading = true;
+    private bool _error;
+    private int _pageCount;
+
+    [Parameter, EditorRequired] public string Url { get; set; } = string.Empty;
+
+    [Parameter] public int MaxPages { get; set; } = 20;
+
+    [Parameter] public string? Style { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_renderedUrl == Url)
+        {
+            return;
+        }
+
+        _renderedUrl = Url;
+        try
+        {
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Barthazon.Shared.UI/pdfviewer.js");
+            _pageCount = await _module.InvokeAsync<int>("render", _container, Url, MaxPages, SharedTexts.PdfPage);
+            _error = false;
+        }
+        catch (JSException)
+        {
+            _error = true;
+        }
+        catch (JSDisconnectedException)
+        {
+            return;
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _module.InvokeVoidAsync("dispose", _container);
+            await _module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+}

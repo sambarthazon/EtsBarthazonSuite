@@ -367,4 +367,35 @@
   <data name="NewPartForCustomer" xml:space="preserve"><value>Nouvelle pièce pour ce client</value></data>
   <data name="NoCustomerParts" xml:space="preserve"><value>Aucune pièce pour ce client.</value></data>
   <data name="SearchHitSubtitle" xml:space="preserve"><value>{0} · Ind. {1}</value></data>
+  <data name="DocumentsEmpty" xml:space="preserve"><value>Aucun document pour cet indice.</value></data>
+  <data name="AddDocuments" xml:space="preserve"><value>Ajouter des documents</value></data>
+  <data name="DocumentTypeForUpload" xml:space="preserve"><value>Type des documents envoyés</value></data>
+  <data name="DropFiles" xml:space="preserve"><value>Déposez des fichiers ici ou touchez pour choisir</value></data>
+  <data name="DropFilesHelp" xml:space="preserve"><value>PDF, DXF, DWG, STEP, programmes CN, images… ({0} Mo maximum par fichier)</value></data>
+  <data name="TakePhoto" xml:space="preserve"><value>Prendre une photo</value></data>
+  <data name="AddPaperDocument" xml:space="preserve"><value>Référencer un document papier</value></data>
+  <data name="PaperDocumentTitle" xml:space="preserve"><value>Document papier</value></data>
+  <data name="PaperLocation" xml:space="preserve"><value>Où trouver l'original</value></data>
+  <data name="PaperLocationHelp" xml:space="preserve"><value>Ex. « Bureau, armoire 2, classeur DUPONT »</value></data>
+  <data name="PaperOnly" xml:space="preserve"><value>Papier seulement</value></data>
+  <data name="PaperLocationLabel" xml:space="preserve"><value>Original papier : {0}</value></data>
+  <data name="AttachScan" xml:space="preserve"><value>Joindre le scan ou la photo</value></data>
+  <data name="Uploading" xml:space="preserve"><value>Envoi de {0}…</value></data>
+  <data name="Uploaded" xml:space="preserve"><value>{0} document(s) ajouté(s).</value></data>
+  <data name="DocumentTitle" xml:space="preserve"><value>Titre</value></data>
+  <data name="DocumentType" xml:space="preserve"><value>Type</value></data>
+  <data name="DocumentNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="EditDocument" xml:space="preserve"><value>Modifier le document</value></data>
+  <data name="RemoveDocument" xml:space="preserve"><value>Retirer le document</value></data>
+  <data name="RemoveDocumentTitle" xml:space="preserve"><value>Retirer le document</value></data>
+  <data name="RemoveDocumentText" xml:space="preserve"><value>Retirer « {0} » de cet indice ? (Le fichier reste disponible s'il est utilisé par un autre indice.)</value></data>
+  <data name="DocumentRemoved" xml:space="preserve"><value>Document retiré.</value></data>
+  <data name="DocumentSaved" xml:space="preserve"><value>Document enregistré.</value></data>
+  <data name="SetMainPhoto" xml:space="preserve"><value>Utiliser comme vignette</value></data>
+  <data name="MainPhoto" xml:space="preserve"><value>Vignette</value></data>
+  <data name="MainPhotoSet" xml:space="preserve"><value>Vignette mise à jour.</value></data>
+  <data name="Preview" xml:space="preserve"><value>Aperçu</value></data>
+  <data name="AddedOn" xml:space="preserve"><value>Ajouté le {0} par {1}</value></data>
+  <data name="NoMainDrawing" xml:space="preserve"><value>Aucun plan pour cet indice.</value></data>
+  <data name="OpenDocuments" xml:space="preserve"><value>Voir tous les documents</value></data>
 </root>
