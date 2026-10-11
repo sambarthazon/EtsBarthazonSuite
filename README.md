@@ -4,6 +4,6 @@ Dépôt regroupant les logiciels internes des Ets BARTHAZON (mécanique généra
 
 | Dossier | Logiciel | État |
 |---|---|---|
-| [`Annuaire/`](Annuaire/) | Annuaire de pièces (portail web + premier module) | En cours |
+| [`Annuaire/`](Annuaire/) | Annuaire de pièces (portail web + premier module) | Version 1 — prête à installer ([installation](Annuaire/docs/installation.md)) |
 
 Les applications suivantes (stocks, commandes & livraisons, pointage) sont prévues comme modules du portail de l'annuaire.

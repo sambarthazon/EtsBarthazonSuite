@@ -64,6 +64,29 @@ public sealed class OperationsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Restoring_a_backup_file_brings_back_the_saved_state()
+    {
+        // Procédure de docs/sauvegarde-restauration.md : remplacer le fichier de la base par une sauvegarde.
+        await using var app = await SqliteApplicationAsync();
+        var backup = (await app.Get<AdministrationService>().BackupNowAsync()).Value;
+        app.User.As(UserRole.Editor, "editeur");
+        var customerId = (await app.Get<IPartService>().GetByReferenceAsync("P-0700")).Value.CustomerId;
+        await app.Get<IPartService>().CreateAsync(new PartCreateInput { InternalReference = "P-0701", Designation = "Créée après la sauvegarde", CustomerId = customerId, FirstIndex = "A" });
+
+        var restoredFile = Path.Combine(app.Root, "restauree.db");
+        File.Copy(Path.Combine(app.Root, "backups", backup.Name), restoredFile);
+        await using var restored = await TestApplication.CreateAsync(settings: new()
+        {
+            ["Database:Provider"] = "Sqlite",
+            ["Database:ConnectionString"] = $"Data Source={restoredFile};Pooling=False",
+        });
+
+        (await restored.Get<IPartService>().GetByReferenceAsync("P-0700")).IsSuccess.Should().BeTrue();
+        (await restored.Get<IPartService>().GetByReferenceAsync("P-0701")).IsSuccess.Should().BeFalse("la pièce a été créée après la sauvegarde");
+        (await restored.Get<IPartService>().GetHistoryAsync((await restored.Get<IPartService>().GetByReferenceAsync("P-0700")).Value.Id)).Value.Should().NotBeEmpty();
+    }
+
+    [Fact]
     public async Task Old_backups_are_removed_by_retention()
     {
         await using var app = await SqliteApplicationAsync();

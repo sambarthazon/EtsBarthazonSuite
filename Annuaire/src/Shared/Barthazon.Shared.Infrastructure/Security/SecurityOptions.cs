@@ -10,4 +10,10 @@ public sealed class SecurityOptions
 
     /// <summary>Durée de la session (cookie), en jours.</summary>
     public int SessionDays { get; set; } = 30;
+
+    /// <summary>
+    /// Dossier des clés qui signent les cookies de connexion. Par défaut : dossier « keys » à côté de la base SQLite
+    /// (sauvegardé et déplacé avec les données). Sans ces clés, les utilisateurs doivent simplement se reconnecter.
+    /// </summary>
+    public string? KeysDirectory { get; set; }
 }

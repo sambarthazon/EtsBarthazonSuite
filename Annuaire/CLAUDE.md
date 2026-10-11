@@ -10,10 +10,13 @@ Toutes les commandes se lancent depuis ce dossier (`Annuaire/`). SDK requis : .N
 |---|---|
 | Compiler (avertissements = erreurs) | `dotnet build Barthazon.sln` |
 | Tests | `dotnet test Barthazon.sln` |
+| Tests sur PostgreSQL | `BZ_TEST_POSTGRES="Host=localhost;Port=5432;Username=postgres" dotnet test Barthazon.sln` (une base jetable par test) |
 | Lancer en développement (http://localhost:5080) | `dotnet run --project src/Host/Barthazon.Portal` |
-| Nouvelle migration SQLite | `dotnet ef migrations add <Nom> --project src/Host/Barthazon.Migrations.Sqlite --startup-project src/Host/Barthazon.Migrations.Sqlite --output-dir Migrations` |
+| Nouvelle migration (les **deux** fournisseurs) | `dotnet ef migrations add <Nom> --project src/Host/Barthazon.Migrations.Sqlite --startup-project src/Host/Barthazon.Migrations.Sqlite --output-dir Migrations` puis la même commande avec `Barthazon.Migrations.Postgres` |
 | Publier Windows | `dotnet publish src/Host/Barthazon.Portal -c Release -r win-x64 --self-contained -o publish/win-x64` |
 | Publier Raspberry Pi | `dotnet publish src/Host/Barthazon.Portal -c Release -r linux-arm64 --self-contained -o publish/linux-arm64` |
+
+Déploiement : `deploy/windows/install.ps1`, `deploy/raspberry/install.sh` ; documentation d'exploitation dans `docs/` (installation, mise à jour, sauvegarde-restauration, migration-raspberry-pi, changement-de-theme).
 
 En développement (`appsettings.Development.json`), la base, les fichiers, les sauvegardes et les journaux sont dans `src/Host/Barthazon.Portal/App_Data/` et les données de démonstration sont chargées.
 

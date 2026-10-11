@@ -4,6 +4,7 @@ using Barthazon.Shared.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Barthazon.Portal.Hosting;
 
@@ -14,8 +15,18 @@ internal static class PortalAuthentication
     public const string SetupPath = "/premier-demarrage";
     public const string LogoutPath = "/compte/deconnexion";
 
-    public static IServiceCollection AddPortalAuthentication(this IServiceCollection services, SecurityOptions security)
+    public static IServiceCollection AddPortalAuthentication(this IServiceCollection services, SecurityOptions security, string keysDirectory)
     {
+        // Clés de signature des cookies conservées dans un dossier connu : la session survit aux redémarrages et mises à jour.
+        Directory.CreateDirectory(keysDirectory);
+        var dataProtection = services.AddDataProtection()
+            .SetApplicationName("Barthazon")
+            .PersistKeysToFileSystem(new DirectoryInfo(keysDirectory));
+        if (OperatingSystem.IsWindows())
+        {
+            dataProtection.ProtectKeysWithDpapi(protectToLocalMachine: true);
+        }
+
         services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(options =>
             {

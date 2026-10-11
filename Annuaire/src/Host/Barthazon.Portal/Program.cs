@@ -40,10 +40,25 @@ builder.Host.UseSerilog((context, configuration) => configuration
 var report = ConfigurationValidator.Validate(builder.Configuration, builder.Environment.ContentRootPath);
 if (!report.IsValid)
 {
-    Console.Error.WriteLine("Configuration invalide — l'application ne peut pas démarrer :");
-    foreach (var error in report.Errors)
+    var message = "Configuration invalide — l'application ne peut pas démarrer :" + Environment.NewLine
+        + string.Join(Environment.NewLine, report.Errors.Select(e => "  - " + e));
+    Console.Error.WriteLine(message);
+
+    // En service Windows la console n'est visible par personne : le message est aussi écrit dans un fichier.
+    foreach (var directory in new[] { logDirectory, builder.Environment.ContentRootPath })
     {
-        Console.Error.WriteLine("  - " + error);
+        try
+        {
+            Directory.CreateDirectory(directory);
+            File.AppendAllText(
+                Path.Combine(directory, "barthazon-erreur-demarrage.log"),
+                $"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
+            break;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Dossier inaccessible : on essaie le suivant.
+        }
     }
 
     return 1;
@@ -74,7 +89,13 @@ foreach (var module in modules)
 
 // Comptes locaux, cookie, utilisateur courant.
 var security = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
-builder.Services.AddPortalAuthentication(security);
+var databaseOptions = builder.Configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>() ?? new DatabaseOptions();
+var sqliteFile = AppDbContextFactory.GetSqliteFilePath(databaseOptions);
+var keysDirectory = Path.GetFullPath(
+    security.KeysDirectory
+        ?? (sqliteFile is null ? Path.Combine("App_Data", "keys") : Path.Combine(Path.GetDirectoryName(sqliteFile)!, "keys")),
+    builder.Environment.ContentRootPath);
+builder.Services.AddPortalAuthentication(security, keysDirectory);
 
 builder.Services.AddSingleton<DemoDataSeeder>();
 builder.Services.AddHostedService<BackupScheduler>();
