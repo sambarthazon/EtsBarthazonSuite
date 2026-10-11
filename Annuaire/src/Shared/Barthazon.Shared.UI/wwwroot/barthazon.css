@@ -20,6 +20,14 @@ a { color: var(--bz-primary); }
 }
 .mud-icon-button { min-width: var(--bz-touch); }
 
+/* Interrupteurs : le bouton interne (rond) garde sa taille MudBlazor, sinon il sort de la piste
+   et chevauche le libellé. La zone tactile est la ligne entière, libellé compris. */
+.mud-switch .mud-switch-base { min-width: 0; min-height: 0; }
+.mud-switch { min-height: var(--bz-touch); }
+
+/* Avatar du menu utilisateur : vrai bouton (clavier, lecteur d'écran), zone tactile de 48 px. */
+.bz-avatar-button { display: inline-flex; align-items: center; justify-content: center; min-width: var(--bz-touch); min-height: var(--bz-touch); padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; color: inherit; }
+
 /* Focus clavier bien visible (accessibilité). */
 :focus-visible {
     outline: 3px solid var(--bz-accent) !important;

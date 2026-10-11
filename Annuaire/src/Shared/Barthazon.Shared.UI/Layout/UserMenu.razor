@@ -5,7 +5,10 @@
 {
     <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@CurrentUser.DisplayName">
         <ActivatorContent>
-            <MudAvatar Color="Color.Secondary" Size="Size.Medium" Class="bz-touch" Style="cursor:pointer">@Initials</MudAvatar>
+            @* MudBlazor 9 : un déclencheur personnalisé doit ouvrir le menu lui-même (context.ToggleAsync). *@
+            <button type="button" class="bz-avatar-button" @onclick="context.ToggleAsync" aria-label="@CurrentUser.DisplayName" aria-haspopup="menu">
+                <MudAvatar Color="Color.Secondary" Size="Size.Medium">@Initials</MudAvatar>
+            </button>
         </ActivatorContent>
         <ChildContent>
             <div class="px-4 py-2">

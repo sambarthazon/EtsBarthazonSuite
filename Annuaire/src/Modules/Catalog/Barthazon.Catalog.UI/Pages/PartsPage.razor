@@ -32,12 +32,16 @@
     </MudButton>
     <MudHidden Breakpoint="Breakpoint.SmAndDown">
         <MudMenu Icon="@Icons.Material.Filled.ViewColumn" aria-label="@CatalogTexts.Columns" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-            <ActivatorContent><MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ViewColumn">@CatalogTexts.Columns</MudButton></ActivatorContent>
+            <ActivatorContent><MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@context.ToggleAsync">@CatalogTexts.Columns</MudButton></ActivatorContent>
             <ChildContent>
                 @foreach (var column in AllColumns)
                 {
-                    <MudMenuItem AutoClose="false" OnClick="() => ToggleColumnAsync(column.Key)">
-                        <MudCheckBox T="bool" Value="_columns.Contains(column.Key)" ReadOnly="true" Label="@column.Label" Dense="true" />
+                    @* Icône de case plutôt qu'une MudCheckBox : une case en lecture seule intercepte le clic de l'élément de menu. *@
+                    <MudMenuItem AutoClose="false" OnClick="() => ToggleColumnAsync(column.Key)"
+                                 Icon="@(_columns.Contains(column.Key) ? Icons.Material.Filled.CheckBox : Icons.Material.Filled.CheckBoxOutlineBlank)"
+                                 IconColor="@(_columns.Contains(column.Key) ? Color.Primary : Color.Default)"
+                                 role="menuitemcheckbox" aria-checked="@(_columns.Contains(column.Key) ? "true" : "false")">
+                        @column.Label
                     </MudMenuItem>
                 }
             </ChildContent>
