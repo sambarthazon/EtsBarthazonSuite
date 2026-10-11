@@ -73,4 +73,5 @@
   <data name="OpenNewTab" xml:space="preserve"><value>Ouvrir</value></data>
   <data name="Download" xml:space="preserve"><value>Télécharger</value></data>
   <data name="NoPreview" xml:space="preserve"><value>Pas d'aperçu pour ce type de fichier : téléchargez-le pour l'ouvrir avec le logiciel adapté.</value></data>
+  <data name="SkipToContent" xml:space="preserve"><value>Aller au contenu</value></data>
 </root>

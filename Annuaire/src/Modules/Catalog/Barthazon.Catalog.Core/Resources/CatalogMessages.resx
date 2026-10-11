@@ -44,6 +44,9 @@
   <data name="LinkToItself" xml:space="preserve"><value>Une pièce ne peut pas être liée à elle-même.</value></data>
   <data name="LinkExists" xml:space="preserve"><value>Ce lien existe déjà.</value></data>
   <data name="LinkNotFound" xml:space="preserve"><value>Lien introuvable.</value></data>
+  <data name="FavoritesNeedLogin" xml:space="preserve"><value>Connectez-vous pour enregistrer vos favoris sur le serveur.</value></data>
+  <data name="LinkTargetRequired" xml:space="preserve"><value>Choisissez la pièce liée.</value></data>
+  <data name="LinkNoteTooLong" xml:space="preserve"><value>La note fait au plus 500 caractères.</value></data>
   <data name="QuantityInvalid" xml:space="preserve"><value>La quantité doit être positive.</value></data>
   <data name="ImportNoSheet" xml:space="preserve"><value>Le fichier ne contient aucune feuille ni aucune ligne.</value></data>
   <data name="ImportMissingColumns" xml:space="preserve"><value>Colonnes obligatoires manquantes : {0}.</value></data>

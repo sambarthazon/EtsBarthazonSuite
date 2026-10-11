@@ -1,0 +1,68 @@
+@inject IFavoriteService Favorites
+@inject BrowserInterop Browser
+@inject Notifier Notifier
+
+@* Étoile « favori » de l'en-tête de fiche : en base pour un utilisateur connecté, sinon dans le navigateur. *@
+<MudTooltip Text="@Label">
+    <MudIconButton Icon="@(_isFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)"
+                   Color="@(_isFavorite ? Color.Secondary : Color.Default)" OnClick="ToggleAsync" Disabled="_busy"
+                   aria-label="@Label" aria-pressed="@(_isFavorite ? "true" : "false")" Class="bz-favorite-toggle" />
+</MudTooltip>
+
+@code {
+    private bool _isFavorite;
+    private bool _busy;
+    private Guid _loadedFor;
+
+    [Parameter, EditorRequired] public Guid PartId { get; set; }
+
+    [Parameter, EditorRequired] public string Reference { get; set; } = string.Empty;
+
+    private string Label => _isFavorite ? CatalogTexts.RemoveFavorite : CatalogTexts.AddFavorite;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Lecture après le rendu : le stockage du navigateur n'est pas accessible pendant le prérendu.
+        if (_loadedFor == PartId)
+        {
+            return;
+        }
+
+        _loadedFor = PartId;
+        _isFavorite = Favorites.IsAvailable
+            ? await Favorites.IsFavoriteAsync(PartId)
+            : (await PartBrowserStorage.ReadAsync(Browser, PartBrowserStorage.FavoritesKey)).Contains(Reference, StringComparer.OrdinalIgnoreCase);
+        StateHasChanged();
+    }
+
+    private async Task ToggleAsync()
+    {
+        _busy = true;
+        try
+        {
+            var target = !_isFavorite;
+            if (Favorites.IsAvailable)
+            {
+                if (!Notifier.Handle(await Favorites.SetAsync(PartId, target)))
+                {
+                    return;
+                }
+            }
+            else if (target)
+            {
+                await PartBrowserStorage.PushAsync(Browser, PartBrowserStorage.FavoritesKey, Reference, max: 100);
+            }
+            else
+            {
+                await PartBrowserStorage.RemoveAsync(Browser, PartBrowserStorage.FavoritesKey, Reference);
+            }
+
+            _isFavorite = target;
+            Notifier.Success(target ? CatalogTexts.FavoriteAdded : CatalogTexts.FavoriteRemoved);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

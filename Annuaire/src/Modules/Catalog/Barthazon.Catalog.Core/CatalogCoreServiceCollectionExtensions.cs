@@ -22,6 +22,9 @@ public static class CatalogCoreServiceCollectionExtensions
         services.AddScoped<IRevisionService, RevisionService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IPartExchangeService, PartExchangeService>();
+        services.AddScoped<IPartLinkService, PartLinkService>();
+        services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         // Points d'extension pour les futures applications : « non disponible » tant qu'un module ne fournit pas mieux.
         services.TryAddSingleton<IPartStockInfoProvider, UnavailablePartInfoProvider>();

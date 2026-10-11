@@ -30,13 +30,25 @@ public sealed class OperationsTests : IAsyncLifetime
 
     public async Task DisposeAsync() => await _app.DisposeAsync();
 
+    /// <summary>La sauvegarde intégrée (VACUUM INTO) ne concerne que SQLite, même quand les tests tournent sur PostgreSQL.</summary>
+    private static async Task<TestApplication> SqliteApplicationAsync()
+    {
+        var app = await TestApplication.CreateAsync(settings: new() { ["Database:Provider"] = "Sqlite" });
+        var data = new CatalogTestData(app);
+        await data.SeedAsync();
+        await data.CreatePartAsync("P-0700", "Arbre", customerReference: "AR-7");
+        app.User.As(UserRole.Administrator, "admin");
+        return app;
+    }
+
     [Fact]
     public async Task Backup_creates_a_consistent_copy_and_records_status()
     {
-        var result = await _app.Get<AdministrationService>().BackupNowAsync();
+        await using var app = await SqliteApplicationAsync();
+        var result = await app.Get<AdministrationService>().BackupNowAsync();
 
         result.IsSuccess.Should().BeTrue(result.FirstError?.Message);
-        var path = Path.Combine(_app.Root, "backups", result.Value.Name);
+        var path = Path.Combine(app.Root, "backups", result.Value.Name);
         File.Exists(path).Should().BeTrue();
         await using (var connection = new SqliteConnection($"Data Source={path};Mode=ReadOnly;Pooling=False"))
         {
@@ -46,7 +58,7 @@ public sealed class OperationsTests : IAsyncLifetime
             (await command.ExecuteScalarAsync()).Should().Be(1L);
         }
 
-        var status = (await _app.Get<AdministrationService>().GetStatusAsync()).Value;
+        var status = (await app.Get<AdministrationService>().GetStatusAsync()).Value;
         status.Backup.LastSuccessAt.Should().NotBeNull();
         status.BackupOverdue.Should().BeFalse();
     }
@@ -54,22 +66,24 @@ public sealed class OperationsTests : IAsyncLifetime
     [Fact]
     public async Task Old_backups_are_removed_by_retention()
     {
-        var directory = Path.Combine(_app.Root, "backups");
+        await using var app = await SqliteApplicationAsync();
+        var directory = Path.Combine(app.Root, "backups");
         Directory.CreateDirectory(directory);
         var old = Path.Combine(directory, "barthazon-20000101-000000.db");
         await File.WriteAllTextAsync(old, "ancien");
         File.SetLastWriteTimeUtc(old, DateTime.UtcNow.AddDays(-40));
 
-        await _app.Get<BackupService>().RunAsync();
+        await app.Get<BackupService>().RunAsync();
 
         File.Exists(old).Should().BeFalse();
-        _app.Get<BackupService>().ListFiles().Should().ContainSingle();
+        app.Get<BackupService>().ListFiles().Should().ContainSingle();
     }
 
     [Fact]
     public async Task Without_backup_the_status_is_overdue()
     {
-        var status = (await _app.Get<AdministrationService>().GetStatusAsync()).Value;
+        await using var app = await SqliteApplicationAsync();
+        var status = (await app.Get<AdministrationService>().GetStatusAsync()).Value;
 
         status.BackupOverdue.Should().BeTrue();
     }
@@ -102,6 +116,31 @@ public sealed class OperationsTests : IAsyncLifetime
         (await target.Get<IPartService>().SearchAsync(new PartSearchRequest { Query = "dupont ar7" })).Value.TotalCount.Should().Be(1);
         (await target.Get<IUserService>().AuthenticateAsync("admin", "motdepasse")).IsSuccess.Should().BeTrue();
         (await target.Get<IPartService>().GetHistoryAsync(imported.Id)).Value.Should().NotBeEmpty("le journal est aussi transféré");
+    }
+
+    [Fact]
+    public async Task Json_export_from_sqlite_is_imported_into_the_configured_database()
+    {
+        // Scénario « passage à PostgreSQL » : avec BZ_TEST_POSTGRES, la cible est une base PostgreSQL.
+        await using var source = await SqliteApplicationAsync();
+        await source.Get<IUserService>().CreateFirstAdministratorAsync(new UserInput { UserName = "admin", DisplayName = "Admin", Password = "motdepasse" });
+        var export = (await source.Get<AdministrationService>().ExportAllAsync()).Value;
+
+        await using var target = await TestApplication.CreateAsync();
+        target.User.As(UserRole.Administrator, "admin");
+        using var stream = new MemoryStream(export.Content);
+        var report = await target.Get<AdministrationService>().ImportAllAsync(stream);
+
+        report.IsSuccess.Should().BeTrue(report.FirstError?.Message);
+        var imported = (await target.Get<IPartService>().GetByReferenceAsync("P-0700")).Value;
+        imported.CustomerCode.Should().Be("DUPONT");
+        (await target.Get<IPartService>().SearchAsync(new PartSearchRequest { Query = "arbre ar7" })).Value.TotalCount.Should().Be(1);
+        (await target.Get<IUserService>().AuthenticateAsync("admin", "motdepasse")).IsSuccess.Should().BeTrue();
+
+        // La base importée reste modifiable (jetons de concurrence, identifiants).
+        target.User.As(UserRole.Editor, "editeur");
+        var created = await target.Get<IPartService>().CreateAsync(new PartCreateInput { InternalReference = "P-0701", Designation = "Bague", CustomerId = imported.CustomerId, FirstIndex = "A" });
+        created.IsSuccess.Should().BeTrue(created.FirstError?.Message);
     }
 
     [Fact]

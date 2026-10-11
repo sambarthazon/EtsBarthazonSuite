@@ -1,6 +1,279 @@
 @page "/pieces/accueil"
+@using Barthazon.Catalog.Core.Persistence
+@inject IDashboardService DashboardData
+@inject IFavoriteService Favorites
+@inject IPartService Parts
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+@inject BrowserInterop Browser
 
-<PageHeader Title="@CatalogTexts.DashboardTitle" />
-<MudPaper Class="pa-4 bz-card" Elevation="0">
-    <MudText>@CatalogTexts.ModuleDescription</MudText>
-</MudPaper>
+<PageTitle>@CatalogTexts.DashboardTitle</PageTitle>
+<PageHeader Title="@CatalogTexts.DashboardTitle" Subtitle="@(_summary is null ? null : string.Format(CultureInfo.CurrentCulture, CatalogTexts.DashboardTotal, _summary.TotalParts))">
+    <Actions>
+        @if (CurrentUser.Role >= UserRole.Editor)
+        {
+            <MudButton Href="pieces/nouvelle" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">@CatalogTexts.NewPart</MudButton>
+        }
+        <MudButton Href="pieces" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewList">@CatalogTexts.AllParts</MudButton>
+    </Actions>
+</PageHeader>
+
+@* Grande barre de recherche : résultats pendant la frappe, Entrée = liste complète filtrée. *@
+<section class="bz-dashboard-search mb-4" role="search" aria-label="@CatalogTexts.DashboardSearchLabel">
+    <form @onsubmit="SubmitSearch" @onsubmit:preventDefault="true">
+        <MudTextField T="string" Value="_query" ValueChanged="OnQueryChangedAsync" Label="@CatalogTexts.DashboardSearchLabel" Placeholder="@CatalogTexts.DashboardSearchPlaceholder"
+                      Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" DebounceInterval="250"
+                      Clearable="true" InputId="bz-dashboard-search" Class="bz-dashboard-search-field" autocomplete="off" />
+    </form>
+    @if (!string.IsNullOrWhiteSpace(_query) && _hits is not null)
+    {
+        <MudPaper Class="bz-card mt-2" Elevation="0" aria-live="polite">
+            @if (_hits.Count == 0)
+            {
+                <MudText Class="pa-3 bz-muted">@CatalogTexts.DashboardNoMatch</MudText>
+            }
+            else
+            {
+                <ul class="bz-part-mini-list">
+                    @foreach (var p in _hits)
+                    {
+                        @MiniRow(p, _query)
+                    }
+                </ul>
+                <div class="pa-2"><MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="SubmitSearch" EndIcon="@Icons.Material.Filled.ArrowForward">@CatalogTexts.DashboardSearchAll</MudButton></div>
+            }
+        </MudPaper>
+    }
+</section>
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="6">
+        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-favorites">
+            <h2 id="bz-dash-favorites" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Small" Color="Color.Secondary" /> @CatalogTexts.Favorites</h2>
+            @if (_favorites is null)
+            {
+                <MudSkeleton Height="80px" SkeletonType="SkeletonType.Rectangle" />
+            }
+            else if (_favorites.Count == 0)
+            {
+                <MudText Class="bz-muted">@CatalogTexts.FavoritesEmpty</MudText>
+            }
+            else
+            {
+                <ul class="bz-part-mini-list">@foreach (var p in _favorites) { @MiniRow(p, null) }</ul>
+            }
+            @if (!Favorites.IsAvailable)
+            {
+                <MudText Typo="Typo.caption" Class="bz-muted d-block mt-2">@CatalogTexts.FavoritesLocal</MudText>
+            }
+        </section>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-recent">
+            <h2 id="bz-dash-recent" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Small" /> @CatalogTexts.RecentlyViewed</h2>
+            @if (_recent is null)
+            {
+                <MudSkeleton Height="80px" SkeletonType="SkeletonType.Rectangle" />
+            }
+            else if (_recent.Count == 0)
+            {
+                <MudText Class="bz-muted">@CatalogTexts.RecentlyViewedEmpty</MudText>
+            }
+            else
+            {
+                <ul class="bz-part-mini-list">@foreach (var p in _recent) { @MiniRow(p, null) }</ul>
+            }
+        </section>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-modified">
+            <h2 id="bz-dash-modified" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.Update" Size="Size.Small" /> @CatalogTexts.RecentlyModified</h2>
+            @if (_summary is null)
+            {
+                <MudSkeleton Height="120px" SkeletonType="SkeletonType.Rectangle" />
+            }
+            else if (_summary.RecentlyModified.Count == 0)
+            {
+                <MudText Class="bz-muted">@CatalogTexts.NoPartsMatch</MudText>
+            }
+            else
+            {
+                <ul class="bz-part-mini-list">
+                    @foreach (var p in _summary.RecentlyModified)
+                    {
+                        @MiniRow(p, null, p.UpdatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture))
+                    }
+                </ul>
+            }
+        </section>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-quality">
+            <h2 id="bz-dash-quality" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.FactCheck" Size="Size.Small" /> @CatalogTexts.DataQuality</h2>
+            <MudText Typo="Typo.body2" Class="bz-muted mb-2">@CatalogTexts.DataQualityHint</MudText>
+            @if (_summary is null)
+            {
+                <MudSkeleton Height="120px" SkeletonType="SkeletonType.Rectangle" />
+            }
+            else
+            {
+                <ul class="bz-count-list">
+                    @foreach (var (issue, count) in _summary.QualityIssues)
+                    {
+                        <li>
+                            <a href="@($"pieces?qualite={issue}")" class="bz-count-row">
+                                <span>@CatalogLabels.Get("DashboardQuality_" + issue)</span>
+                                @if (count == 0)
+                                {
+                                    <StatusChip Text="@CatalogTexts.DataQualityOk" Tone="StatusTone.Success" />
+                                }
+                                else
+                                {
+                                    <StatusChip Text="@count.ToString(CultureInfo.CurrentCulture)" Tone="StatusTone.Warning" />
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-status">
+            <h2 id="bz-dash-status" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.DonutLarge" Size="Size.Small" /> @CatalogTexts.PartsByStatus</h2>
+            @if (_summary is not null)
+            {
+                <ul class="bz-count-list">
+                    @foreach (var status in Enum.GetValues<PartStatus>())
+                    {
+                        <li>
+                            <a href="@($"pieces?statut={status}")" class="bz-count-row">
+                                <PartStatusChip Status="status" />
+                                <b>@_summary.CountByStatus.GetValueOrDefault(status).ToString(CultureInfo.CurrentCulture)</b>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-customers">
+            <h2 id="bz-dash-customers" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" /> @CatalogTexts.PartsByCustomer</h2>
+            @if (_summary is not null)
+            {
+                <ul class="bz-count-list">
+                    @foreach (var c in _summary.CountByCustomer.Take(MaxCustomers))
+                    {
+                        <li>
+                            <a href="@($"pieces?client={Uri.EscapeDataString(c.Code)}")" class="bz-count-row">
+                                <span><b>@c.Code</b> <span class="bz-muted">— @c.Name</span></span>
+                                <b>@c.Count.ToString(CultureInfo.CurrentCulture)</b>
+                            </a>
+                        </li>
+                    }
+                </ul>
+                @if (_summary.CountByCustomer.Count > MaxCustomers)
+                {
+                    <MudButton Href="clients" Variant="Variant.Text" Color="Color.Primary" Class="mt-1">@CatalogTexts.AllCustomers</MudButton>
+                }
+            }
+        </section>
+    </MudItem>
+
+    @* Zones à venir (application Stock, Commandes & livraisons). *@
+    <MudItem xs="12" md="6">
+        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-threshold">
+            <h2 id="bz-dash-threshold" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" /> @CatalogTexts.BelowThresholdCard</h2>
+            <FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock">
+                <ChildContent><MudText Class="bz-muted">@CatalogTexts.NotAvailable</MudText></ChildContent>
+                <Placeholder>
+                    <ul class="bz-count-list pa-2">
+                        <li class="bz-count-row">@CatalogTexts.DemoBelowThreshold1</li>
+                        <li class="bz-count-row">@CatalogTexts.DemoBelowThreshold2</li>
+                    </ul>
+                </Placeholder>
+            </FeatureGate>
+        </section>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-deliveries">
+            <h2 id="bz-dash-deliveries" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.LocalShipping" Size="Size.Small" /> @CatalogTexts.WeekDeliveriesCard</h2>
+            <FeatureGate Feature="@FeatureNames.Deliveries" Application="@CatalogTexts.AppOrders">
+                <ChildContent><MudText Class="bz-muted">@CatalogTexts.NotAvailable</MudText></ChildContent>
+                <Placeholder>
+                    <ul class="bz-count-list pa-2">
+                        <li class="bz-count-row">@CatalogTexts.DemoWeekDelivery1</li>
+                        <li class="bz-count-row">@CatalogTexts.DemoWeekDelivery2</li>
+                    </ul>
+                </Placeholder>
+            </FeatureGate>
+        </section>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private const int MaxCustomers = 8;
+
+    private DashboardSummary? _summary;
+    private IReadOnlyList<PartListItem>? _favorites;
+    private IReadOnlyList<PartListItem>? _recent;
+    private IReadOnlyList<PartListItem>? _hits;
+    private string? _query;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var summary = await DashboardData.GetSummaryAsync();
+        _summary = summary.IsSuccess ? summary.Value : null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        // Le stockage du navigateur n'est lisible qu'une fois la page interactive.
+        _recent = await DashboardData.GetByReferencesAsync(await PartBrowserStorage.ReadAsync(Browser, PartBrowserStorage.RecentKey));
+        _favorites = Favorites.IsAvailable
+            ? await Favorites.ListAsync()
+            : await DashboardData.GetByReferencesAsync(await PartBrowserStorage.ReadAsync(Browser, PartBrowserStorage.FavoritesKey));
+        StateHasChanged();
+    }
+
+    private async Task OnQueryChangedAsync(string? value)
+    {
+        _query = value;
+        _hits = string.IsNullOrWhiteSpace(value) ? null : await Parts.QuickSearchAsync(value, 8);
+    }
+
+    private void SubmitSearch()
+    {
+        var q = _query?.Trim();
+        Navigation.NavigateTo(string.IsNullOrEmpty(q) ? "pieces" : $"pieces?q={Uri.EscapeDataString(q)}");
+    }
+
+    private static RenderFragment MiniRow(PartListItem p, string? query, string? extra = null) => __builder =>
+    {
+        <li>
+            <a href="@($"pieces/{Uri.EscapeDataString(p.InternalReference)}")" class="bz-part-mini">
+                <PartThumbnail DocumentId="p.ThumbnailDocumentId" Size="40" />
+                <span class="bz-part-mini-text">
+                    <span><b><Highlight Text="@p.InternalReference" Query="@query" /></b> <span class="bz-muted">· @p.CustomerCode</span></span>
+                    <span class="bz-part-mini-designation"><Highlight Text="@p.Designation" Query="@query" /></span>
+                </span>
+                <span class="bz-part-mini-meta">
+                    <RevisionChip Index="@p.CurrentIndex" Status="p.CurrentRevisionStatus" Compact="true" />
+                    @if (extra is not null) { <span class="bz-muted bz-small">@extra</span> }
+                </span>
+            </a>
+        </li>
+    };
+}

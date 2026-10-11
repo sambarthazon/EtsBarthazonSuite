@@ -20,6 +20,7 @@ public static class BrandTokens
         string PrimaryContrast,
         string Accent,
         string AccentContrast,
+        string AccentText,
         string Background,
         string Surface,
         string SurfaceAlt,
@@ -43,13 +44,16 @@ public static class BrandTokens
         PrimaryContrast: "#FFFFFF",
         Accent: "#E07A1F",
         AccentContrast: "#FFFFFF",
+        // Accent utilisé comme couleur de texte : assombri pour un contraste AA (4,5:1) sur fond clair.
+        AccentText: "#B85C12",
         Background: "#F4F6F8",
         Surface: "#FFFFFF",
         SurfaceAlt: "#EEF2F6",
         Text: "#1B2430",
         TextSecondary: "#4A5868",
         Success: "#2E7D32",
-        Warning: "#ED6C02",
+        // #ED6C02 (palette d'origine) n'atteint que 3,1:1 sur blanc : assombri pour les textes d'alerte (AA).
+        Warning: "#B45309",
         Error: "#C62828",
         Info: "#0277BD",
         Disabled: "#9AA5B1",
@@ -66,6 +70,7 @@ public static class BrandTokens
         PrimaryContrast: "#0E1620",
         Accent: "#F29A4A",
         AccentContrast: "#1B1206",
+        AccentText: "#F29A4A",
         Background: "#12171D",
         Surface: "#1B232C",
         SurfaceAlt: "#232D38",
@@ -111,6 +116,7 @@ public static class BrandTokens
         Add("primary-contrast", colors.PrimaryContrast);
         Add("accent", colors.Accent);
         Add("accent-contrast", colors.AccentContrast);
+        Add("accent-text", colors.AccentText);
         Add("background", colors.Background);
         Add("surface", colors.Surface);
         Add("surface-alt", colors.SurfaceAlt);

@@ -1,5 +1,7 @@
 @inject IPartStockInfoProvider StockProvider
 
+<FavoriteToggle PartId="Part.Id" Reference="@Part.InternalReference" />
+
 @* Pastille « Stock » dans l'en-tête : grisée tant que l'application Stock n'existe pas. *@
 <FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock" Inline="true">
     <ChildContent>

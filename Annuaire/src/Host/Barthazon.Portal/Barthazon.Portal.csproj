@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\Modules\Catalog\Barthazon.Catalog.Infrastructure\Barthazon.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Catalog\Barthazon.Catalog.UI\Barthazon.Catalog.UI.csproj" />
     <ProjectReference Include="..\Barthazon.Migrations.Sqlite\Barthazon.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\Barthazon.Migrations.Postgres\Barthazon.Migrations.Postgres.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Barthazon.Architecture.Tests" />

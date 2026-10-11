@@ -377,7 +377,7 @@ internal sealed partial class PartService(
         return ordered.ThenBy(i => i.InternalReference, comparer);
     }
 
-    private async Task<List<PartListItem>> ToListItemsAsync(ICatalogUnitOfWork uow, IReadOnlyList<PartRow> rows, CancellationToken cancellationToken)
+    internal async Task<List<PartListItem>> ToListItemsAsync(ICatalogUnitOfWork uow, IReadOnlyList<PartRow> rows, CancellationToken cancellationToken)
     {
         if (rows.Count == 0)
         {

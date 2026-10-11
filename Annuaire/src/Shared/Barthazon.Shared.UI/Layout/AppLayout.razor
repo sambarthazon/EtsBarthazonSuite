@@ -17,6 +17,8 @@
 <BrandStyles IsDarkMode="_isDarkMode" />
 
 <MudLayout>
+    @* Lien d'évitement (clavier, lecteur d'écran) : bouton plutôt qu'ancre, car « #… » serait résolu par rapport à l'adresse de base. *@
+    <button type="button" class="bz-skip-link" @onclick="SkipToContentAsync">@SharedTexts.SkipToContent</button>
     <MudAppBar Elevation="1" Dense="false">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
                        OnClick="ToggleDrawer" aria-label="@SharedTexts.OpenMenu" Class="bz-hide-mobile" />
@@ -44,7 +46,9 @@
 
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="bz-page">
-            @Body
+            <main id="bz-main" tabindex="-1" class="bz-main">
+                @Body
+            </main>
         </MudContainer>
     </MudMainContent>
 
@@ -129,4 +133,6 @@
     }
 
     public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+
+    private async Task SkipToContentAsync() => await Browser.FocusAsync("bz-main");
 }

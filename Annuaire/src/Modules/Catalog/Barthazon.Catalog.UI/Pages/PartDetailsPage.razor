@@ -158,14 +158,8 @@ else
         await RememberRecentAsync();
     }
 
-    private async Task RememberRecentAsync()
-    {
-        // Pièces consultées récemment : mémorisées dans le navigateur (par appareil).
-        const string key = "bz-recent-parts";
-        var stored = await Browser.GetStorageAsync(key) ?? string.Empty;
-        var recent = stored.Split('|', StringSplitOptions.RemoveEmptyEntries).Where(r => r != _part!.InternalReference).Prepend(_part!.InternalReference).Take(12);
-        await Browser.SetStorageAsync(key, string.Join('|', recent));
-    }
+    // Pièces consultées récemment : mémorisées dans le navigateur (par appareil).
+    private Task RememberRecentAsync() => PartBrowserStorage.PushAsync(Browser, PartBrowserStorage.RecentKey, _part!.InternalReference);
 
     private string RevisionLabel(Guid id)
     {

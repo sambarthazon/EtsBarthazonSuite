@@ -75,6 +75,17 @@ public sealed class TestApplication : IAsyncDisposable
             ["Catalog:ReferencePattern"] = "P-{0:0000}",
             ["Security:AllowAnonymousRead"] = "true",
         };
+        // Variante PostgreSQL (facultative) : BZ_TEST_POSTGRES = chaîne de connexion sans base,
+        // ex. « Host=localhost;Port=5432;Username=postgres ». Une base jetable est créée par test.
+        var postgres = Environment.GetEnvironmentVariable("BZ_TEST_POSTGRES");
+        string? postgresDatabase = null;
+        if (!string.IsNullOrWhiteSpace(postgres) && settings?.ContainsKey("Database:Provider") != true)
+        {
+            postgresDatabase = "bz_test_" + Guid.NewGuid().ToString("N");
+            values["Database:Provider"] = "Postgres";
+            values["Database:ConnectionString"] = $"{postgres};Database={postgresDatabase}";
+        }
+
         foreach (var (key, value) in settings ?? [])
         {
             values[key] = value;
@@ -94,13 +105,28 @@ public sealed class TestApplication : IAsyncDisposable
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         await provider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
-        return new TestApplication(root, provider, user);
+        return new TestApplication(root, provider, user) { _postgresDatabase = postgresDatabase, _postgresServer = postgres };
     }
+
+    private string? _postgresDatabase;
+    private string? _postgresServer;
 
     public async ValueTask DisposeAsync()
     {
         _scope.Dispose();
         await _provider.DisposeAsync();
+        if (_postgresDatabase is not null)
+        {
+            Npgsql.NpgsqlConnection.ClearAllPools();
+            await using var connection = new Npgsql.NpgsqlConnection($"{_postgresServer};Database=postgres");
+            await connection.OpenAsync();
+            await using var command = connection.CreateCommand();
+#pragma warning disable CA2100 // Nom de base généré par le test (Guid), pas de saisie utilisateur.
+            command.CommandText = $"DROP DATABASE IF EXISTS {_postgresDatabase} WITH (FORCE)";
+#pragma warning restore CA2100
+            await command.ExecuteNonQueryAsync();
+        }
+
         try
         {
             Directory.Delete(Root, recursive: true);

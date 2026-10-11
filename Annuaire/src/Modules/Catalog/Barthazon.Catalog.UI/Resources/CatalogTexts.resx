@@ -475,4 +475,50 @@
   <data name="LabelsSelectNone" xml:space="preserve"><value>Tout décocher</value></data>
   <data name="LabelsEmpty" xml:space="preserve"><value>Aucune pièce à étiqueter.</value></data>
   <data name="LabelsSkip" xml:space="preserve"><value>Étiquettes déjà utilisées sur la planche</value></data>
+  <data name="DashboardSearchLabel" xml:space="preserve"><value>Rechercher une pièce</value></data>
+  <data name="DashboardSearchPlaceholder" xml:space="preserve"><value>Référence, référence client, désignation, client, matière…</value></data>
+  <data name="DashboardSearchAll" xml:space="preserve"><value>Voir tous les résultats</value></data>
+  <data name="DashboardNoMatch" xml:space="preserve"><value>Aucune pièce ne correspond.</value></data>
+  <data name="DashboardTotal" xml:space="preserve"><value>{0} pièce(s) dans l'annuaire (hors archives)</value></data>
+  <data name="AllParts" xml:space="preserve"><value>Toutes les pièces</value></data>
+  <data name="Favorites" xml:space="preserve"><value>Favoris</value></data>
+  <data name="FavoritesEmpty" xml:space="preserve"><value>Aucun favori : touchez l'étoile d'une fiche pièce pour la retrouver ici.</value></data>
+  <data name="FavoritesLocal" xml:space="preserve"><value>Non connecté : les favoris sont enregistrés sur cet appareil uniquement.</value></data>
+  <data name="AddFavorite" xml:space="preserve"><value>Ajouter aux favoris</value></data>
+  <data name="RemoveFavorite" xml:space="preserve"><value>Retirer des favoris</value></data>
+  <data name="FavoriteAdded" xml:space="preserve"><value>Ajoutée aux favoris.</value></data>
+  <data name="FavoriteRemoved" xml:space="preserve"><value>Retirée des favoris.</value></data>
+  <data name="RecentlyViewed" xml:space="preserve"><value>Consultées récemment</value></data>
+  <data name="RecentlyViewedEmpty" xml:space="preserve"><value>Aucune pièce consultée récemment sur cet appareil.</value></data>
+  <data name="RecentlyModified" xml:space="preserve"><value>Dernières modifications</value></data>
+  <data name="PartsByStatus" xml:space="preserve"><value>Pièces par statut</value></data>
+  <data name="PartsByCustomer" xml:space="preserve"><value>Pièces par client</value></data>
+  <data name="AllCustomers" xml:space="preserve"><value>Tous les clients</value></data>
+  <data name="DataQuality" xml:space="preserve"><value>Qualité des données</value></data>
+  <data name="DataQualityHint" xml:space="preserve"><value>Chaque ligne ouvre la liste des pièces concernées.</value></data>
+  <data name="DataQualityOk" xml:space="preserve"><value>Rien à signaler</value></data>
+  <data name="DashboardQuality_NoDrawing" xml:space="preserve"><value>Pièces sans plan</value></data>
+  <data name="DashboardQuality_NoMaterial" xml:space="preserve"><value>Pièces sans matière</value></data>
+  <data name="DashboardQuality_NoInForceRevision" xml:space="preserve"><value>Pièces sans indice en vigueur</value></data>
+  <data name="DashboardQuality_PaperDrawingOnly" xml:space="preserve"><value>Pièces avec plan uniquement papier</value></data>
+  <data name="DashboardQuality_PendingDraft" xml:space="preserve"><value>Pièces avec un brouillon en attente</value></data>
+  <data name="BelowThresholdCard" xml:space="preserve"><value>Pièces sous le seuil</value></data>
+  <data name="WeekDeliveriesCard" xml:space="preserve"><value>Livraisons de la semaine</value></data>
+  <data name="DemoBelowThreshold1" xml:space="preserve"><value>P-0004 — Bague de guidage : 12 pcs (seuil 50)</value></data>
+  <data name="DemoBelowThreshold2" xml:space="preserve"><value>P-0011 — Axe épaulé : 0 pcs (seuil 20)</value></data>
+  <data name="DemoWeekDelivery1" xml:space="preserve"><value>Lundi — MECA : 40 × P-0002</value></data>
+  <data name="DemoWeekDelivery2" xml:space="preserve"><value>Jeudi — HYDRO : 120 × P-0007</value></data>
+  <data name="LinksHint" xml:space="preserve"><value>Le lien inverse apparaît automatiquement sur la fiche de l'autre pièce.</value></data>
+  <data name="LinksEmpty" xml:space="preserve"><value>Aucune pièce liée.</value></data>
+  <data name="AddLink" xml:space="preserve"><value>Ajouter un lien</value></data>
+  <data name="LinkType" xml:space="preserve"><value>Relation</value></data>
+  <data name="LinkedPart" xml:space="preserve"><value>Pièce liée</value></data>
+  <data name="LinkedPartHelper" xml:space="preserve"><value>Tapez une référence ou une désignation.</value></data>
+  <data name="LinkQuantity" xml:space="preserve"><value>Quantité (optionnelle)</value></data>
+  <data name="LinkNote" xml:space="preserve"><value>Note (optionnelle)</value></data>
+  <data name="LinkAdded" xml:space="preserve"><value>Lien ajouté.</value></data>
+  <data name="LinkRemoved" xml:space="preserve"><value>Lien supprimé.</value></data>
+  <data name="RemoveLink" xml:space="preserve"><value>Supprimer le lien</value></data>
+  <data name="RemoveLinkConfirm" xml:space="preserve"><value>Supprimer le lien « {0} » avec la pièce {1} ?</value></data>
+  <data name="LinkThisPart" xml:space="preserve"><value>Cette pièce…</value></data>
 </root>

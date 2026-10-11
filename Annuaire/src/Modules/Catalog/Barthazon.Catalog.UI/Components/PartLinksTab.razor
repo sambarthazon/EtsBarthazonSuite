@@ -1,9 +1,196 @@
-@* Complété dans un jalon ultérieur. *@
+@inject IPartLinkService Links
+@inject IPartService Parts
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+
+@* Liens entre pièces : le lien inverse est affiché automatiquement sur l'autre fiche. *@
+<div class="pa-2">
+    <MudText Typo="Typo.body2" Class="bz-muted mb-3">@CatalogTexts.LinksHint</MudText>
+
+    @if (_links is null)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+    else if (_links.Count == 0)
+    {
+        <MudText Class="bz-muted mb-3">@CatalogTexts.LinksEmpty</MudText>
+    }
+    else
+    {
+        @foreach (var group in _links.GroupBy(l => l.Type.Label(l.IsInverse)))
+        {
+            <MudText Typo="Typo.subtitle2" HtmlTag="h3" Class="mt-2 mb-1">@group.Key</MudText>
+            <ul class="bz-link-list mb-2">
+                @foreach (var link in group)
+                {
+                    <li class="bz-link-item">
+                        <div class="flex-grow-1" style="min-width:0">
+                            <a href="@($"pieces/{Uri.EscapeDataString(link.OtherReference)}")"><b>@link.OtherReference</b></a>
+                            <span> — @link.OtherDesignation</span>
+                            @if (link.OtherIndex is not null) { <span class="bz-muted"> · @CatalogTexts.ColIndex @link.OtherIndex</span> }
+                            @if (link.OtherIsArchived) { <StatusChip Text="@CatalogTexts.ArchivedChip" Tone="StatusTone.Disabled" Class="ml-1" /> }
+                            @if (link.Quantity is { } quantity) { <span class="bz-muted"> · × @CatalogLabels.Number(quantity)</span> }
+                            @if (link.Note is not null) { <div class="bz-muted" style="overflow-wrap:anywhere">@link.Note</div> }
+                        </div>
+                        <PartStatusChip Status="link.OtherStatus" />
+                        @if (CanEdit)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Outlined.LinkOff" aria-label="@CatalogTexts.RemoveLink" title="@CatalogTexts.RemoveLink"
+                                           OnClick="() => RemoveAsync(link)" />
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    }
+
+    @if (CanEdit)
+    {
+        @if (!_adding)
+        {
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AddLink" OnClick="StartAdd" Class="mt-2">@CatalogTexts.AddLink</MudButton>
+        }
+        else
+        {
+            <MudPaper Class="pa-3 mt-2 bz-card" Elevation="0">
+                <MudText Typo="Typo.subtitle1" HtmlTag="h3" Class="mb-2">@CatalogTexts.AddLink</MudText>
+                <FormErrors State="_form" />
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="5">
+                        <MudSelect T="int" @bind-Value="_option" Label="@CatalogTexts.LinkType" Variant="Variant.Outlined"
+                                   HelperText="@CatalogTexts.LinkThisPart">
+                            @for (var i = 0; i < Options.Length; i++)
+                            {
+                                var index = i;
+                                <MudSelectItem T="int" Value="index">@Options[index].Type.Label(Options[index].Inverse)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="7">
+                        <MudAutocomplete T="PartListItem" @bind-Value="_target" SearchFunc="SearchAsync" ToStringFunc="@(p => p is null ? string.Empty : $"{p.InternalReference} — {p.Designation}")"
+                                         Label="@CatalogTexts.LinkedPart" HelperText="@CatalogTexts.LinkedPartHelper" Variant="Variant.Outlined"
+                                         DebounceInterval="200" MaxItems="20" ResetValueOnEmptyText="true" Clearable="true"
+                                         Error="_form.HasError(nameof(PartLinkInput.OtherPartId))" ErrorText="@_form.ErrorFor(nameof(PartLinkInput.OtherPartId))" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField T="decimal?" @bind-Value="_quantity" Label="@CatalogTexts.LinkQuantity" Variant="Variant.Outlined" HideSpinButtons="true"
+                                         Culture="CultureInfo.CurrentCulture" Error="_form.HasError(nameof(PartLinkInput.Quantity))" ErrorText="@_form.ErrorFor(nameof(PartLinkInput.Quantity))" />
+                    </MudItem>
+                    <MudItem xs="12" sm="8">
+                        <MudTextField T="string" @bind-Value="_note" Label="@CatalogTexts.LinkNote" Variant="Variant.Outlined" MaxLength="500"
+                                      Error="_form.HasError(nameof(PartLinkInput.Note))" ErrorText="@_form.ErrorFor(nameof(PartLinkInput.Note))" />
+                    </MudItem>
+                </MudGrid>
+                <div class="d-flex gap-2 mt-3">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddAsync" Disabled="_saving">@SharedTexts.Save</MudButton>
+                    <MudButton Variant="Variant.Text" OnClick="() => _adding = false">@SharedTexts.Cancel</MudButton>
+                </div>
+            </MudPaper>
+        }
+    }
+</div>
 
 @code {
+    /// <summary>Relations proposées, vues depuis la fiche courante (« Associée à » est symétrique).</summary>
+    private static readonly (PartLinkType Type, bool Inverse)[] Options =
+    [
+        (PartLinkType.ComponentOf, false),
+        (PartLinkType.ComponentOf, true),
+        (PartLinkType.Replaces, false),
+        (PartLinkType.Replaces, true),
+        (PartLinkType.Variant, false),
+        (PartLinkType.Variant, true),
+        (PartLinkType.Related, false),
+    ];
+
+    private readonly FormState _form = new();
+    private IReadOnlyList<PartLinkItem>? _links;
+    private Guid _loadedFor;
+    private bool _adding;
+    private bool _saving;
+    private int _option = Options.Length - 1;
+    private PartListItem? _target;
+    private decimal? _quantity;
+    private string? _note;
+
     [Parameter] public PartDetails? Part { get; set; }
 
     [Parameter] public RevisionDetails? Revision { get; set; }
 
     [Parameter] public EventCallback OnChanged { get; set; }
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Part is not null && Part.Id != _loadedFor)
+        {
+            _loadedFor = Part.Id;
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        var result = await Links.ListAsync(Part!.Id);
+        _links = result.IsSuccess ? result.Value : [];
+    }
+
+    private void StartAdd()
+    {
+        _form.Clear();
+        _target = null;
+        _quantity = null;
+        _note = null;
+        _option = Options.Length - 1;
+        _adding = true;
+    }
+
+    private async Task<IEnumerable<PartListItem>> SearchAsync(string? text, CancellationToken cancellationToken) =>
+        (await Parts.QuickSearchAsync(text ?? string.Empty, 20, cancellationToken)).Where(p => p.Id != Part?.Id);
+
+    private async Task AddAsync()
+    {
+        _saving = true;
+        try
+        {
+            var option = Options[_option];
+            var result = await Links.AddAsync(new PartLinkInput
+            {
+                PartId = Part!.Id,
+                OtherPartId = _target?.Id,
+                Type = option.Type,
+                IsInverse = option.Inverse,
+                Quantity = _quantity,
+                Note = _note,
+            });
+            _form.Apply(result);
+            if (Notifier.Handle(result, CatalogTexts.LinkAdded))
+            {
+                _adding = false;
+                await LoadAsync();
+                await OnChanged.InvokeAsync();
+            }
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task RemoveAsync(PartLinkItem link)
+    {
+        var message = string.Format(CultureInfo.CurrentCulture, CatalogTexts.RemoveLinkConfirm, link.Type.Label(link.IsInverse), link.OtherReference);
+        if (!await Dialogs.ConfirmAsync(CatalogTexts.RemoveLink, message, CatalogTexts.RemoveLink, danger: true))
+        {
+            return;
+        }
+
+        if (Notifier.Handle(await Links.RemoveAsync(link.Id), CatalogTexts.LinkRemoved))
+        {
+            await LoadAsync();
+            await OnChanged.InvokeAsync();
+        }
+    }
 }
