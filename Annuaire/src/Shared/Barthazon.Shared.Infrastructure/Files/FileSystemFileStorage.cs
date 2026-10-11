@@ -79,13 +79,15 @@ public sealed class FileSystemFileStorage : IFileStorage
     /// <summary>Chemin absolu d'une clé ; refuse toute clé qui sortirait du dossier racine.</summary>
     internal string Resolve(string storageKey)
     {
-        if (string.IsNullOrWhiteSpace(storageKey) || Path.IsPathRooted(storageKey) || storageKey.Contains("..", StringComparison.Ordinal))
+        // Refus des segments « . » / « .. » (un nom comme « plan..v2.pdf » reste accepté).
+        if (string.IsNullOrWhiteSpace(storageKey) || Path.IsPathRooted(storageKey)
+            || storageKey.Split('/', '\\').Any(segment => segment is "." or ".."))
         {
             throw new ArgumentException("Clé de stockage invalide.", nameof(storageKey));
         }
 
         var full = Path.GetFullPath(Path.Combine(_root, storageKey.Replace('/', Path.DirectorySeparatorChar)));
-        if (!full.StartsWith(_root, StringComparison.Ordinal))
+        if (!full.StartsWith(Path.TrimEndingDirectorySeparator(_root) + Path.DirectorySeparatorChar, StringComparison.Ordinal))
         {
             throw new ArgumentException("Clé de stockage invalide.", nameof(storageKey));
         }

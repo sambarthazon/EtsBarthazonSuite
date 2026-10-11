@@ -110,6 +110,33 @@ public sealed class RevisionLifecycleTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Too_long_characteristics_and_operations_are_refused_with_a_message()
+    {
+        var part = await _data.CreatePartAsync("P-0108", "Axe");
+        var a = (await _data.Parts.GetRevisionAsync(part.Id, part.CurrentRevisionId!.Value)).Value;
+        var input = RevisionInput.From(a);
+        input.Characteristics.Add(new CharacteristicInput { Name = new string('n', 101), Value = "6" });
+        input.Operations.Add(new OperationInput { Number = 10, Type = OperationType.Turning, NcProgramReference = new string('p', 101) });
+
+        var result = await _data.Revisions.UpdateAsync(part.Id, a.Id, input);
+
+        result.Errors.Select(e => e.Field).Should().BeEquivalentTo(["Characteristics[0].Name", "Operations[0].NcProgramReference"]);
+    }
+
+    [Fact]
+    public async Task Any_value_longer_than_its_column_is_refused_before_reaching_the_database()
+    {
+        // Filet de sécurité de l'unité de travail (même comportement sous SQLite et PostgreSQL).
+        await using var uow = _app.Get<Barthazon.Shared.Kernel.Persistence.IUnitOfWorkFactory<Barthazon.Catalog.Core.Persistence.ICatalogUnitOfWork>>().Create();
+        var family = new Barthazon.Catalog.Core.Domain.PartFamily(new string('f', 101));
+        uow.Families.Add(family);
+
+        var result = await uow.SaveChangesAsync();
+
+        result.Errors.Should().ContainSingle(e => e.Kind == ErrorKind.Validation && e.Field == "Name");
+    }
+
+    [Fact]
     public async Task Duplication_copies_characteristics_routing_and_selected_documents_only()
     {
         var part = await _data.CreatePartAsync("P-0107", "Axe");

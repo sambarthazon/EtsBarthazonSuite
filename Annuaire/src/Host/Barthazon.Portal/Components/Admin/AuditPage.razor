@@ -34,6 +34,7 @@
     }
     else
     {
+        <MudHidden Breakpoint="Breakpoint.Xs">
         <div style="overflow-x:auto">
             <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="bz-card">
                 <thead><tr><th>@PortalTexts.AuditDate</th><th>@PortalTexts.AuditUser</th><th>@PortalTexts.AuditEntity</th><th>@PortalTexts.AuditAction</th><th>@PortalTexts.AuditDetails</th></tr></thead>
@@ -51,6 +52,22 @@
                 </tbody>
             </MudSimpleTable>
         </div>
+        </MudHidden>
+        <MudHidden Breakpoint="Breakpoint.Xs" Invert="true">
+            <ul class="bz-audit-cards">
+                @foreach (var entry in page.Items)
+                {
+                    <li class="bz-card bz-audit-card">
+                        <div class="bz-audit-card-head">
+                            <span>@entry.At.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</span>
+                            <span>@entry.UserName</span>
+                        </div>
+                        <div><b>@EntityLabel(entry.EntityType)</b> — @ActionLabel(entry.Action)</div>
+                        <div class="bz-audit-card-details">@Details(entry)</div>
+                    </li>
+                }
+            </ul>
+        </MudHidden>
         @if (page.TotalCount > PageSize)
         {
             <div class="d-flex justify-center mt-3">
@@ -126,7 +143,7 @@
 
         foreach (var (field, old, value) in changes.Take(8))
         {
-            <div><span class="bz-muted">@CatalogLabels.FieldLabel(field) :</span> @(entry.Action == AuditActions.Created ? null : $"{old ?? "—"} → ")<b>@(value ?? "—")</b></div>
+            <div><span class="bz-muted">@CatalogLabels.FieldLabel(field) :</span> @(entry.Action == AuditActions.Created ? null : $"{CatalogLabels.ValueLabel(field, old) ?? "—"} → ")<b>@(CatalogLabels.ValueLabel(field, value) ?? "—")</b></div>
         }
     };
 

@@ -102,6 +102,9 @@ public static class SearchNormalizer
             .ToList();
     }
 
+    /// <summary>Longueur de la colonne de recherche.</summary>
+    public const int MaxSearchTextLength = 4000;
+
     /// <summary>
     /// Construit le texte de recherche d'un objet : pour chaque valeur, la forme normalisée (mots)
     /// et la forme compacte (références sans séparateurs), séparées par « | ».
@@ -126,7 +129,24 @@ public static class SearchNormalizer
             }
         }
 
-        return parts.Count == 0 ? string.Empty : "|" + string.Join('|', parts.Distinct(StringComparer.Ordinal)) + "|";
+        if (parts.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        // Colonne limitée à MaxSearchTextLength : on garde les premières valeurs (référence, désignation, client…), les plus utiles.
+        var builder = new StringBuilder("|");
+        foreach (var part in parts.Distinct(StringComparer.Ordinal))
+        {
+            if (builder.Length + part.Length + 1 > MaxSearchTextLength)
+            {
+                break;
+            }
+
+            builder.Append(part).Append('|');
+        }
+
+        return builder.ToString();
     }
 
     /// <summary>Vrai si tous les termes de la saisie sont présents dans le texte de recherche.</summary>

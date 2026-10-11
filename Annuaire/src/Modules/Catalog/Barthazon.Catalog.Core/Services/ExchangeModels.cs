@@ -34,6 +34,14 @@ public static class ExchangeColumns
     /// <summary>Colonnes obligatoires.</summary>
     public static IReadOnlyList<string> Required { get; } = [InternalReference, Designation, CustomerCode];
 
+    /// <summary>Longueur maximale de chaque colonne importée (mêmes limites que la saisie).</summary>
+    public static IReadOnlyList<(string Column, int Max)> MaxLengths { get; } =
+    [
+        (InternalReference, 50), (Designation, 200), (CustomerCode, 20), (CustomerName, 200), (CustomerReference, 100),
+        (Family, 100), (Index, 10), (Material, 150), (Grade, 100), (BlankDimensions, 100), (Description, 4000),
+        (WorkshopNotes, 4000), (GeneralTolerance, 200),
+    ];
+
     /// <summary>Colonnes de l'export (celles de l'import + informations).</summary>
     public static IReadOnlyList<string> Export { get; } = [.. Import.Take(8), RevisionStatus, .. Import.Skip(8), UpdatedAt];
 }

@@ -113,6 +113,15 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
 }
 
+// En-têtes de protection : pas d'affichage dans un cadre d'un autre site (clic détourné), pas de devinette de type.
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers.XFrameOptions = "SAMEORIGIN";
+    headers.XContentTypeOptions = "nosniff";
+    headers["Referrer-Policy"] = "same-origin";
+    await next();
+});
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseAuthentication();
 app.Use(async (context, next) =>

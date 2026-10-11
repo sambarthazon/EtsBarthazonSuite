@@ -60,4 +60,5 @@
   <data name="ImportDuplicateInFile" xml:space="preserve"><value>Référence en double dans le fichier (ligne {0}).</value></data>
   <data name="ImportIndexIgnored" xml:space="preserve"><value>Indice « {0} » ignoré : la pièce existe déjà (les indices se gèrent depuis la fiche).</value></data>
   <data name="ImportNothing" xml:space="preserve"><value>Aucune ligne valide à importer.</value></data>
+  <data name="ImportTooLong" xml:space="preserve"><value>« {0} » trop long : {1} caractères au plus.</value></data>
 </root>

@@ -32,6 +32,17 @@ public sealed class FileSystemFileStorageTests : IDisposable
     }
 
     [Fact]
+    public async Task File_names_with_double_dots_are_accepted_but_parent_segments_are_not()
+    {
+        using var input = new MemoryStream([1, 2, 3]);
+
+        (await _storage.SaveAsync("parts/a/b/plan..v2.pdf", input, 1024)).SizeBytes.Should().Be(3);
+        (await _storage.ExistsAsync("parts/a/b/plan..v2.pdf")).Should().BeTrue();
+        var escape = () => _storage.ExistsAsync("parts/../../secret.txt");
+        await escape.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
     public async Task Too_large_file_is_rejected_and_nothing_is_left_on_disk()
     {
         using var input = new MemoryStream(new byte[2048]);

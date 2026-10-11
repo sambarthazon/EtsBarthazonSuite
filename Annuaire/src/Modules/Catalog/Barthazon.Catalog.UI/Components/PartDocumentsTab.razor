@@ -126,7 +126,10 @@
 
     private Task OnFilesAsync(InputFileChangeEventArgs e) => UploadAsync(e.GetMultipleFiles(20), _uploadType);
 
-    private Task OnPhotoAsync(InputFileChangeEventArgs e) => UploadAsync([e.File], DocumentType.Photo);
+    // Sur ordinateur, le bouton « Prendre une photo » ouvre un sélecteur de fichiers : un fichier qui n'est pas une image
+    // (plan PDF…) garde le type choisi dans la liste.
+    private Task OnPhotoAsync(InputFileChangeEventArgs e) =>
+        UploadAsync([e.File], e.File.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) ? DocumentType.Photo : _uploadType);
 
     private async Task UploadAsync(IReadOnlyList<IBrowserFile> files, DocumentType type)
     {

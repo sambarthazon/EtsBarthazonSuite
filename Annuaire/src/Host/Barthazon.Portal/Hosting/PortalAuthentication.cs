@@ -56,6 +56,7 @@ internal static class PortalAuthentication
         services.AddScoped<Barthazon.Shared.Kernel.Security.ICurrentUser>(sp => sp.GetRequiredService<CurrentUserAccessor>());
         services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, UserCircuitHandler>();
         services.AddSingleton<FirstRunState>();
+        services.AddSingleton<LoginThrottle>();
         return services;
     }
 

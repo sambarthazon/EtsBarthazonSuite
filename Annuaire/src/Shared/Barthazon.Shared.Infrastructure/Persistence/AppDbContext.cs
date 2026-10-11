@@ -20,6 +20,9 @@ public sealed class AppDbContext : DbContext
     [
         nameof(IAuditable.Version), nameof(IAuditable.CreatedAt), nameof(IAuditable.CreatedBy),
         nameof(IAuditable.UpdatedAt), nameof(IAuditable.UpdatedBy), "SearchText", "Id", "LastLoginAt",
+
+        // Champs calculés par le programme, sans intérêt pour un lecteur du journal.
+        "RevisionsChangedAt", "CurrentRevisionId", "StorageKey", "Sha256",
     ];
 
     /// <summary>Propriétés dont la valeur est masquée dans le journal.</summary>

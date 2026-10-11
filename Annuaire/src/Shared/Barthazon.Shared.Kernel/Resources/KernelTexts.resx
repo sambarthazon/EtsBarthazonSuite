@@ -15,4 +15,5 @@
   <data name="BackupFailed" xml:space="preserve"><value>Échec de la sauvegarde : {0}</value></data>
   <data name="ImportNotAFile" xml:space="preserve"><value>Ce fichier n'est pas un export complet Barthazon.</value></data>
   <data name="ImportFailed" xml:space="preserve"><value>Échec de l'import : {0}</value></data>
+  <data name="TextTooLongMax" xml:space="preserve"><value>Texte trop long : {0} caractères au plus.</value></data>
 </root>

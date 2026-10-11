@@ -330,6 +330,13 @@ internal sealed partial class PartService(
     }
 
     // ----- Outils -----
+
+    /// <summary>Règle de forme de la référence interne (elle sert dans l'adresse de la fiche), ou null si elle est correcte.</summary>
+    internal static string? ReferenceFormatError(string reference) =>
+        reference.IndexOfAny(['/', '\\', '?', '#', '%']) >= 0 ? CatalogMessages.ReferenceInvalid
+        : ReservedReferences.Contains(reference.Trim()) ? CatalogMessages.ReferenceReserved
+        : null;
+
     internal static IEnumerable<PartListItem> Rank(IEnumerable<PartListItem> items, string query)
     {
         // Correspondance exacte de référence en premier, puis début de référence, puis le reste.
@@ -482,11 +489,11 @@ internal sealed partial class PartService(
     private async Task<Validation> ValidatePartAsync(ICatalogUnitOfWork uow, PartInput input, Guid? id, CancellationToken cancellationToken)
     {
         var reference = input.InternalReference?.Trim() ?? string.Empty;
+        var formatError = reference.Length > 0 ? ReferenceFormatError(reference) : null;
         var validation = new Validation()
             .Required(reference, nameof(PartInput.InternalReference), CatalogMessages.ReferenceRequired)
             .MaxLength(reference, 50, nameof(PartInput.InternalReference), CatalogMessages.TextTooLong)
-            .When(reference.IndexOfAny(['/', '\\', '?', '#', '%']) >= 0, nameof(PartInput.InternalReference), CatalogMessages.ReferenceInvalid)
-            .When(ReservedReferences.Contains(reference), nameof(PartInput.InternalReference), CatalogMessages.ReferenceReserved)
+            .When(formatError is not null, nameof(PartInput.InternalReference), formatError ?? string.Empty)
             .Required(input.Designation, nameof(PartInput.Designation), CatalogMessages.DesignationRequired)
             .MaxLength(input.Designation, 200, nameof(PartInput.Designation), CatalogMessages.TextTooLong)
             .MaxLength(input.CustomerReference, 100, nameof(PartInput.CustomerReference), CatalogMessages.TextTooLong)

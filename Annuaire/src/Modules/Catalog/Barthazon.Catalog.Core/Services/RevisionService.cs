@@ -210,7 +210,12 @@ internal sealed class RevisionService(
 
         for (var i = 0; i < input.Characteristics.Count; i++)
         {
-            validation.Required(input.Characteristics[i].Name, $"Characteristics[{i}].Name", CatalogMessages.CharacteristicNameRequired);
+            var characteristic = input.Characteristics[i];
+            validation
+                .Required(characteristic.Name, $"Characteristics[{i}].Name", CatalogMessages.CharacteristicNameRequired)
+                .MaxLength(characteristic.Name, 100, $"Characteristics[{i}].Name", CatalogMessages.TextTooLong)
+                .MaxLength(characteristic.Value, 500, $"Characteristics[{i}].Value", CatalogMessages.TextTooLong)
+                .MaxLength(characteristic.Unit, 30, $"Characteristics[{i}].Unit", CatalogMessages.TextTooLong);
         }
 
         var numbers = new HashSet<int>();
@@ -221,7 +226,11 @@ internal sealed class RevisionService(
                 .When(operation.Number <= 0, $"Operations[{i}].Number", CatalogMessages.OperationNumberInvalid)
                 .When(operation.Number > 0 && !numbers.Add(operation.Number), $"Operations[{i}].Number", CatalogMessages.OperationNumberDuplicate)
                 .Positive(operation.SetupTimeMin, $"Operations[{i}].SetupTimeMin", CatalogMessages.NegativeValue)
-                .Positive(operation.CycleTimeMin, $"Operations[{i}].CycleTimeMin", CatalogMessages.NegativeValue);
+                .Positive(operation.CycleTimeMin, $"Operations[{i}].CycleTimeMin", CatalogMessages.NegativeValue)
+                .MaxLength(operation.Description, 4000, $"Operations[{i}].Description", CatalogMessages.TextTooLong)
+                .MaxLength(operation.NcProgramReference, 100, $"Operations[{i}].NcProgramReference", CatalogMessages.TextTooLong)
+                .MaxLength(operation.Tooling, 1000, $"Operations[{i}].Tooling", CatalogMessages.TextTooLong)
+                .MaxLength(operation.Subcontractor, 200, $"Operations[{i}].Subcontractor", CatalogMessages.TextTooLong);
         }
 
         if (input.MaterialId is { } materialId && !(await materials.GetManyAsync([materialId], cancellationToken)).ContainsKey(materialId))

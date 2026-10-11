@@ -19,6 +19,14 @@ public abstract class EfUnitOfWork : IUnitOfWork
 
     public async Task<Result> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        // Filet de sécurité : un texte plus long que la colonne donne un message clair, quel que soit le fournisseur
+        // (SQLite ignore les longueurs, PostgreSQL refuserait l'enregistrement avec une exception).
+        var tooLong = TooLongValues();
+        if (tooLong.Count > 0)
+        {
+            return Result.Failure(tooLong);
+        }
+
         try
         {
             await Context.SaveChangesAsync(cancellationToken);
@@ -47,6 +55,28 @@ public abstract class EfUnitOfWork : IUnitOfWork
     {
         GC.SuppressFinalize(this);
         return Context.DisposeAsync();
+    }
+
+    private List<Error> TooLongValues()
+    {
+        var errors = new List<Error>();
+        foreach (var entry in Context.ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified))
+        {
+            foreach (var property in entry.Properties)
+            {
+                if (property.CurrentValue is string value
+                    && property.Metadata.GetMaxLength() is { } max
+                    && value.Length > max
+                    && (entry.State == EntityState.Added || property.IsModified))
+                {
+                    errors.Add(Error.Validation(
+                        string.Format(System.Globalization.CultureInfo.CurrentCulture, KernelTexts.TextTooLongMax, max),
+                        property.Metadata.Name));
+                }
+            }
+        }
+
+        return errors;
     }
 
     private static bool IsUniqueViolation(DbUpdateException ex)

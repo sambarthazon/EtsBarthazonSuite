@@ -106,4 +106,5 @@
   <data name="Action_LoggedIn" xml:space="preserve"><value>Connexion</value></data>
   <data name="StatusDiskValue" xml:space="preserve"><value>{0} : {1:0.0} Go libres sur {2:0} Go</value></data>
   <data name="StatusDiskUnknownValue" xml:space="preserve"><value>{0} : inconnu (partage réseau)</value></data>
+  <data name="LoginLocked" xml:space="preserve"><value>Trop de tentatives de connexion. Réessayez dans {0} minute(s).</value></data>
 </root>

@@ -17,11 +17,14 @@ public sealed partial class BackupScheduler(BackupService backups, BackupOptions
         {
             // Rattrapage : application arrêtée à l'heure prévue (PC éteint…).
             await Task.Delay(TimeSpan.FromMinutes(2), timeProvider, stoppingToken);
-            var status = await backups.GetStatusAsync(stoppingToken);
-            if (status.LastSuccessAt is null || timeProvider.GetUtcNow() - status.LastSuccessAt.Value > TimeSpan.FromHours(26))
+            await RunSafelyAsync(async () =>
             {
-                await backups.RunAsync(stoppingToken);
-            }
+                var status = await backups.GetStatusAsync(stoppingToken);
+                if (status.LastSuccessAt is null || timeProvider.GetUtcNow() - status.LastSuccessAt.Value > TimeSpan.FromHours(26))
+                {
+                    await backups.RunAsync(stoppingToken);
+                }
+            }, stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -34,7 +37,7 @@ public sealed partial class BackupScheduler(BackupService backups, BackupOptions
 
                 LogNextBackup(logger, next);
                 await Task.Delay(next - now, timeProvider, stoppingToken);
-                await backups.RunAsync(stoppingToken);
+                await RunSafelyAsync(() => backups.RunAsync(stoppingToken), stoppingToken);
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -42,6 +45,26 @@ public sealed partial class BackupScheduler(BackupService backups, BackupOptions
             // Arrêt de l'application.
         }
     }
+
+    /// <summary>
+    /// Une erreur imprévue (base verrouillée, partage réseau…) ne doit jamais arrêter le planificateur :
+    /// par défaut, une exception non gérée dans un service d'arrière-plan arrête toute l'application.
+    /// L'échec reste visible dans le journal et dans l'administration (dernière sauvegarde trop ancienne).
+    /// </summary>
+    private async Task RunSafelyAsync(Func<Task> action, CancellationToken stoppingToken)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+        {
+            LogUnexpectedFailure(logger, ex);
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Échec imprévu de la sauvegarde automatique ; nouvel essai au prochain créneau.")]
+    private static partial void LogUnexpectedFailure(ILogger logger, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Prochaine sauvegarde automatique : {Next}")]
     private static partial void LogNextBackup(ILogger logger, DateTimeOffset next);

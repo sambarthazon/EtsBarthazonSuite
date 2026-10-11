@@ -70,6 +70,8 @@ internal sealed partial class UserService(
 {
     public const int MinimumPasswordLength = 8;
 
+    private string? _dummyHash;
+
     public async Task<bool> AnyUserAsync(CancellationToken cancellationToken = default)
     {
         await using var uow = unitOfWorkFactory.Create();
@@ -80,7 +82,14 @@ internal sealed partial class UserService(
     {
         await using var uow = unitOfWorkFactory.Create();
         var user = await uow.Users.GetByUserNameAsync(User.NormalizeUserName(userName), cancellationToken);
-        if (user is null || !user.IsActive || user.IsArchived || string.IsNullOrEmpty(password) || !passwordHasher.Verify(user.PasswordHash, password))
+        if (user is null)
+        {
+            // Même durée de réponse qu'avec un identifiant existant : on ne révèle pas quels comptes existent.
+            passwordHasher.Verify(_dummyHash ??= passwordHasher.Hash(Guid.NewGuid().ToString("N")), password ?? string.Empty);
+            return Error.Unauthenticated(ReferentialMessages.InvalidCredentials);
+        }
+
+        if (!user.IsActive || user.IsArchived || string.IsNullOrEmpty(password) || !passwordHasher.Verify(user.PasswordHash, password))
         {
             return Error.Unauthenticated(ReferentialMessages.InvalidCredentials);
         }

@@ -299,6 +299,10 @@ internal sealed class PartExchangeService(
             {
                 errors.Add(CatalogMessages.ReferenceRequired);
             }
+            else if (PartService.ReferenceFormatError(reference) is { } referenceError)
+            {
+                errors.Add(referenceError);
+            }
             else if (firstLineByReference.TryGetValue(reference, out var firstLine))
             {
                 errors.Add(string.Format(CultureInfo.CurrentCulture, CatalogMessages.ImportDuplicateInFile, firstLine));
@@ -311,6 +315,15 @@ internal sealed class PartExchangeService(
             if (designation is null)
             {
                 errors.Add(CatalogMessages.DesignationRequired);
+            }
+
+            // Longueurs : signalées dès l'aperçu plutôt qu'au moment de l'import.
+            foreach (var (column, max) in ExchangeColumns.MaxLengths)
+            {
+                if (row.Get(column) is { } value && value.Length > max)
+                {
+                    errors.Add(string.Format(CultureInfo.CurrentCulture, CatalogMessages.ImportTooLong, column, max));
+                }
             }
 
             if (customerCode is null)

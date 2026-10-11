@@ -133,6 +133,29 @@ public sealed class ExchangeTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Invalid_references_and_too_long_values_are_reported_in_the_preview()
+    {
+        var tooLongNotes = new string('x', 4001);
+        using var file = Excel(
+            Row("A/B", "Référence avec barre", "DUPONT"),
+            Row("accueil", "Mot réservé", "DUPONT"),
+            [.. Row("LONG-1", "Consignes trop longues", "DUPONT").Take(14), tooLongNotes, null],
+            Row("OK-1", "Correcte", "DUPONT"));
+
+        var preview = (await Exchange.AnalyzeAsync(file, "import.xlsx")).Value;
+
+        preview.Rows.Single(r => r.InternalReference == "A/B").Action.Should().Be(ImportAction.Error);
+        preview.Rows.Single(r => r.InternalReference == "accueil").Action.Should().Be(ImportAction.Error);
+        preview.Rows.Single(r => r.InternalReference == "LONG-1").Errors.Should().ContainSingle(e => e.Contains("Consignes atelier", StringComparison.Ordinal));
+        preview.Rows.Single(r => r.InternalReference == "OK-1").Action.Should().Be(ImportAction.Create);
+
+        file.Position = 0;
+        var result = (await Exchange.ApplyAsync(file, "import.xlsx", new ImportOptions())).Value;
+        result.Created.Should().Be(1, "seule la ligne correcte est importée, sans pièce à moitié créée");
+        (await _data.Parts.GetByReferenceAsync("LONG-1")).IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task Csv_with_semicolons_and_accents_is_accepted()
     {
         var csv = "Référence interne;Désignation;Code client;Statut\nCSV-1;\"Bride; épaisse\";DUPONT;Obsolète\n";

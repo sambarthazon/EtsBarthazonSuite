@@ -52,7 +52,21 @@ public static class CatalogLabels
             _ => null,
         };
         var translated = prefix is null ? null : Get(prefix + value) ?? (field == "Status" ? Get("RevisionStatus_" + value) : null);
-        return translated ?? value.Trim('"');
+        return translated ?? FormatDate(value.Trim('"'));
+    }
+
+    /// <summary>Dates du journal (format ISO) affichées à la française ; autres valeurs inchangées.</summary>
+    private static string FormatDate(string value)
+    {
+        if (value.Length == 10 && DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+        {
+            return date.ToString("d", CultureInfo.CurrentCulture);
+        }
+
+        return value.Length > 10 && value[10] == 'T'
+            && DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var moment)
+            ? moment.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)
+            : value;
     }
 
     public static StatusTone Tone(this PartStatus status) => status switch

@@ -60,6 +60,7 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
     min-width: 0;
 }
 .bz-brand img { height: 36px; width: 36px; flex-shrink: 0; }
+.bz-brand span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 .bz-appbar-search {
     width: min(520px, 45vw);
@@ -516,3 +517,9 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
 @media (max-width: 599.98px) {
   .bz-part-mini-meta .bz-small { display: none; }
 }
+
+/* Journal : fiches empilées sur téléphone. */
+.bz-audit-cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bz-audit-card { padding: 10px 12px; }
+.bz-audit-card-head { display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; color: var(--bz-text-secondary); }
+.bz-audit-card-details { font-size: .85rem; overflow-wrap: anywhere; margin-top: 4px; }

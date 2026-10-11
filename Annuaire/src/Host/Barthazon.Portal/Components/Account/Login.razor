@@ -7,6 +7,7 @@
 @using Barthazon.Referential.Core.Services
 @using Barthazon.Shared.Infrastructure.Security
 @inject IUserService Users
+@inject LoginThrottle Throttle
 @inject SecurityOptions Security
 @inject NavigationManager Navigation
 
@@ -55,13 +56,24 @@
 
     private async Task LoginAsync()
     {
+        var address = HttpContext.Connection.RemoteIpAddress?.ToString();
+        if (Throttle.RetryAfter(address, Input!.UserName) is { } wait)
+        {
+            _error = string.Format(CultureInfo.CurrentCulture, PortalTexts.LoginLocked, Math.Max(1, (int)Math.Ceiling(wait.TotalMinutes)));
+            Input!.Password = null;
+            return;
+        }
+
         var result = await Users.AuthenticateAsync(Input!.UserName ?? string.Empty, Input!.Password ?? string.Empty);
         if (result.IsFailure)
         {
+            Throttle.RecordFailure(address, Input!.UserName);
             _error = result.FirstError?.Message;
             Input!.Password = null;
             return;
         }
+
+        Throttle.RecordSuccess(address, Input!.UserName);
 
         await PortalAuthentication.SignInAsync(HttpContext, result.Value, Security);
         Navigation.NavigateTo(AccountEndpoints.SafeReturnUrl(ReturnUrl), forceLoad: true);
