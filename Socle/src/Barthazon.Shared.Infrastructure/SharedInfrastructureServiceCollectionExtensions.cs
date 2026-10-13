@@ -61,8 +61,9 @@ public static class SharedInfrastructureServiceCollectionExtensions
             module.ConfigureServices(services, configuration);
         }
 
-        services.AddSingleton<IDbContextFactory<AppDbContext>>(sp =>
-            new AppDbContextFactory(database, sp.GetServices<IModulePersistence>(), sp.GetRequiredService<TimeProvider>()));
+        // Base du socle (tables sys_ et ref_) ; chaque application déclare la sienne dans ConfigureServices.
+        services.AddModuleDatabase<SocleDbContext>(SocleDbContext.Info, (sp, options) => new SocleDbContext(
+            options, sp.GetServices<SocleMappingsAssembly>().Select(m => m.Assembly), sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<DatabaseInitializer>();
         services.AddSingleton<IAuditReader, AuditReader>();
         services.AddSingleton<IFileStorage>(new FileSystemFileStorage(files));

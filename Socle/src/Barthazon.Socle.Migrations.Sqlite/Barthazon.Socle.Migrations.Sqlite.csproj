@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Migrations EF Core du socle (tables sys_ et ref_), fournisseur Sqlite. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Barthazon.Shared.Infrastructure\Barthazon.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\Barthazon.Referential.Infrastructure\Barthazon.Referential.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

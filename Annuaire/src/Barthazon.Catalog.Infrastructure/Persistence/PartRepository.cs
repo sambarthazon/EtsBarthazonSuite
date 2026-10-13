@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Barthazon.Catalog.Infrastructure.Persistence;
 
 /// <summary>Pièces : requêtes explicites, projections ; aucun IQueryable ne sort d'ici.</summary>
-internal sealed class PartRepository(AppDbContext context) : EfRepository<Part>(context), IPartRepository
+internal sealed class PartRepository(CatalogDbContext context) : EfRepository<Part>(context), IPartRepository
 {
     private IQueryable<Part> Aggregate => Set
         .Include(p => p.Tags)

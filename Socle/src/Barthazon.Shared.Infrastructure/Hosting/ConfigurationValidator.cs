@@ -50,7 +50,7 @@ public static class ConfigurationValidator
                 {
                     var path = Path.GetFullPath(dataSource, contentRoot);
                     CheckWritableDirectory(Path.GetDirectoryName(path)!, InfrastructureTexts.DirectoryDatabase, errors);
-                    if (AppDbContextFactory.IsNetworkPath(path))
+                    if (DatabaseConnection.IsNetworkPath(path))
                     {
                         warnings.Add(InfrastructureTexts.DatabaseOnNetworkShare);
                     }

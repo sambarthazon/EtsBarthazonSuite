@@ -18,10 +18,8 @@
     <Compile Include="..\Support\*.cs" Link="Support\%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Barthazon.Socle.Migrations.Sqlite\Barthazon.Socle.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\..\src\Barthazon.Socle.Migrations.Postgres\Barthazon.Socle.Migrations.Postgres.csproj" />
     <ProjectReference Include="..\..\src\Barthazon.Referential.Infrastructure\Barthazon.Referential.Infrastructure.csproj" />
-    <!-- TEMPORAIRE (jalon R1) : migrations encore communes ; retiré au jalon R2 (contexte par application). -->
-    <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Infrastructure\Barthazon.Catalog.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\Portail\src\Barthazon.Migrations.Sqlite\Barthazon.Migrations.Sqlite.csproj" />
-    <ProjectReference Include="..\..\..\Portail\src\Barthazon.Migrations.Postgres\Barthazon.Migrations.Postgres.csproj" />
   </ItemGroup>
 </Project>

@@ -21,7 +21,9 @@ public class DependencyRulesTests
             "Barthazon.Shared.Kernel", "Barthazon.Shared.Infrastructure", "Barthazon.Shared.UI",
             "Barthazon.Referential.Contracts", "Barthazon.Referential.Core", "Barthazon.Referential.Infrastructure", "Barthazon.Referential.UI",
             "Barthazon.Catalog.Contracts", "Barthazon.Catalog.Core", "Barthazon.Catalog.Infrastructure", "Barthazon.Catalog.UI",
-            "Barthazon.Portal", "Barthazon.Migrations.Sqlite",
+            "Barthazon.Socle.Migrations.Sqlite", "Barthazon.Socle.Migrations.Postgres",
+            "Barthazon.Catalog.Migrations.Sqlite", "Barthazon.Catalog.Migrations.Postgres",
+            "Barthazon.Portal",
         ]);
     }
 

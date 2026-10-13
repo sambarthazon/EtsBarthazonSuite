@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Tests d'intégration : socle, annuaire (et stock) réels branchés ensemble ; reprise des bases existantes. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <PackageReference Include="coverlet.collector" PrivateAssets="all" />
+    <PackageReference Include="FluentAssertions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\..\Socle\tests\Support\*.cs" Link="Support\%(Filename)%(Extension)" />
+    <None Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Referential.Infrastructure\Barthazon.Referential.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Socle.Migrations.Sqlite\Barthazon.Socle.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Socle.Migrations.Postgres\Barthazon.Socle.Migrations.Postgres.csproj" />
+    <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Infrastructure\Barthazon.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Migrations.Sqlite\Barthazon.Catalog.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Migrations.Postgres\Barthazon.Catalog.Migrations.Postgres.csproj" />
+  </ItemGroup>
+</Project>

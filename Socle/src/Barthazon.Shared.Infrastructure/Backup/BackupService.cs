@@ -23,7 +23,7 @@ public sealed record BackupFile(string Name, long SizeBytes, DateTimeOffset Crea
 /// vers le dossier configuré, avec rétention.
 /// </summary>
 public sealed partial class BackupService(
-    IDbContextFactory<AppDbContext> contextFactory,
+    IDbContextFactory<SocleDbContext> contextFactory,
     DatabaseOptions database,
     BackupOptions options,
     TimeProvider timeProvider,

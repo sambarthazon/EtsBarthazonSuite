@@ -90,7 +90,7 @@ foreach (var module in modules)
 // Comptes locaux, cookie, utilisateur courant.
 var security = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
 var databaseOptions = builder.Configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>() ?? new DatabaseOptions();
-var sqliteFile = AppDbContextFactory.GetSqliteFilePath(databaseOptions);
+var sqliteFile = DatabaseConnection.GetSqliteFilePath(databaseOptions);
 var keysDirectory = Path.GetFullPath(
     security.KeysDirectory
         ?? (sqliteFile is null ? Path.Combine("App_Data", "keys") : Path.Combine(Path.GetDirectoryName(sqliteFile)!, "keys")),

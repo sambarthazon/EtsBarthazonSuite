@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Barthazon.Referential.Infrastructure.Seeding;
 
 /// <summary>À la première installation : matières courantes en mécanique générale.</summary>
-internal sealed class ReferentialSeeder(IDbContextFactory<AppDbContext> contextFactory) : IDataSeeder
+internal sealed class ReferentialSeeder(IDbContextFactory<SocleDbContext> contextFactory) : IDataSeeder
 {
     private static readonly (string Designation, string Grade, MaterialFamily Family, decimal Density)[] CommonMaterials =
     [

@@ -12,10 +12,15 @@ using Barthazon.Shared.Kernel.Resources;
 using Barthazon.Shared.Kernel.Results;
 using Barthazon.Shared.Kernel.Security;
 
+using Microsoft.EntityFrameworkCore;
+
 namespace Barthazon.Shared.Infrastructure.Administration;
 
 /// <summary>Espace disque d'un emplacement.</summary>
 public sealed record DiskSpace(string Path, long? FreeBytes, long? TotalBytes);
+
+/// <summary>État de la base d'une application : migrations appliquées et en attente.</summary>
+public sealed record DatabaseState(string Key, int AppliedMigrations, int PendingMigrations, string? LastMigration, string? Error);
 
 /// <summary>État du système (page d'administration).</summary>
 public sealed record SystemStatus(
@@ -28,7 +33,8 @@ public sealed record SystemStatus(
     BackupStatus Backup,
     bool BackupOverdue,
     IReadOnlyList<DiskSpace> Disks,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    IReadOnlyList<DatabaseState> Databases);
 
 /// <summary>Fichier produit pour l'administrateur.</summary>
 public sealed record AdminFile(string FileName, string ContentType, byte[] Content);
@@ -44,6 +50,7 @@ public sealed class AdministrationService(
     BackupOptions backupOptions,
     SecurityOptions security,
     ConfigurationWarnings configurationWarnings,
+    IEnumerable<ModuleDatabase> databases,
     TimeProvider timeProvider)
 {
     public async Task<Result<PagedResult<AuditEntry>>> QueryAuditAsync(AuditQuery query, CancellationToken cancellationToken = default)
@@ -62,7 +69,7 @@ public sealed class AdministrationService(
             return Result<SystemStatus>.Failure(allowed.Errors);
         }
 
-        var dbPath = AppDbContextFactory.GetSqliteFilePath(database);
+        var dbPath = DatabaseConnection.GetSqliteFilePath(database);
         var backup = await backups.GetStatusAsync(cancellationToken);
         var overdue = backupOptions.Enabled && database.IsSqlite && backup.IsOverdue(timeProvider.GetUtcNow());
         var warnings = configurationWarnings.Items.ToList();
@@ -77,7 +84,28 @@ public sealed class AdministrationService(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(Disk)
             .ToList();
-        return new SystemStatus(version, database.Provider, dbPath, files.RootPath, backupOptions.Directory, security.AllowAnonymousRead, backup, overdue, disks, warnings);
+        var states = new List<DatabaseState>();
+        foreach (var module in databases.OrderBy(d => d.Info.Order))
+        {
+            states.Add(await DatabaseStateAsync(module, cancellationToken));
+        }
+
+        return new SystemStatus(version, database.Provider, dbPath, files.RootPath, backupOptions.Directory, security.AllowAnonymousRead, backup, overdue, disks, warnings, states);
+    }
+
+    private static async Task<DatabaseState> DatabaseStateAsync(ModuleDatabase module, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var context = module.CreateContext();
+            var applied = (await context.Database.GetAppliedMigrationsAsync(cancellationToken)).ToList();
+            var pending = (await context.Database.GetPendingMigrationsAsync(cancellationToken)).Count();
+            return new DatabaseState(module.Info.Key, applied.Count, pending, applied.LastOrDefault(), null);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return new DatabaseState(module.Info.Key, 0, 0, null, ex.Message);
+        }
     }
 
     public async Task<Result<BackupFile>> BackupNowAsync(CancellationToken cancellationToken = default)

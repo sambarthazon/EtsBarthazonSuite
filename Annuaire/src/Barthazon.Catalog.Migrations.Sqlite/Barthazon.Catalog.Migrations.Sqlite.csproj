@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Migrations EF Core de l'annuaire (tables cat_), fournisseur Sqlite. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Barthazon.Catalog.Infrastructure\Barthazon.Catalog.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

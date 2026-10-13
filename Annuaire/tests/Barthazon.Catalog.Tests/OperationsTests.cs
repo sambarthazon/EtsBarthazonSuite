@@ -198,7 +198,7 @@ public sealed class OperationsTests : IAsyncLifetime
     [Fact]
     public void Tables_are_ordered_by_dependencies()
     {
-        using var context = _app.Get<Microsoft.EntityFrameworkCore.IDbContextFactory<Barthazon.Shared.Infrastructure.Persistence.AppDbContext>>().CreateDbContext();
+        using var context = _app.Get<Microsoft.EntityFrameworkCore.IDbContextFactory<Barthazon.Catalog.Infrastructure.Persistence.CatalogDbContext>>().CreateDbContext();
         var order = DataTransferService.OrderedEntityTypes(context.Model).Select(t => t.GetTableName()).ToList();
 
         order.IndexOf("cat_parts").Should().BeLessThan(order.IndexOf("cat_part_revisions"));

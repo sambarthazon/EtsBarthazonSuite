@@ -27,6 +27,26 @@ else
                 }
             </FieldView>
             <FieldView Label="@PortalTexts.StatusProvider" Value="@_status.DatabaseProvider" />
+            <FieldView Label="@PortalTexts.StatusDatabases">
+                @foreach (var db in _status.Databases)
+                {
+                    <div>
+                        @DatabaseName(db.Key) :
+                        @if (db.Error is not null)
+                        {
+                            <StatusChip Text="@PortalTexts.StatusDatabaseError" Tone="StatusTone.Error" />
+                        }
+                        else if (db.PendingMigrations > 0)
+                        {
+                            <StatusChip Text="@string.Format(CultureInfo.CurrentCulture, PortalTexts.StatusDatabasePending, db.PendingMigrations)" Tone="StatusTone.Warning" />
+                        }
+                        else
+                        {
+                            <span title="@db.LastMigration">@string.Format(CultureInfo.CurrentCulture, PortalTexts.StatusDatabaseUpToDate, db.AppliedMigrations)</span>
+                        }
+                    </div>
+                }
+            </FieldView>
             <FieldView Label="@PortalTexts.StatusDatabasePath" Value="@_status.DatabasePath" />
             <FieldView Label="@PortalTexts.StatusFilesPath" Value="@_status.FilesPath" />
             <FieldView Label="@PortalTexts.StatusBackupPath" Value="@_status.BackupDirectory" />
@@ -80,4 +100,7 @@ else
 
     private static string VersionOf(Assembly assembly) =>
         assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion?.Split('+')[0] ?? "?";
+
+    private string DatabaseName(string key) =>
+        key == "socle" ? PortalTexts.VersionSocle : Modules.Modules.FirstOrDefault(m => m.Key == key)?.DisplayName ?? key;
 }

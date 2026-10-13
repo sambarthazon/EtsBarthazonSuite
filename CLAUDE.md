@@ -31,7 +31,7 @@ Fichiers communs à la racine : `Barthazon.sln` (tout), filtres `Socle.slnf`, `A
 - Dépendances **à sens unique et par contrats** : une application n'utilise une autre que par son projet `*.Contracts` (ex. Stock → `Barthazon.Catalog.Contracts`, jamais l'inverse).
 - Aucun projet de `Socle/` ne référence une application ; aucun projet de `Annuaire/` ne référence `Stock/`.
 - Un projet `*.Contracts` ne référence que `Shared.Kernel` et d'autres `*.Contracts`. **Les contrats n'évoluent que par ajout** (nouvelle interface plutôt que changement de signature).
-- Données : tables préfixées par application (`sys_`/`ref_` socle, `cat_` annuaire, `stk_` stock), **aucune clé étrangère entre applications**, une opération n'écrit que dans les tables de son application.
+- Données : une seule base, mais **un contexte EF Core, des migrations et une table d'historique par application** (`__ef_migrations_socle`, `_catalog`, `_stock`) ; tables préfixées (`sys_`/`ref_` socle, `cat_` annuaire, `stk_` stock), **aucune clé étrangère entre applications**, une opération n'écrit que dans les tables de son application. Voir `Socle/CLAUDE.md`.
 - Interface : une application expose des **emplacements** (`UiSlot`) ; une autre y insère ses composants. L'annuaire ne mentionne jamais le stock dans son code.
 - Ces règles sont vérifiées par `Portail/tests/Barthazon.Architecture.Tests`.
 

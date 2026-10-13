@@ -20,7 +20,7 @@ public sealed class ApplicationSettingsCache
 /// depuis l'administration (table sys_settings).
 /// </summary>
 public sealed class DbApplicationSettingsStore(
-    IDbContextFactory<AppDbContext> contextFactory,
+    IDbContextFactory<SocleDbContext> contextFactory,
     IConfiguration configuration,
     ApplicationSettingsCache cache,
     IAccessGuard accessGuard,

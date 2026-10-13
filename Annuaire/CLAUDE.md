@@ -10,7 +10,8 @@ Voir d'abord le `CLAUDE.md` à la racine du dépôt (carte, règles entre applic
 |---|---|
 | `Barthazon.Catalog.Contracts` | Ce que les autres applications ont le droit d'utiliser : `IPartLookup`, énumérations, points d'extension (`IPartStockInfoProvider`…). **N'évolue que par ajout.** |
 | `Barthazon.Catalog.Core` | Entités (pièce, indices, gamme, documents), règles, services applicatifs |
-| `Barthazon.Catalog.Infrastructure` | Mappings EF Core (tables `cat_`), repositories, Excel |
+| `Barthazon.Catalog.Infrastructure` | `CatalogDbContext` (tables `cat_`, historique `__ef_migrations_catalog`), mappings, repositories, Excel |
+| `Barthazon.Catalog.Migrations.Sqlite` / `.Postgres` | Migrations de l'annuaire, par fournisseur |
 | `Barthazon.Catalog.UI` | Pages et composants Razor (`/pieces…`) |
 | `tests/Barthazon.Catalog.Tests` | Tests (hôte : `CatalogTestApp`) |
 
@@ -19,7 +20,7 @@ Voir d'abord le `CLAUDE.md` à la racine du dépôt (carte, règles entre applic
 | Action | Commande |
 |---|---|
 | Compiler / tester l'annuaire et le socle | `dotnet build Annuaire.slnf` / `dotnet test Annuaire.slnf` |
-| Nouvelle migration (les **deux** fournisseurs) | `dotnet ef migrations add <Nom> --project Portail/src/Barthazon.Migrations.Sqlite --startup-project Portail/src/Barthazon.Migrations.Sqlite --output-dir Migrations` puis la même commande avec `Barthazon.Migrations.Postgres` |
+| Nouvelle migration de l'annuaire (les **deux** fournisseurs) | `dotnet ef migrations add <Nom> --project Annuaire/src/Barthazon.Catalog.Migrations.Sqlite --startup-project Annuaire/src/Barthazon.Catalog.Migrations.Sqlite --output-dir Migrations` puis la même commande avec `Barthazon.Catalog.Migrations.Postgres` |
 
 En développement, la base, les fichiers, les sauvegardes et les journaux sont dans `Portail/src/Barthazon.Portal/App_Data/` et les données de démonstration sont chargées.
 

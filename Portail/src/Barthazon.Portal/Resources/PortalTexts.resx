@@ -55,7 +55,7 @@
   <data name="StatusNoBackup" xml:space="preserve"><value>Aucune sauvegarde réussie à ce jour.</value></data>
   <data name="StatusBackupOverdue" xml:space="preserve"><value>La dernière sauvegarde réussie date de plus de 48 heures : vérifiez le dossier des sauvegardes.</value></data>
   <data name="StatusLastBackupError" xml:space="preserve"><value>Dernière erreur de sauvegarde : {0}</value></data>
-  <data name="StatusFilesReminder" xml:space="preserve"><value>Le dossier des fichiers (plans, photos…) n'est pas inclus dans la sauvegarde de la base : il doit être sauvegardé lui aussi (voir docs/sauvegarde-restauration.md).</value></data>
+  <data name="StatusFilesReminder" xml:space="preserve"><value>Le dossier des fichiers (plans, photos…) n'est pas inclus dans la sauvegarde de la base : il doit être sauvegardé lui aussi (voir Portail/docs/sauvegarde-restauration.md).</value></data>
   <data name="Yes" xml:space="preserve"><value>Oui</value></data>
   <data name="No" xml:space="preserve"><value>Non</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Paramètres</value></data>
@@ -110,4 +110,8 @@
   <data name="StatusVersions" xml:space="preserve"><value>Versions</value></data>
   <data name="VersionSocle" xml:space="preserve"><value>Socle</value></data>
   <data name="VersionPortal" xml:space="preserve"><value>Portail</value></data>
+  <data name="StatusDatabases" xml:space="preserve"><value>Bases des applications</value></data>
+  <data name="StatusDatabaseUpToDate" xml:space="preserve"><value>à jour ({0} migration(s))</value></data>
+  <data name="StatusDatabasePending" xml:space="preserve"><value>{0} migration(s) en attente</value></data>
+  <data name="StatusDatabaseError" xml:space="preserve"><value>inaccessible</value></data>
 </root>

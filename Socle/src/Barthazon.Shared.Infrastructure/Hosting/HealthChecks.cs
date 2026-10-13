@@ -5,22 +5,42 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Barthazon.Shared.Infrastructure.Hosting;
 
-/// <summary>/health : la base répond.</summary>
-public sealed class DatabaseHealthCheck(IDbContextFactory<AppDbContext> contextFactory) : IHealthCheck
+/// <summary>/health : chaque base d'application répond et ses migrations sont à jour.</summary>
+public sealed class DatabaseHealthCheck(IEnumerable<ModuleDatabase> databases) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        try
+        var data = new Dictionary<string, object>(StringComparer.Ordinal);
+        var problems = new List<string>();
+        foreach (var database in databases.OrderBy(d => d.Info.Order))
         {
-            await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
-            return await db.Database.CanConnectAsync(cancellationToken)
-                ? HealthCheckResult.Healthy("Base de données accessible.")
-                : HealthCheckResult.Unhealthy("Base de données inaccessible.");
+            try
+            {
+                await using var db = database.CreateContext();
+                if (!await db.Database.CanConnectAsync(cancellationToken))
+                {
+                    problems.Add(database.Info.Key);
+                    data[database.Info.Key] = "inaccessible";
+                    continue;
+                }
+
+                var pending = (await db.Database.GetPendingMigrationsAsync(cancellationToken)).Count();
+                data[database.Info.Key] = pending == 0 ? "à jour" : $"{pending} migration(s) en attente";
+                if (pending > 0)
+                {
+                    problems.Add(database.Info.Key);
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                problems.Add(database.Info.Key);
+                data[database.Info.Key] = ex.Message;
+            }
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            return HealthCheckResult.Unhealthy("Base de données inaccessible.", ex);
-        }
+
+        return problems.Count == 0
+            ? HealthCheckResult.Healthy("Base de données accessible.", data)
+            : HealthCheckResult.Unhealthy("Base de données inaccessible ou migrations en attente : " + string.Join(", ", problems) + ".", data: data);
     }
 }
 

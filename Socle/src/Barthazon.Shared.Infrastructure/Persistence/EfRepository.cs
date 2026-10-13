@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Barthazon.Shared.Infrastructure.Persistence;
 
 /// <summary>Repository générique EF Core (lecture par identifiant, ajout, contrôle de version).</summary>
-public class EfRepository<TEntity>(AppDbContext context) : IRepository<TEntity>
+public class EfRepository<TEntity>(ModuleDbContext context) : IRepository<TEntity>
     where TEntity : Entity
 {
-    protected AppDbContext Context { get; } = context;
+    protected ModuleDbContext Context { get; } = context;
 
     protected DbSet<TEntity> Set => Context.Set<TEntity>();
 

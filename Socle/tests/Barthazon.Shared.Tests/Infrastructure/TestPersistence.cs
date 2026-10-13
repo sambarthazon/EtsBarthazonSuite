@@ -26,7 +26,17 @@ internal sealed class WidgetConfiguration : IEntityTypeConfiguration<Widget>
     }
 }
 
-internal sealed class WidgetUnitOfWork(AppDbContext context, string? user) : EfUnitOfWork(context, user)
+/// <summary>Contexte de test : une application fictive avec sa table.</summary>
+public sealed class WidgetDbContext(DbContextOptions<WidgetDbContext> options) : ModuleDbContext(options)
+{
+    public static ModuleDatabaseInfo Info { get; } = new("widgets", 10, "__ef_migrations_widgets", "none", "none", ["test_"]);
+
+    protected override bool OwnsSharedTables => true;
+
+    protected override void ApplyMappings(ModelBuilder modelBuilder) => modelBuilder.ApplyConfiguration(new WidgetConfiguration());
+}
+
+internal sealed class WidgetUnitOfWork(ModuleDbContext context, string? user) : EfUnitOfWork(context, user)
 {
     public IRepository<Widget> Widgets { get; } = new EfRepository<Widget>(context);
 
@@ -35,7 +45,7 @@ internal sealed class WidgetUnitOfWork(AppDbContext context, string? user) : EfU
     public Task<List<Widget>> LargerThanAsync(decimal diameter) =>
         Context.Set<Widget>().Where(w => w.Diameter > diameter).OrderByDescending(w => w.Diameter).ToListAsync();
 
-    public AppDbContext Db => Context;
+    public ModuleDbContext Db => Context;
 }
 
 /// <summary>Base SQLite temporaire (fichier), supprimée à la fin du test.</summary>
@@ -47,12 +57,12 @@ public sealed class SqliteTestDatabase : IAsyncDisposable
     {
         Directory.CreateDirectory(_directory);
         var options = new DatabaseOptions { ConnectionString = $"Data Source={Path.Combine(_directory, "test.db")};Pooling=False" };
-        Factory = new AppDbContextFactory(AppDbContextFactory.BuildOptions(options), [typeof(AppDbContext).Assembly, typeof(SqliteTestDatabase).Assembly]);
+        Factory = new ModuleDatabase<WidgetDbContext>(WidgetDbContext.Info, options, o => new WidgetDbContext(o));
         using var context = Factory.CreateDbContext();
         context.Database.EnsureCreated();
     }
 
-    public AppDbContextFactory Factory { get; }
+    public ModuleDatabase<WidgetDbContext> Factory { get; }
 
     internal WidgetUnitOfWork CreateUnitOfWork(string? user = "testeur") => new(Factory.CreateDbContext(), user);
 

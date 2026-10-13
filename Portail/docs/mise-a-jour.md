@@ -7,6 +7,12 @@ Une mise à jour remplace le programme ; **les données et la configuration loca
 1. Prévenir les utilisateurs : l'application est indisponible une à deux minutes.
 2. Dans *Administration → Sauvegardes*, cliquer sur **Sauvegarder maintenant** et vérifier que la sauvegarde apparaît dans la liste. (Le script fait aussi une copie de la base juste avant la mise à jour : `avant-mise-a-jour-AAAAMMJJ-HHMMSS.db` dans le dossier des sauvegardes.)
 
+## Mise à jour vers la version « applications séparées » (annuaire + stock)
+
+Cette version range les données de chaque application dans ses propres tables d'historique de migrations. **Au premier démarrage**, une base créée par une version précédente est **reprise automatiquement** : rien n'est modifié dans les données, les migrations déjà appliquées sont reconnues et l'ancienne table d'historique est conservée sous le nom `__ef_migrations_legacy`. Le journal de l'application l'indique (« Reprise d'une base de l'ancienne génération… »). Ensuite, les tables des nouvelles applications (stock) sont créées.
+
+Comme pour toute mise à jour : faire d'abord une sauvegarde (*Administration → Sauvegardes → Sauvegarder maintenant*). Après le démarrage, *Administration* affiche l'état de la base de chaque application (« à jour »).
+
 ## Windows
 
 Sur le poste de développement, publier la nouvelle version (voir [installation](installation.md), étape 1), copier `publish/win-x64` et `Portail/deploy/windows` sur le PC, puis dans PowerShell **administrateur** :

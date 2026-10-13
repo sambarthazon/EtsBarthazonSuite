@@ -21,7 +21,7 @@ public sealed class MaterialAndMachineTests : IAsyncLifetime
     private TestApplication _app = default!;
 
     public async Task InitializeAsync() =>
-        _app = await ReferentialTestApp.CreateAsync(s => s.AddSingleton<IReferentialUsageProvider>(_usage));
+        _app = await TestApplication.CreateAsync(s => s.AddSingleton<IReferentialUsageProvider>(_usage));
 
     public async Task DisposeAsync() => await _app.DisposeAsync();
 

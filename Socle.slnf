@@ -9,6 +9,8 @@
       "Socle\\src\\Barthazon.Shared.Infrastructure\\Barthazon.Shared.Infrastructure.csproj",
       "Socle\\src\\Barthazon.Shared.Kernel\\Barthazon.Shared.Kernel.csproj",
       "Socle\\src\\Barthazon.Shared.UI\\Barthazon.Shared.UI.csproj",
+      "Socle\\src\\Barthazon.Socle.Migrations.Postgres\\Barthazon.Socle.Migrations.Postgres.csproj",
+      "Socle\\src\\Barthazon.Socle.Migrations.Sqlite\\Barthazon.Socle.Migrations.Sqlite.csproj",
       "Socle\\tests\\Barthazon.Referential.Tests\\Barthazon.Referential.Tests.csproj",
       "Socle\\tests\\Barthazon.Shared.Tests\\Barthazon.Shared.Tests.csproj"
     ]

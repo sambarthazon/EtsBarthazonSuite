@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Barthazon.Shared.Infrastructure.Auditing;
 
 /// <summary>Lecture du journal des modifications.</summary>
-public sealed class AuditReader(IDbContextFactory<AppDbContext> contextFactory) : IAuditReader
+public sealed class AuditReader(IDbContextFactory<SocleDbContext> contextFactory) : IAuditReader
 {
     public async Task<PagedResult<AuditEntry>> QueryAsync(AuditQuery query, CancellationToken cancellationToken = default)
     {

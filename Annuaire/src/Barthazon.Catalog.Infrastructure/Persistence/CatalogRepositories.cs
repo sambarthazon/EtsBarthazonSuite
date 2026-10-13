@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Barthazon.Catalog.Infrastructure.Persistence;
 
-internal sealed class PartFamilyRepository(AppDbContext context) : EfRepository<PartFamily>(context), IPartFamilyRepository
+internal sealed class PartFamilyRepository(CatalogDbContext context) : EfRepository<PartFamily>(context), IPartFamilyRepository
 {
     public async Task<IReadOnlyList<PartFamily>> ListAsync(bool includeArchived, CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking().Where(f => includeArchived || !f.IsArchived).ToListAsync(cancellationToken);
@@ -22,7 +22,7 @@ internal sealed class PartFamilyRepository(AppDbContext context) : EfRepository<
     public void Remove(PartFamily family) => Set.Remove(family);
 }
 
-internal sealed class TagRepository(AppDbContext context) : EfRepository<Tag>(context), ITagRepository
+internal sealed class TagRepository(CatalogDbContext context) : EfRepository<Tag>(context), ITagRepository
 {
     public async Task<IReadOnlyList<Tag>> ListAsync(bool includeArchived, CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking().Where(t => includeArchived || !t.IsArchived).ToListAsync(cancellationToken);
@@ -36,7 +36,7 @@ internal sealed class TagRepository(AppDbContext context) : EfRepository<Tag>(co
     public void Remove(Tag tag) => Set.Remove(tag);
 }
 
-internal sealed class PartLinkRepository(AppDbContext context) : EfRepository<PartLink>(context), IPartLinkRepository
+internal sealed class PartLinkRepository(CatalogDbContext context) : EfRepository<PartLink>(context), IPartLinkRepository
 {
     public async Task<IReadOnlyList<PartLink>> ListForPartAsync(Guid partId, CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking().Where(l => l.SourcePartId == partId || l.TargetPartId == partId).ToListAsync(cancellationToken);
@@ -47,7 +47,7 @@ internal sealed class PartLinkRepository(AppDbContext context) : EfRepository<Pa
     public void Remove(PartLink link) => Set.Remove(link);
 }
 
-internal sealed class FavoriteRepository(AppDbContext context) : IFavoriteRepository
+internal sealed class FavoriteRepository(CatalogDbContext context) : IFavoriteRepository
 {
     public async Task<IReadOnlyList<Guid>> ListPartIdsAsync(Guid userId, CancellationToken cancellationToken = default) =>
         await context.Set<Favorite>().AsNoTracking().Where(f => f.UserId == userId).OrderByDescending(f => f.CreatedAt).Select(f => f.PartId).ToListAsync(cancellationToken);
@@ -62,7 +62,7 @@ internal sealed class FavoriteRepository(AppDbContext context) : IFavoriteReposi
 
 internal sealed class CatalogUnitOfWork : EfUnitOfWork, ICatalogUnitOfWork
 {
-    public CatalogUnitOfWork(AppDbContext context, string? userName)
+    public CatalogUnitOfWork(CatalogDbContext context, string? userName)
         : base(context, userName)
     {
         Families = new PartFamilyRepository(context);
@@ -84,7 +84,7 @@ internal sealed class CatalogUnitOfWork : EfUnitOfWork, ICatalogUnitOfWork
 }
 
 /// <summary>Fabrique d'unités de travail de l'annuaire (une par opération applicative).</summary>
-internal sealed class CatalogUnitOfWorkFactory(IDbContextFactory<AppDbContext> contextFactory, ICurrentUser currentUser)
+internal sealed class CatalogUnitOfWorkFactory(IDbContextFactory<CatalogDbContext> contextFactory, ICurrentUser currentUser)
     : IUnitOfWorkFactory<ICatalogUnitOfWork>
 {
     public ICatalogUnitOfWork Create() => new CatalogUnitOfWork(contextFactory.CreateDbContext(), currentUser.UserName);

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Barthazon.Referential.Infrastructure.Persistence;
 
-internal sealed class CustomerRepository(AppDbContext context) : EfRepository<Customer>(context), ICustomerRepository
+internal sealed class CustomerRepository(SocleDbContext context) : EfRepository<Customer>(context), ICustomerRepository
 {
     public Task<Customer?> GetWithContactsAsync(Guid id, CancellationToken cancellationToken = default) =>
         Set.Include(c => c.Contacts).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
@@ -25,7 +25,7 @@ internal sealed class CustomerRepository(AppDbContext context) : EfRepository<Cu
         await Set.AsNoTracking().Where(c => ids.Contains(c.Id)).ToListAsync(cancellationToken);
 }
 
-internal sealed class MaterialRepository(AppDbContext context) : EfRepository<Material>(context), IMaterialRepository
+internal sealed class MaterialRepository(SocleDbContext context) : EfRepository<Material>(context), IMaterialRepository
 {
     public async Task<IReadOnlyList<Material>> ListAsync(bool includeArchived, CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking().Where(m => includeArchived || !m.IsArchived).ToListAsync(cancellationToken);
@@ -46,7 +46,7 @@ internal sealed class MaterialRepository(AppDbContext context) : EfRepository<Ma
     public void Remove(Material material) => Set.Remove(material);
 }
 
-internal sealed class MachineRepository(AppDbContext context) : EfRepository<Machine>(context), IMachineRepository
+internal sealed class MachineRepository(SocleDbContext context) : EfRepository<Machine>(context), IMachineRepository
 {
     public async Task<IReadOnlyList<Machine>> ListAsync(bool includeArchived, CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking().Where(m => includeArchived || !m.IsArchived).ToListAsync(cancellationToken);
@@ -63,7 +63,7 @@ internal sealed class MachineRepository(AppDbContext context) : EfRepository<Mac
     public void Remove(Machine machine) => Set.Remove(machine);
 }
 
-internal sealed class UserRepository(AppDbContext context) : EfRepository<User>(context), IUserRepository
+internal sealed class UserRepository(SocleDbContext context) : EfRepository<User>(context), IUserRepository
 {
     public Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
         Set.FirstOrDefaultAsync(u => u.UserName == userName, cancellationToken);
@@ -79,7 +79,7 @@ internal sealed class UserRepository(AppDbContext context) : EfRepository<User>(
 
 internal sealed class ReferentialUnitOfWork : EfUnitOfWork, IReferentialUnitOfWork
 {
-    public ReferentialUnitOfWork(AppDbContext context, string? userName)
+    public ReferentialUnitOfWork(SocleDbContext context, string? userName)
         : base(context, userName)
     {
         Customers = new CustomerRepository(context);
@@ -98,7 +98,7 @@ internal sealed class ReferentialUnitOfWork : EfUnitOfWork, IReferentialUnitOfWo
 }
 
 /// <summary>Fabrique d'unités de travail du référentiel (une par opération applicative).</summary>
-internal sealed class ReferentialUnitOfWorkFactory(IDbContextFactory<AppDbContext> contextFactory, ICurrentUser currentUser)
+internal sealed class ReferentialUnitOfWorkFactory(IDbContextFactory<SocleDbContext> contextFactory, ICurrentUser currentUser)
     : IUnitOfWorkFactory<IReferentialUnitOfWork>
 {
     public IReferentialUnitOfWork Create() => new ReferentialUnitOfWork(contextFactory.CreateDbContext(), currentUser.UserName);

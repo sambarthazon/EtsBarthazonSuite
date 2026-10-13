@@ -11,7 +11,7 @@ public sealed class UserServiceTests : IAsyncLifetime
 
     private IUserService Users => _app.Get<IUserService>();
 
-    public async Task InitializeAsync() => _app = await ReferentialTestApp.CreateAsync();
+    public async Task InitializeAsync() => _app = await TestApplication.CreateAsync();
 
     public async Task DisposeAsync() => await _app.DisposeAsync();
 

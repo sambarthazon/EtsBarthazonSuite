@@ -1,4 +1,3 @@
-using System.Reflection;
 using Barthazon.Catalog.Core.Persistence;
 using Barthazon.Catalog.Core.Services;
 using Barthazon.Catalog.Infrastructure.Exchange;
@@ -10,15 +9,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Barthazon.Catalog.Infrastructure;
 
-/// <summary>Persistance de l'annuaire : mappings EF Core (tables cat_*) et repositories.</summary>
+/// <summary>Persistance de l'annuaire : son contexte et ses migrations (tables cat_*), repositories.</summary>
 public sealed class CatalogPersistence : IModulePersistence
 {
     public string Key => "catalog";
 
-    public Assembly MappingsAssembly => typeof(CatalogPersistence).Assembly;
-
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        services.AddModuleDatabase<CatalogDbContext>(CatalogDbContext.Info, (sp, options) => new CatalogDbContext(options, sp.GetRequiredService<TimeProvider>()));
         services.AddScoped<IUnitOfWorkFactory<ICatalogUnitOfWork>, CatalogUnitOfWorkFactory>();
         services.AddSingleton<IPartSpreadsheet, ClosedXmlPartSpreadsheet>();
     }

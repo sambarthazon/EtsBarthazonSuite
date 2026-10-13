@@ -6,9 +6,11 @@ namespace Barthazon.Shared.Infrastructure.Persistence.Configurations;
 
 internal sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntry>
 {
+    public const string TableName = "sys_audit_entries";
+
     public void Configure(EntityTypeBuilder<AuditEntry> builder)
     {
-        builder.ToTable("sys_audit_entries");
+        builder.ToTable(TableName);
         builder.HasKey(e => e.Id);
         builder.Property(e => e.UserName).HasMaxLength(100);
         builder.Property(e => e.EntityType).HasMaxLength(100).IsRequired();

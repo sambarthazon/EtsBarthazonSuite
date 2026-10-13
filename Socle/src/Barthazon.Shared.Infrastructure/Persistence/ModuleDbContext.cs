@@ -9,11 +9,17 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 namespace Barthazon.Shared.Infrastructure.Persistence;
 
 /// <summary>
-/// Contexte EF Core unique, qui charge les mappings de chaque module déclaré.
-/// À utiliser uniquement via <see cref="AppDbContextFactory"/> : un contexte de courte durée par opération applicative.
-/// L'enregistrement remplit automatiquement les champs d'audit et alimente le journal.
+/// Base des contextes EF Core : un contexte par application (socle, annuaire, stock…), chacun avec ses tables,
+/// ses migrations et sa table d'historique. Porte ce qui est commun : conventions SQLite (décimaux, dates),
+/// identifiants générés par le code, jetons de concurrence, champs d'audit et alimentation du journal.
+/// <para>
+/// Le journal reste une table unique (<c>sys_audit_entries</c>) : chaque contexte la mappe pour écrire l'entrée
+/// de journal dans la même transaction que la modification, mais seul le contexte du socle la crée
+/// (les autres la déclarent <c>ExcludeFromMigrations</c>).
+/// </para>
+/// À utiliser uniquement via une fabrique : un contexte de courte durée par opération applicative.
 /// </summary>
-public sealed class AppDbContext : DbContext
+public abstract class ModuleDbContext : DbContext
 {
     /// <summary>Propriétés techniques jamais tracées dans le détail du journal.</summary>
     private static readonly HashSet<string> IgnoredAuditProperties =
@@ -28,19 +34,16 @@ public sealed class AppDbContext : DbContext
     /// <summary>Propriétés dont la valeur est masquée dans le journal.</summary>
     private static readonly HashSet<string> MaskedAuditProperties = ["PasswordHash", "SecurityStamp"];
 
-    private readonly IReadOnlyList<Assembly> _mappingAssemblies;
     private readonly TimeProvider _timeProvider;
 
-    public AppDbContext(DbContextOptions<AppDbContext> options, IReadOnlyList<Assembly> mappingAssemblies, TimeProvider? timeProvider = null)
+    protected ModuleDbContext(DbContextOptions options, TimeProvider? timeProvider = null)
         : base(options)
     {
-        _mappingAssemblies = mappingAssemblies;
         _timeProvider = timeProvider ?? TimeProvider.System;
-        ModelKey = string.Join('|', mappingAssemblies.Select(a => a.GetName().Name).Order(StringComparer.Ordinal));
     }
 
-    /// <summary>Clé du modèle (assemblages de mappings), utilisée par le cache de modèles d'EF Core.</summary>
-    internal string ModelKey { get; }
+    /// <summary>Vrai pour le contexte qui crée les tables communes (journal) : celui du socle.</summary>
+    protected virtual bool OwnsSharedTables => false;
 
     /// <summary>Identifiant de connexion de l'auteur des modifications (rempli par l'unité de travail).</summary>
     public string? AuditUserName { get; set; }
@@ -89,14 +92,20 @@ public sealed class AppDbContext : DbContext
         }
     }
 
+    /// <summary>Mappings de l'application (tables de son préfixe).</summary>
+    protected abstract void ApplyMappings(ModelBuilder modelBuilder);
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-        foreach (var assembly in _mappingAssemblies.Where(a => a != typeof(AppDbContext).Assembly))
+        modelBuilder.ApplyConfiguration(new Configurations.AuditEntryConfiguration());
+        if (!OwnsSharedTables)
         {
-            modelBuilder.ApplyConfigurationsFromAssembly(assembly);
+            // Journal commun : écrit par ce contexte, créé par la migration du socle.
+            modelBuilder.Entity<AuditEntry>().ToTable(Configurations.AuditEntryConfiguration.TableName, t => t.ExcludeFromMigrations());
         }
+
+        ApplyMappings(modelBuilder);
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
@@ -233,12 +242,3 @@ public sealed class AppDbContext : DbContext
 
 /// <summary>Modification d'un champ (ancienne → nouvelle valeur), sérialisée dans le journal.</summary>
 public sealed record AuditChange(object? Old, object? New);
-
-/// <summary>Le cache de modèles d'EF Core doit distinguer les ensembles de modules (tests, outils).</summary>
-internal sealed class AppModelCacheKeyFactory : IModelCacheKeyFactory
-{
-    public object Create(DbContext context, bool designTime) =>
-        context is AppDbContext app
-            ? (context.GetType(), app.ModelKey, context.Database.ProviderName, designTime)
-            : (object)(context.GetType(), designTime);
-}

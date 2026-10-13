@@ -12,7 +12,7 @@ public sealed class CustomerServiceTests : IAsyncLifetime
 
     private ICustomerService Customers => _app.Get<ICustomerService>();
 
-    public async Task InitializeAsync() => _app = await ReferentialTestApp.CreateAsync();
+    public async Task InitializeAsync() => _app = await TestApplication.CreateAsync();
 
     public async Task DisposeAsync() => await _app.DisposeAsync();
 
@@ -71,7 +71,7 @@ public sealed class CustomerServiceTests : IAsyncLifetime
     [Fact]
     public async Task Anonymous_read_can_be_disabled()
     {
-        await using var app = await ReferentialTestApp.CreateAsync(settings: new() { ["Security:AllowAnonymousRead"] = "false" });
+        await using var app = await TestApplication.CreateAsync(settings: new() { ["Security:AllowAnonymousRead"] = "false" });
         app.User.SignOut();
 
         var listed = await app.Get<ICustomerService>().ListAsync(null, false);

@@ -15,13 +15,17 @@ public sealed record DataTransferReport(IReadOnlyDictionary<string, int> RowsByT
 
 /// <summary>
 /// Export / import complet des données en JSON, indépendant du fournisseur de base :
-/// sert à transférer le contenu de SQLite vers PostgreSQL. Parcourt le modèle EF Core de tous les modules
-/// (tables dans l'ordre des dépendances), sans connaître les entités.
+/// sert à transférer le contenu de SQLite vers PostgreSQL. Parcourt le modèle EF Core de chaque application
+/// (dans l'ordre des migrations : socle d'abord ; tables dans l'ordre des dépendances), sans connaître les entités.
+/// <para>
+/// Format version 2 : mêmes tables par nom que la version 1 (contexte unique), plus la liste des applications.
+/// L'import accepte les deux versions : les tables sont reconnues par leur nom.
+/// </para>
 /// </summary>
-public sealed class DataTransferService(IDbContextFactory<AppDbContext> contextFactory, TimeProvider timeProvider)
+public sealed class DataTransferService(IEnumerable<ModuleDatabase> databases, DatabaseOptions database, TimeProvider timeProvider)
 {
     public const string Format = "barthazon-export";
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -32,9 +36,10 @@ public sealed class DataTransferService(IDbContextFactory<AppDbContext> contextF
     private static readonly MethodInfo SetMethod = typeof(DbContext).GetMethods()
         .Single(m => m.Name == nameof(DbContext.Set) && m.IsGenericMethodDefinition && m.GetParameters().Length == 0);
 
+    private IReadOnlyList<ModuleDatabase> Ordered => databases.OrderBy(d => d.Info.Order).ThenBy(d => d.Info.Key, StringComparer.Ordinal).ToList();
+
     public async Task<byte[]> ExportAsync(CancellationToken cancellationToken = default)
     {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         using var output = new MemoryStream();
         await using (var writer = new Utf8JsonWriter(output))
         {
@@ -42,25 +47,36 @@ public sealed class DataTransferService(IDbContextFactory<AppDbContext> contextF
             writer.WriteString("format", Format);
             writer.WriteNumber("version", FormatVersion);
             writer.WriteString("exportedAt", timeProvider.GetUtcNow());
-            writer.WriteString("provider", context.Database.ProviderName);
-            writer.WriteStartObject("tables");
-            foreach (var entityType in OrderedEntityTypes(context.Model))
+            writer.WriteString("provider", database.Provider);
+            writer.WriteStartArray("applications");
+            foreach (var module in Ordered)
             {
-                writer.WriteStartArray(entityType.GetTableName()!);
-                foreach (var entity in await LoadAllAsync(context, entityType, cancellationToken))
+                writer.WriteStringValue(module.Info.Key);
+            }
+
+            writer.WriteEndArray();
+            writer.WriteStartObject("tables");
+            foreach (var module in Ordered)
+            {
+                await using var context = module.CreateContext();
+                foreach (var entityType in OwnedEntityTypes(context.Model, module.Info))
                 {
-                    var entry = context.Entry(entity);
-                    writer.WriteStartObject();
-                    foreach (var property in entityType.GetProperties())
+                    writer.WriteStartArray(entityType.GetTableName()!);
+                    foreach (var entity in await LoadAllAsync(context, entityType, cancellationToken))
                     {
-                        writer.WritePropertyName(property.Name);
-                        JsonSerializer.Serialize(writer, entry.Property(property.Name).CurrentValue, property.ClrType, JsonOptions);
+                        var entry = context.Entry(entity);
+                        writer.WriteStartObject();
+                        foreach (var property in entityType.GetProperties())
+                        {
+                            writer.WritePropertyName(property.Name);
+                            JsonSerializer.Serialize(writer, entry.Property(property.Name).CurrentValue, property.ClrType, JsonOptions);
+                        }
+
+                        writer.WriteEndObject();
                     }
 
-                    writer.WriteEndObject();
+                    writer.WriteEndArray();
                 }
-
-                writer.WriteEndArray();
             }
 
             writer.WriteEndObject();
@@ -72,68 +88,91 @@ public sealed class DataTransferService(IDbContextFactory<AppDbContext> contextF
 
     /// <summary>
     /// Remplace TOUTES les données de la base par celles du fichier (base de destination fraîchement installée).
-    /// Opération dans une transaction : en cas d'erreur, rien n'est modifié.
+    /// Une seule transaction pour toutes les applications : en cas d'erreur, rien n'est modifié.
     /// </summary>
     public async Task<DataTransferReport> ImportAsync(Stream content, CancellationToken cancellationToken = default)
     {
         using var document = await JsonDocument.ParseAsync(content, cancellationToken: cancellationToken);
         var root = document.RootElement;
-        if (!root.TryGetProperty("format", out var format) || format.GetString() != Format || !root.TryGetProperty("tables", out var tables))
+        if (!root.TryGetProperty("format", out var format) || format.GetString() != Format
+            || !root.TryGetProperty("version", out var version) || version.GetInt32() is < 1 or > FormatVersion
+            || !root.TryGetProperty("tables", out var tables))
         {
             throw new InvalidDataException("format");
         }
 
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        context.SuppressAudit = true;
-        var ordered = OrderedEntityTypes(context.Model).ToList();
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await using var connection = DatabaseConnection.CreateConnection(database);
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
-        // 1. Vider les tables (dépendants d'abord).
-        foreach (var entityType in Enumerable.Reverse(ordered))
+        // 1. Vider les tables : applications dans l'ordre inverse, dépendants d'abord.
+        foreach (var module in Enumerable.Reverse(Ordered))
         {
-            foreach (var entity in await LoadAllAsync(context, entityType, cancellationToken, tracking: true))
+            await using var context = module.CreateContext(connection);
+            await context.Database.UseTransactionAsync(transaction, cancellationToken);
+            context.SuppressAudit = true;
+            foreach (var entityType in Enumerable.Reverse(OwnedEntityTypes(context.Model, module.Info).ToList()))
             {
-                context.Remove(entity);
-            }
-
-            await context.SaveChangesAsync(cancellationToken);
-            context.ChangeTracker.Clear();
-        }
-
-        // 2. Insérer (tables principales d'abord).
-        var report = new Dictionary<string, int>();
-        foreach (var entityType in ordered)
-        {
-            var table = entityType.GetTableName()!;
-            if (!tables.TryGetProperty(table, out var rows))
-            {
-                continue;
-            }
-
-            var count = 0;
-            foreach (var row in rows.EnumerateArray())
-            {
-                var entity = Activator.CreateInstance(entityType.ClrType, nonPublic: true)!;
-                var entry = context.Entry(entity);
-                foreach (var property in entityType.GetProperties())
+                foreach (var entity in await LoadAllAsync(context, entityType, cancellationToken, tracking: true))
                 {
-                    if (row.TryGetProperty(property.Name, out var value))
-                    {
-                        entry.Property(property.Name).CurrentValue = value.Deserialize(property.ClrType, JsonOptions);
-                    }
+                    context.Remove(entity);
                 }
 
-                entry.State = EntityState.Added;
-                count++;
+                await context.SaveChangesAsync(cancellationToken);
+                context.ChangeTracker.Clear();
             }
+        }
 
-            await context.SaveChangesAsync(cancellationToken);
-            context.ChangeTracker.Clear();
-            report[table] = count;
+        // 2. Insérer : socle d'abord, tables principales avant leurs dépendants.
+        var report = new Dictionary<string, int>();
+        foreach (var module in Ordered)
+        {
+            await using var context = module.CreateContext(connection);
+            await context.Database.UseTransactionAsync(transaction, cancellationToken);
+            context.SuppressAudit = true;
+            foreach (var entityType in OwnedEntityTypes(context.Model, module.Info))
+            {
+                var table = entityType.GetTableName()!;
+                if (!tables.TryGetProperty(table, out var rows))
+                {
+                    continue;
+                }
+
+                var count = 0;
+                foreach (var row in rows.EnumerateArray())
+                {
+                    var entity = Activator.CreateInstance(entityType.ClrType, nonPublic: true)!;
+                    var entry = context.Entry(entity);
+                    foreach (var property in entityType.GetProperties())
+                    {
+                        if (row.TryGetProperty(property.Name, out var value))
+                        {
+                            entry.Property(property.Name).CurrentValue = value.Deserialize(property.ClrType, JsonOptions);
+                        }
+                    }
+
+                    entry.State = EntityState.Added;
+                    count++;
+                }
+
+                await context.SaveChangesAsync(cancellationToken);
+                context.ChangeTracker.Clear();
+                report[table] = count;
+            }
         }
 
         await transaction.CommitAsync(cancellationToken);
         return new DataTransferReport(report);
+    }
+
+    /// <summary>
+    /// Tables d'une application (d'après ses préfixes) : le journal commun, mappé par chaque contexte,
+    /// n'appartient qu'au socle.
+    /// </summary>
+    public static IEnumerable<IEntityType> OwnedEntityTypes(IModel model, ModuleDatabaseInfo info)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+        return OrderedEntityTypes(model).Where(t => info.TablePrefixes.Any(p => t.GetTableName()!.StartsWith(p, StringComparison.Ordinal)));
     }
 
     /// <summary>Types d'entités dans l'ordre des dépendances (une table principale avant ses dépendants).</summary>
@@ -166,7 +205,7 @@ public sealed class DataTransferService(IDbContextFactory<AppDbContext> contextF
         return result;
     }
 
-    private static async Task<List<object>> LoadAllAsync(AppDbContext context, IEntityType entityType, CancellationToken cancellationToken, bool tracking = false)
+    private static async Task<List<object>> LoadAllAsync(ModuleDbContext context, IEntityType entityType, CancellationToken cancellationToken, bool tracking = false)
     {
         var set = (IQueryable<object>)SetMethod.MakeGenericMethod(entityType.ClrType).Invoke(context, null)!;
         var query = tracking ? set : set.AsNoTracking();

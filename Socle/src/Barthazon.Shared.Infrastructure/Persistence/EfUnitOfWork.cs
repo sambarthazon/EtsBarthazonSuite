@@ -8,14 +8,14 @@ namespace Barthazon.Shared.Infrastructure.Persistence;
 /// <summary>Unité de travail EF Core : possède un contexte de courte durée.</summary>
 public abstract class EfUnitOfWork : IUnitOfWork
 {
-    protected EfUnitOfWork(AppDbContext context, string? userName)
+    protected EfUnitOfWork(ModuleDbContext context, string? userName)
     {
         ArgumentNullException.ThrowIfNull(context);
         Context = context;
         Context.AuditUserName = userName;
     }
 
-    protected AppDbContext Context { get; }
+    protected ModuleDbContext Context { get; }
 
     public async Task<Result> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
