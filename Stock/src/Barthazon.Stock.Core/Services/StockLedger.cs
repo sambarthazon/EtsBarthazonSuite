@@ -1,0 +1,133 @@
+using System.Globalization;
+using Barthazon.Shared.Kernel.Persistence;
+using Barthazon.Shared.Kernel.Results;
+using Barthazon.Stock.Core.Domain;
+using Barthazon.Stock.Core.Persistence;
+using Barthazon.Stock.Core.Resources;
+
+namespace Barthazon.Stock.Core.Services;
+
+/// <summary>Mouvements préparés par un service, enregistrés ensemble par <see cref="StockLedger"/>.</summary>
+internal sealed class LedgerEntry
+{
+    public List<StockTransaction> Transactions { get; } = [];
+
+    /// <summary>Action à exécuter dans la même unité de travail juste avant l'enregistrement (ex. marquer un mouvement annulé).</summary>
+    public List<Action> BeforeSave { get; } = [];
+
+    public StockTransaction Add(StockTransaction transaction)
+    {
+        Transactions.Add(transaction);
+        return transaction;
+    }
+}
+
+/// <summary>
+/// Enregistre des mouvements : numérotation, mise à jour des soldes dans la même transaction, contrôle des quantités
+/// négatives, tout ou rien. En cas de conflit (deux saisies simultanées sur la même case), relit et revalide une fois.
+/// </summary>
+internal sealed class StockLedger(IUnitOfWorkFactory<IStockUnitOfWork> unitOfWorkFactory, StockOptions options)
+{
+    /// <summary>
+    /// Exécute <paramref name="prepare"/> dans une unité de travail neuve (lecture, contrôles, préparation des
+    /// mouvements), puis enregistre. <paramref name="prepare"/> est rappelée en cas de nouvel essai.
+    /// </summary>
+    public async Task<Result<IReadOnlyList<StockTransaction>>> RecordAsync(
+        Func<IStockUnitOfWork, Task<Result<LedgerEntry>>> prepare, CancellationToken cancellationToken = default)
+    {
+        Result<IReadOnlyList<StockTransaction>>? last = null;
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            await using var uow = unitOfWorkFactory.Create();
+            var prepared = await prepare(uow);
+            if (prepared.IsFailure)
+            {
+                return Result<IReadOnlyList<StockTransaction>>.Failure(prepared.Errors);
+            }
+
+            var entry = prepared.Value;
+            var applied = await ApplyAsync(uow, entry, cancellationToken);
+            if (applied.IsFailure)
+            {
+                return Result<IReadOnlyList<StockTransaction>>.Failure(applied.Errors);
+            }
+
+            foreach (var action in entry.BeforeSave)
+            {
+                action();
+            }
+
+            var saved = await uow.SaveChangesAsync(cancellationToken);
+            if (saved.IsSuccess)
+            {
+                return Result.Success<IReadOnlyList<StockTransaction>>(entry.Transactions);
+            }
+
+            last = Result<IReadOnlyList<StockTransaction>>.Failure(saved.Errors);
+            if (!saved.HasError(ErrorKind.Conflict))
+            {
+                break;
+            }
+        }
+
+        return last!.HasError(ErrorKind.Conflict)
+            ? Result<IReadOnlyList<StockTransaction>>.Failure(Error.Conflict(StockMessages.MovementConflict))
+            : last;
+    }
+
+    private async Task<Result> ApplyAsync(IStockUnitOfWork uow, LedgerEntry entry, CancellationToken cancellationToken)
+    {
+        var lines = entry.Transactions.SelectMany(t => t.Lines).ToList();
+        if (lines.Count == 0)
+        {
+            return Result.Failure(Error.Validation(StockMessages.MovementEmpty));
+        }
+
+        var keys = lines.Select(l => l.Key).Distinct().ToList();
+        var balances = (await uow.Balances.GetForUpdateAsync(keys, cancellationToken)).ToDictionary(b => b.Key);
+        var errors = new List<Error>();
+        foreach (var group in lines.GroupBy(l => l.Key))
+        {
+            var key = group.Key;
+            var delta = group.Sum(l => l.Delta);
+            var at = entry.Transactions.Where(t => t.Lines.Any(l => l.Key == key)).Max(t => t.OccurredAt);
+            balances.TryGetValue(key, out var balance);
+            var current = balance?.Quantity ?? 0m;
+            var next = current + delta;
+            if (next < 0 && delta < 0 && !(key.IsItem && options.AllowNegativeItemStock))
+            {
+                var message = key.IsItem ? StockMessages.InsufficientItemQuantity
+                    : key.IsWorkInProgress ? StockMessages.InsufficientWorkInProgress
+                    : StockMessages.InsufficientPartQuantity;
+                errors.Add(Error.Validation(string.Format(CultureInfo.CurrentCulture, message, StockFormat.Quantity(Math.Max(current, 0)))));
+                continue;
+            }
+
+            if (balance is null)
+            {
+                balance = new StockBalance(key);
+                uow.Balances.Add(balance);
+            }
+
+            balance.Apply(delta, at);
+            if (balance.Quantity == 0)
+            {
+                uow.Balances.Remove(balance);
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            return Result.Failure(errors.Distinct());
+        }
+
+        var sequence = await uow.Transactions.GetLastSequenceAsync(cancellationToken);
+        foreach (var transaction in entry.Transactions)
+        {
+            transaction.Sequence = ++sequence;
+            uow.Transactions.Add(transaction);
+        }
+
+        return Result.Success();
+    }
+}

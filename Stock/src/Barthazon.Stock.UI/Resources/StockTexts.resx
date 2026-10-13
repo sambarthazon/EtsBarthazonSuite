@@ -17,4 +17,211 @@
   <data name="UpcomingTitle" xml:space="preserve"><value>Bientôt disponible</value></data>
   <data name="UpcomingText" xml:space="preserve"><value>Cette partie du stock est en cours de réalisation.</value></data>
   <data name="BackToDashboard" xml:space="preserve"><value>Tableau de bord du stock</value></data>
+  <data name="BlankShape_Round" xml:space="preserve"><value>Rond</value></data>
+  <data name="BlankShape_Square" xml:space="preserve"><value>Carré</value></data>
+  <data name="BlankShape_Flat" xml:space="preserve"><value>Plat</value></data>
+  <data name="BlankShape_Hexagonal" xml:space="preserve"><value>Hexagonal</value></data>
+  <data name="BlankShape_Tube" xml:space="preserve"><value>Tube</value></data>
+  <data name="BlankShape_Sheet" xml:space="preserve"><value>Tôle</value></data>
+  <data name="BlankShape_Block" xml:space="preserve"><value>Bloc</value></data>
+  <data name="BlankShape_CastOrForged" xml:space="preserve"><value>Moulé / forgé</value></data>
+  <data name="BlankShape_Other" xml:space="preserve"><value>Autre</value></data>
+  <data name="OperationType_Cutting" xml:space="preserve"><value>Débit</value></data>
+  <data name="OperationType_Turning" xml:space="preserve"><value>Tournage</value></data>
+  <data name="OperationType_Milling" xml:space="preserve"><value>Fraisage</value></data>
+  <data name="OperationType_DrillingTapping" xml:space="preserve"><value>Perçage / taraudage</value></data>
+  <data name="OperationType_Grinding" xml:space="preserve"><value>Rectification</value></data>
+  <data name="OperationType_Deburring" xml:space="preserve"><value>Ébavurage</value></data>
+  <data name="OperationType_Treatment" xml:space="preserve"><value>Traitement</value></data>
+  <data name="OperationType_Inspection" xml:space="preserve"><value>Contrôle</value></data>
+  <data name="OperationType_Subcontracting" xml:space="preserve"><value>Sous-traitance</value></data>
+  <data name="OperationType_Other" xml:space="preserve"><value>Autre</value></data>
+  <data name="ItemKind_RawMaterial" xml:space="preserve"><value>Matière</value></data>
+  <data name="ItemKind_Blank" xml:space="preserve"><value>Brut</value></data>
+  <data name="ItemKind_Other" xml:space="preserve"><value>Autre</value></data>
+  <data name="Unit_Piece" xml:space="preserve"><value>u</value></data>
+  <data name="Unit_Meter" xml:space="preserve"><value>m</value></data>
+  <data name="Unit_Kilogram" xml:space="preserve"><value>kg</value></data>
+  <data name="Unit_SquareMeter" xml:space="preserve"><value>m²</value></data>
+  <data name="UnitName_Piece" xml:space="preserve"><value>Unité (u)</value></data>
+  <data name="UnitName_Meter" xml:space="preserve"><value>Mètre (m)</value></data>
+  <data name="UnitName_Kilogram" xml:space="preserve"><value>Kilogramme (kg)</value></data>
+  <data name="UnitName_SquareMeter" xml:space="preserve"><value>Mètre carré (m²)</value></data>
+  <data name="LocationKind_Storage" xml:space="preserve"><value>Magasin</value></data>
+  <data name="LocationKind_Workshop" xml:space="preserve"><value>Atelier (en-cours)</value></data>
+  <data name="LocationKind_Shipping" xml:space="preserve"><value>Expédition</value></data>
+  <data name="LocationKind_Subcontractor" xml:space="preserve"><value>Sous-traitant</value></data>
+  <data name="LocationKind_Other" xml:space="preserve"><value>Autre</value></data>
+  <data name="TransactionType_ItemReceipt" xml:space="preserve"><value>Réception</value></data>
+  <data name="TransactionType_ItemIssue" xml:space="preserve"><value>Sortie d'article</value></data>
+  <data name="TransactionType_Launch" xml:space="preserve"><value>Lancement</value></data>
+  <data name="TransactionType_OperationDone" xml:space="preserve"><value>Opération réalisée</value></data>
+  <data name="TransactionType_OperationSkipped" xml:space="preserve"><value>Opération non réalisée</value></data>
+  <data name="TransactionType_Scrap" xml:space="preserve"><value>Rebut</value></data>
+  <data name="TransactionType_Rework" xml:space="preserve"><value>Reprise</value></data>
+  <data name="TransactionType_Transfer" xml:space="preserve"><value>Transfert</value></data>
+  <data name="TransactionType_Shipment" xml:space="preserve"><value>Sortie de pièces finies</value></data>
+  <data name="TransactionType_PartReceipt" xml:space="preserve"><value>Entrée de pièces finies</value></data>
+  <data name="TransactionType_Adjustment" xml:space="preserve"><value>Correction</value></data>
+  <data name="TransactionType_Reversal" xml:space="preserve"><value>Annulation</value></data>
+  <data name="Reason_Dimension" xml:space="preserve"><value>Cote</value></data>
+  <data name="Reason_Aspect" xml:space="preserve"><value>Aspect</value></data>
+  <data name="Reason_Material" xml:space="preserve"><value>Matière</value></data>
+  <data name="Reason_Setup" xml:space="preserve"><value>Réglage</value></data>
+  <data name="Reason_Handling" xml:space="preserve"><value>Manutention</value></data>
+  <data name="Reason_Inventory" xml:space="preserve"><value>Inventaire</value></data>
+  <data name="Reason_Other" xml:space="preserve"><value>Autre</value></data>
+  <data name="Reason_InitialStock" xml:space="preserve"><value>Stock initial</value></data>
+  <data name="ActionAdjustment" xml:space="preserve"><value>Correction</value></data>
+  <data name="ActionIssue" xml:space="preserve"><value>Sortie</value></data>
+  <data name="ActionReceipt" xml:space="preserve"><value>Réception</value></data>
+  <data name="ActionTransfer" xml:space="preserve"><value>Transfert</value></data>
+  <data name="AdjustExistingCell" xml:space="preserve"><value>Case existante</value></data>
+  <data name="AdjustOtherCell" xml:space="preserve"><value>Autre emplacement ou lot</value></data>
+  <data name="Alerts" xml:space="preserve"><value>Alertes</value></data>
+  <data name="All" xml:space="preserve"><value>Tous</value></data>
+  <data name="AllMovements" xml:space="preserve"><value>Tous les mouvements</value></data>
+  <data name="Archive" xml:space="preserve"><value>Archiver</value></data>
+  <data name="Archived" xml:space="preserve"><value>Archivé</value></data>
+  <data name="AvailableHere" xml:space="preserve"><value>Disponible ici : {0}</value></data>
+  <data name="BelowThreshold" xml:space="preserve"><value>Sous le seuil</value></data>
+  <data name="BelowThresholdOnly" xml:space="preserve"><value>Sous le seuil seulement</value></data>
+  <data name="CellToAdjust" xml:space="preserve"><value>Case à corriger</value></data>
+  <data name="ChooseAction" xml:space="preserve"><value>Type de saisie</value></data>
+  <data name="ChooseCell" xml:space="preserve"><value>Choisissez l'emplacement concerné.</value></data>
+  <data name="ClearFilters" xml:space="preserve"><value>Effacer les filtres</value></data>
+  <data name="ColActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="ColCode" xml:space="preserve"><value>Code</value></data>
+  <data name="ColDate" xml:space="preserve"><value>Date</value></data>
+  <data name="ColDelta" xml:space="preserve"><value>Quantité</value></data>
+  <data name="ColDesignation" xml:space="preserve"><value>Désignation</value></data>
+  <data name="ColLines" xml:space="preserve"><value>Variations</value></data>
+  <data name="ColNumber" xml:space="preserve"><value>N°</value></data>
+  <data name="ColQuantity" xml:space="preserve"><value>Quantité</value></data>
+  <data name="ColReference" xml:space="preserve"><value>Référence</value></data>
+  <data name="ColSubject" xml:space="preserve"><value>Objet</value></data>
+  <data name="ColType" xml:space="preserve"><value>Type</value></data>
+  <data name="ColUser" xml:space="preserve"><value>Saisi par</value></data>
+  <data name="ColValue" xml:space="preserve"><value>Valeur indicative</value></data>
+  <data name="Comment" xml:space="preserve"><value>Commentaire</value></data>
+  <data name="CountedQuantity" xml:space="preserve"><value>Quantité constatée</value></data>
+  <data name="Customer" xml:space="preserve"><value>Client</value></data>
+  <data name="CustomerCode" xml:space="preserve"><value>Code client</value></data>
+  <data name="CustomerName" xml:space="preserve"><value>Nom du client</value></data>
+  <data name="Decrease" xml:space="preserve"><value>Diminuer</value></data>
+  <data name="DefaultLocation" xml:space="preserve"><value>Emplacement par défaut</value></data>
+  <data name="Description" xml:space="preserve"><value>Description</value></data>
+  <data name="DesignationExample" xml:space="preserve"><value>Ex. Barre C45 Ø60, Brut forgé bride Ø125</value></data>
+  <data name="Dimensions" xml:space="preserve"><value>Dimensions</value></data>
+  <data name="DimensionsExample" xml:space="preserve"><value>Ex. Ø60, 40×20, Ø125 × 32</value></data>
+  <data name="Edit" xml:space="preserve"><value>Modifier</value></data>
+  <data name="EditItem" xml:space="preserve"><value>Modifier l'article {0}</value></data>
+  <data name="EditLocation" xml:space="preserve"><value>Modifier l'emplacement</value></data>
+  <data name="EditorOnly" xml:space="preserve"><value>Réservé aux éditeurs.</value></data>
+  <data name="FromCell" xml:space="preserve"><value>Prendre dans</value></data>
+  <data name="FromDate" xml:space="preserve"><value>Du</value></data>
+  <data name="InStockNow" xml:space="preserve"><value>En stock : {0}</value></data>
+  <data name="Increase" xml:space="preserve"><value>Augmenter</value></data>
+  <data name="IndicativeValue" xml:space="preserve"><value>Valeur indicative : {0}</value></data>
+  <data name="Information" xml:space="preserve"><value>Informations</value></data>
+  <data name="IssueReference" xml:space="preserve"><value>Référence (retour fournisseur, essai…)</value></data>
+  <data name="Item" xml:space="preserve"><value>Article</value></data>
+  <data name="ItemCodeHelp" xml:space="preserve"><value>Proposé automatiquement, modifiable. Imprimé sur l'étiquette.</value></data>
+  <data name="ItemKind" xml:space="preserve"><value>Type</value></data>
+  <data name="ItemNotFound" xml:space="preserve"><value>Article introuvable</value></data>
+  <data name="ItemsBelowThreshold" xml:space="preserve"><value>{0} article(s) sous le seuil</value></data>
+  <data name="ItemsCount" xml:space="preserve"><value>{0} article(s)</value></data>
+  <data name="ItemsTitle" xml:space="preserve"><value>Articles</value></data>
+  <data name="KnownQuantity" xml:space="preserve"><value>Quantité connue : {0}</value></data>
+  <data name="LastMovements" xml:space="preserve"><value>Derniers mouvements</value></data>
+  <data name="Location" xml:space="preserve"><value>Emplacement</value></data>
+  <data name="LocationCodeHelp" xml:space="preserve"><value>Court et sans espace (ex. MAG-A1) : imprimé en QR code.</value></data>
+  <data name="LocationContents" xml:space="preserve"><value>Contenu de l'emplacement</value></data>
+  <data name="LocationEmpty" xml:space="preserve"><value>Cet emplacement est vide.</value></data>
+  <data name="LocationHasStock" xml:space="preserve"><value>Cet emplacement contient du stock : videz-le avant de l'archiver.</value></data>
+  <data name="LocationKind" xml:space="preserve"><value>Type d'emplacement</value></data>
+  <data name="LocationName" xml:space="preserve"><value>Nom</value></data>
+  <data name="LocationNotFound" xml:space="preserve"><value>Emplacement introuvable</value></data>
+  <data name="Login" xml:space="preserve"><value>Se connecter</value></data>
+  <data name="LoginToDeclare" xml:space="preserve"><value>Connectez-vous pour saisir</value></data>
+  <data name="LoginToDeclareText" xml:space="preserve"><value>Toute saisie de stock est nominative : connectez-vous avec votre compte.</value></data>
+  <data name="Lot" xml:space="preserve"><value>Lot</value></data>
+  <data name="LotHelp" xml:space="preserve"><value>N° de coulée, de lot fournisseur…</value></data>
+  <data name="LotValue" xml:space="preserve"><value>lot {0}</value></data>
+  <data name="Material" xml:space="preserve"><value>Matière</value></data>
+  <data name="MaterialDesignation" xml:space="preserve"><value>Désignation de la matière</value></data>
+  <data name="MaterialFamily" xml:space="preserve"><value>Famille</value></data>
+  <data name="MaterialGrade" xml:space="preserve"><value>Nuance</value></data>
+  <data name="MoreActions" xml:space="preserve"><value>Autres actions</value></data>
+  <data name="MoreOptions" xml:space="preserve"><value>Date, commentaire</value></data>
+  <data name="Movement" xml:space="preserve"><value>Mouvement</value></data>
+  <data name="MovementReversed" xml:space="preserve"><value>Mouvement {0} annulé.</value></data>
+  <data name="MovementSaved" xml:space="preserve"><value>Mouvement {0} enregistré.</value></data>
+  <data name="MovementsCount" xml:space="preserve"><value>{0} mouvement(s)</value></data>
+  <data name="MovementsTitle" xml:space="preserve"><value>Mouvements</value></data>
+  <data name="NewCustomerQuick" xml:space="preserve"><value>Nouveau client</value></data>
+  <data name="NewEntry" xml:space="preserve"><value>Nouvelle saisie</value></data>
+  <data name="NewItem" xml:space="preserve"><value>Nouvel article</value></data>
+  <data name="NewLocation" xml:space="preserve"><value>Nouvel emplacement</value></data>
+  <data name="NewMaterialQuick" xml:space="preserve"><value>Nouvelle matière</value></data>
+  <data name="NoAlerts" xml:space="preserve"><value>Aucune alerte.</value></data>
+  <data name="NoItems" xml:space="preserve"><value>Aucun article.</value></data>
+  <data name="NoLocations" xml:space="preserve"><value>Aucun emplacement.</value></data>
+  <data name="NoMovements" xml:space="preserve"><value>Aucun mouvement.</value></data>
+  <data name="Notes" xml:space="preserve"><value>Notes</value></data>
+  <data name="NothingInStock" xml:space="preserve"><value>Rien en stock.</value></data>
+  <data name="OccurredOn" xml:space="preserve"><value>Date du mouvement</value></data>
+  <data name="OccurredOnHelp" xml:space="preserve"><value>Vide = maintenant. Une date passée sert à saisir un document papier.</value></data>
+  <data name="OwnedBy" xml:space="preserve"><value>Fourni par {0}</value></data>
+  <data name="Owner" xml:space="preserve"><value>Propriétaire</value></data>
+  <data name="OwnerCompany" xml:space="preserve"><value>BARTHAZON</value></data>
+  <data name="OwnerCompanyName" xml:space="preserve"><value>BARTHAZON</value></data>
+  <data name="OwnerCustomers" xml:space="preserve"><value>Fournis par les clients</value></data>
+  <data name="OwnerHelp" xml:space="preserve"><value>Vide si l'article appartient à BARTHAZON.</value></data>
+  <data name="PieceCount" xml:space="preserve"><value>Nombre</value></data>
+  <data name="PieceSize" xml:space="preserve"><value>Longueur ou quantité unitaire ({0})</value></data>
+  <data name="ProvidedByCustomer" xml:space="preserve"><value>Fourni par le client</value></data>
+  <data name="QuantityIssued" xml:space="preserve"><value>Quantité sortie</value></data>
+  <data name="QuantityMoved" xml:space="preserve"><value>Quantité transférée</value></data>
+  <data name="QuantityReceived" xml:space="preserve"><value>Quantité reçue</value></data>
+  <data name="QuickEntrySubtitle" xml:space="preserve"><value>Réception, sortie, transfert ou correction, en quelques gestes.</value></data>
+  <data name="QuickEntryTitle" xml:space="preserve"><value>Saisie rapide</value></data>
+  <data name="Reason" xml:space="preserve"><value>Motif</value></data>
+  <data name="ReceiptReference" xml:space="preserve"><value>Bon de livraison fournisseur</value></data>
+  <data name="RecordedOn" xml:space="preserve"><value>Saisi le</value></data>
+  <data name="ReferenceUnitCost" xml:space="preserve"><value>Prix de référence</value></data>
+  <data name="ReferenceUnitCostHelp" xml:space="preserve"><value>€ HT par unité, sert seulement à estimer une valeur.</value></data>
+  <data name="Restore" xml:space="preserve"><value>Restaurer</value></data>
+  <data name="ReversalOf" xml:space="preserve"><value>Annulation du mouvement {0}.</value></data>
+  <data name="Reverse" xml:space="preserve"><value>Annuler le mouvement</value></data>
+  <data name="ReverseText" xml:space="preserve"><value>Le mouvement {0} sera annulé par un contre-mouvement ; il restera visible, barré, dans le journal.</value></data>
+  <data name="ReverseTitle" xml:space="preserve"><value>Annuler ce mouvement ?</value></data>
+  <data name="Reversed" xml:space="preserve"><value>Annulé</value></data>
+  <data name="ReversedBy" xml:space="preserve"><value>Annulé par le mouvement {0}.</value></data>
+  <data name="SameItemAgain" xml:space="preserve"><value>Même article</value></data>
+  <data name="Saved" xml:space="preserve"><value>Enregistré.</value></data>
+  <data name="SearchCustomer" xml:space="preserve"><value>Rechercher un client…</value></data>
+  <data name="SearchItem" xml:space="preserve"><value>Rechercher un article (code, désignation, dimensions)</value></data>
+  <data name="Shape" xml:space="preserve"><value>Forme</value></data>
+  <data name="ShowArchived" xml:space="preserve"><value>Afficher les archivés</value></data>
+  <data name="ShowReversed" xml:space="preserve"><value>Afficher les mouvements annulés</value></data>
+  <data name="SortOrder" xml:space="preserve"><value>Ordre</value></data>
+  <data name="SortOrderHelp" xml:space="preserve"><value>Ordre d'affichage dans les listes.</value></data>
+  <data name="StockByLocation" xml:space="preserve"><value>Stock</value></data>
+  <data name="SubmitAdjustment" xml:space="preserve"><value>Corriger</value></data>
+  <data name="SubmitIssue" xml:space="preserve"><value>Enregistrer la sortie</value></data>
+  <data name="SubmitReceipt" xml:space="preserve"><value>Enregistrer la réception</value></data>
+  <data name="SubmitTransfer" xml:space="preserve"><value>Transférer</value></data>
+  <data name="TabLocations" xml:space="preserve"><value>Emplacements</value></data>
+  <data name="Threshold" xml:space="preserve"><value>Seuil d'alerte</value></data>
+  <data name="ThresholdHelp" xml:space="preserve"><value>Alerte quand le stock passe en dessous.</value></data>
+  <data name="ThresholdValue" xml:space="preserve"><value>Seuil : {0}</value></data>
+  <data name="ToDate" xml:space="preserve"><value>Au</value></data>
+  <data name="ToLocation" xml:space="preserve"><value>Vers</value></data>
+  <data name="TrackLots" xml:space="preserve"><value>Suivi par lot</value></data>
+  <data name="TrackLotsLabel" xml:space="preserve"><value>Suivi par lot (n° de coulée à chaque réception et sortie)</value></data>
+  <data name="TrackedByLot" xml:space="preserve"><value>suivi par lot</value></data>
+  <data name="Unit" xml:space="preserve"><value>Unité</value></data>
+  <data name="UpdatedOnBy" xml:space="preserve"><value>Modifié le {0} par {1}</value></data>
+  <data name="UsualSupplier" xml:space="preserve"><value>Fournisseur habituel</value></data>
 </root>

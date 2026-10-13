@@ -11,4 +11,43 @@
   <data name="ConfigNumberInvalid" xml:space="preserve"><value>{0} : « {1} » n'est pas un nombre entier.</value></data>
   <data name="ConfigBooleanInvalid" xml:space="preserve"><value>{0} : « {1} » doit valoir true ou false.</value></data>
   <data name="LocationNotFound" xml:space="preserve"><value>Emplacement introuvable.</value></data>
+  <data name="TextTooLong" xml:space="preserve"><value>Texte trop long.</value></data>
+  <data name="CodeInvalid" xml:space="preserve"><value>Le code ne peut contenir ni espace, ni les caractères / \ ? # %.</value></data>
+  <data name="MustBePositive" xml:space="preserve"><value>La valeur doit être positive ou nulle.</value></data>
+  <data name="QuantityMustBePositive" xml:space="preserve"><value>La quantité doit être supérieure à zéro.</value></data>
+  <data name="QuantityPrecision" xml:space="preserve"><value>Quantité invalide pour cette unité : nombre entier de pièces, ou trois décimales au plus.</value></data>
+  <data name="DeclareRequiresLogin" xml:space="preserve"><value>Connectez-vous pour enregistrer un mouvement : toute déclaration est nominative.</value></data>
+  <data name="LocationCodeRequired" xml:space="preserve"><value>Le code de l'emplacement est obligatoire.</value></data>
+  <data name="LocationNameRequired" xml:space="preserve"><value>Le nom de l'emplacement est obligatoire.</value></data>
+  <data name="LocationCodeExists" xml:space="preserve"><value>Un emplacement porte déjà ce code.</value></data>
+  <data name="LocationHasStock" xml:space="preserve"><value>Cet emplacement contient du stock : videz-le avant de l'archiver.</value></data>
+  <data name="UnknownLocation" xml:space="preserve"><value>Emplacement inconnu</value></data>
+  <data name="ItemNotFound" xml:space="preserve"><value>Article introuvable.</value></data>
+  <data name="ItemCodeRequired" xml:space="preserve"><value>Le code de l'article est obligatoire.</value></data>
+  <data name="ItemCodeExists" xml:space="preserve"><value>Un article porte déjà ce code.</value></data>
+  <data name="ItemHasStock" xml:space="preserve"><value>Cet article a encore du stock : il ne peut pas être archivé.</value></data>
+  <data name="ItemArchived" xml:space="preserve"><value>Cet article est archivé : restaurez-le avant de saisir une réception.</value></data>
+  <data name="UnitChangeWithStock" xml:space="preserve"><value>L'unité ne peut pas changer tant que l'article a du stock.</value></data>
+  <data name="DesignationRequired" xml:space="preserve"><value>La désignation est obligatoire.</value></data>
+  <data name="MaterialUnknown" xml:space="preserve"><value>Matière inconnue.</value></data>
+  <data name="CustomerUnknown" xml:space="preserve"><value>Client inconnu.</value></data>
+  <data name="UnknownItem" xml:space="preserve"><value>Article inconnu</value></data>
+  <data name="UnknownPart" xml:space="preserve"><value>Pièce inconnue</value></data>
+  <data name="LotRequired" xml:space="preserve"><value>Cet article est suivi par lot : indiquez le numéro de lot.</value></data>
+  <data name="TransferSameLocation" xml:space="preserve"><value>Choisissez un emplacement de destination différent.</value></data>
+  <data name="AdjustmentNoDifference" xml:space="preserve"><value>La quantité constatée est égale à la quantité connue : aucune correction à faire.</value></data>
+  <data name="DateInFuture" xml:space="preserve"><value>La date du mouvement ne peut pas être dans le futur.</value></data>
+  <data name="DateTooOld" xml:space="preserve"><value>La date du mouvement ne peut pas être antérieure de plus de {0} jours.</value></data>
+  <data name="MovementEmpty" xml:space="preserve"><value>Aucune quantité à enregistrer.</value></data>
+  <data name="MovementNotFound" xml:space="preserve"><value>Mouvement introuvable.</value></data>
+  <data name="MovementConflict" xml:space="preserve"><value>Une autre saisie vient de modifier ce stock : vérifiez les quantités et recommencez.</value></data>
+  <data name="InsufficientItemQuantity" xml:space="preserve"><value>Quantité insuffisante : seulement {0} en stock à cet emplacement. Si le stock réel est différent, un éditeur peut faire une correction.</value></data>
+  <data name="InsufficientPartQuantity" xml:space="preserve"><value>Quantité insuffisante : seulement {0} pièce(s) en stock à cet emplacement.</value></data>
+  <data name="InsufficientWorkInProgress" xml:space="preserve"><value>Seulement {0} pièce(s) attendent cette opération.</value></data>
+  <data name="ReversalOfReversal" xml:space="preserve"><value>Une annulation ne s'annule pas : refaites la saisie.</value></data>
+  <data name="AlreadyReversed" xml:space="preserve"><value>Ce mouvement a déjà été annulé.</value></data>
+  <data name="ReversalForbidden" xml:space="preserve"><value>Seul un éditeur peut annuler le mouvement d'un autre utilisateur.</value></data>
+  <data name="ReversalDelayExpired" xml:space="preserve"><value>Le délai de {0} minutes pour annuler votre propre mouvement est dépassé : demandez à un éditeur.</value></data>
+  <data name="ReversalWouldBeNegative" xml:space="preserve"><value>Annulation impossible : les quantités concernées ont déjà été utilisées.</value></data>
+  <data name="ReversalBlockedBy" xml:space="preserve"><value>Annulation impossible : ces quantités ont déjà été utilisées. Annulez d'abord le mouvement {0}.</value></data>
 </root>

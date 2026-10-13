@@ -1,0 +1,30 @@
+@* Choix d'une case de stock d'un objet (emplacement, lot, quantité). *@
+<MudSelect T="StockKey?" Value="Value" ValueChanged="v => ValueChanged.InvokeAsync(v)" Label="@Label" Variant="Variant.Outlined" Required="true"
+           RequiredError="@SharedTexts.RequiredField" ToStringFunc="Display" AnchorOrigin="Origin.BottomCenter" Class="mb-3">
+    @foreach (var cell in Cells)
+    {
+        <MudSelectItem T="StockKey?" Value="cell.Key">@Display(cell.Key)</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<StockCellView> Cells { get; set; } = [];
+
+    [Parameter] public StockKey? Value { get; set; }
+
+    [Parameter] public EventCallback<StockKey?> ValueChanged { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+
+    private string Display(StockKey? key)
+    {
+        var cell = Cells.FirstOrDefault(c => c.Key == key);
+        if (cell is null)
+        {
+            return string.Empty;
+        }
+
+        var lot = cell.Lot is null ? string.Empty : " · " + string.Format(CultureInfo.CurrentCulture, StockTexts.LotValue, cell.Lot);
+        return $"{cell.LocationCode} — {cell.LocationName}{lot} · {StockLabels.Quantity(cell.Quantity, cell.Unit)}";
+    }
+}

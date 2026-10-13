@@ -1,3 +1,4 @@
+using Barthazon.Stock.Core.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,6 +10,13 @@ public static class StockCoreServiceCollectionExtensions
     public static IServiceCollection AddStockCore(this IServiceCollection services)
     {
         services.AddSingleton(sp => StockOptions.From(sp.GetRequiredService<IConfiguration>()));
+        services.AddScoped<StockAccess>();
+        services.AddScoped<StockLedger>();
+        services.AddScoped<ILocationService, LocationService>();
+        services.AddScoped<IItemService, ItemService>();
+        services.AddScoped<MovementService>();
+        services.AddScoped<IMovementService>(sp => sp.GetRequiredService<MovementService>());
+        services.AddScoped<IBalanceVerificationService, BalanceVerificationService>();
         return services;
     }
 }

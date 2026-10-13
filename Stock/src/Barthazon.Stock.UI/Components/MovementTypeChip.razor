@@ -1,0 +1,19 @@
+@* Type d'un mouvement, avec la mention « annulé » le cas échéant. *@
+<StatusChip Text="@Movement.Type.Label()" Tone="Tone" />
+@if (Movement.IsReversed)
+{
+    <StatusChip Text="@StockTexts.Reversed" Tone="StatusTone.Disabled" Class="ml-1" Tooltip="@string.Format(CultureInfo.CurrentCulture, StockTexts.ReversedBy, Movement.ReversedByNumber)" />
+}
+
+@code {
+    [Parameter, EditorRequired] public MovementItem Movement { get; set; } = default!;
+
+    private StatusTone Tone => Movement.Type switch
+    {
+        StockTransactionType.ItemReceipt or StockTransactionType.PartReceipt => StatusTone.Success,
+        StockTransactionType.Scrap => StatusTone.Error,
+        StockTransactionType.Adjustment or StockTransactionType.Reversal => StatusTone.Warning,
+        StockTransactionType.Launch or StockTransactionType.OperationDone or StockTransactionType.OperationSkipped or StockTransactionType.Rework => StatusTone.Info,
+        _ => StatusTone.Neutral,
+    };
+}

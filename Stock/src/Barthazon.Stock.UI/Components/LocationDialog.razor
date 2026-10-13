@@ -1,0 +1,55 @@
+@inject ILocationService Locations
+@inject Notifier Notifier
+
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudTextField @bind-Value="_input.Code" Label="@StockTexts.ColCode" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" AutoFocus="true" MaxLength="30"
+                      HelperText="@StockTexts.LocationCodeHelp" Error="_form.HasError(nameof(LocationInput.Code))" ErrorText="@_form.ErrorFor(nameof(LocationInput.Code))" />
+        <MudTextField @bind-Value="_input.Name" Label="@StockTexts.LocationName" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" Class="mt-3" MaxLength="100"
+                      Error="_form.HasError(nameof(LocationInput.Name))" ErrorText="@_form.ErrorFor(nameof(LocationInput.Name))" />
+        <MudSelect T="StockLocationKind" @bind-Value="_input.Kind" Label="@StockTexts.LocationKind" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="k => k.Label()">
+            @foreach (var kind in Enum.GetValues<StockLocationKind>())
+            {
+                <MudSelectItem T="StockLocationKind" Value="kind">@kind.Label()</MudSelectItem>
+            }
+        </MudSelect>
+        <MudNumericField T="int" @bind-Value="_input.SortOrder" Label="@StockTexts.SortOrder" Variant="Variant.Outlined" Class="mt-3" HelperText="@StockTexts.SortOrderHelp" />
+        <MudTextField @bind-Value="_input.Description" Label="@StockTexts.Description" Variant="Variant.Outlined" Lines="2" Class="mt-3" MaxLength="1000" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private LocationInput _input = new();
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter] public LocationItem? Item { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Item is not null)
+        {
+            _input = new LocationInput
+            {
+                Code = Item.Code, Name = Item.Name, Kind = Item.Kind, SortOrder = Item.SortOrder, Description = Item.Description, Version = Item.Version,
+            };
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        var result = await Locations.SaveAsync(Item?.Id, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(StockTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(result.Value));
+        }
+    }
+}

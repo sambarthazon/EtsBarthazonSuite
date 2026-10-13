@@ -1,0 +1,143 @@
+@page "/stock/articles/nouveau"
+@page "/stock/articles/{Code}/modifier"
+@inject IItemService Items
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+
+<PageHeader Title="@(IsNew ? StockTexts.NewItem : string.Format(CultureInfo.CurrentCulture, StockTexts.EditItem, Code))"
+            BackHref="@(IsNew ? "stock/articles" : $"stock/articles/{Uri.EscapeDataString(Code!)}")" />
+<UnsavedChangesGuard IsDirty="() => !_saving && _form.IsDirty(_input)" ShowBanner="true" />
+
+@if (CurrentUser.Role < UserRole.Editor)
+{
+    <EmptyState Title="@StockTexts.EditorOnly" Icon="@Icons.Material.Outlined.Lock" />
+}
+else if (_loaded)
+{
+    <FormErrors State="_form" OnReload="ReloadAsync" />
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="6">
+            <section class="bz-card pa-4">
+                <MudTextField @bind-Value="_input.Code" Label="@StockTexts.ColCode" Variant="Variant.Outlined" Required="true" RequiredError="@SharedTexts.RequiredField" MaxLength="30"
+                              Error="_form.HasError(nameof(ItemInput.Code))" ErrorText="@_form.ErrorFor(nameof(ItemInput.Code))" HelperText="@StockTexts.ItemCodeHelp" />
+                <MudTextField @bind-Value="_input.Designation" Label="@StockTexts.ColDesignation" Variant="Variant.Outlined" Required="true" RequiredError="@SharedTexts.RequiredField"
+                              Class="mt-3" MaxLength="200" AutoFocus="IsNew" Placeholder="@StockTexts.DesignationExample"
+                              Error="_form.HasError(nameof(ItemInput.Designation))" ErrorText="@_form.ErrorFor(nameof(ItemInput.Designation))" />
+                <MudSelect T="StockItemKind" @bind-Value="_input.Kind" Label="@StockTexts.ItemKind" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="k => k.Label()">
+                    @foreach (var kind in Enum.GetValues<StockItemKind>())
+                    {
+                        <MudSelectItem T="StockItemKind" Value="kind">@kind.Label()</MudSelectItem>
+                    }
+                </MudSelect>
+                <div class="mt-3">
+                    <MaterialSelect Value="_input.MaterialId" ValueChanged="v => _input.MaterialId = v"
+                                    Error="_form.HasError(nameof(ItemInput.MaterialId))" ErrorText="@_form.ErrorFor(nameof(ItemInput.MaterialId))" />
+                </div>
+                <MudSelect T="BlankShape?" @bind-Value="_input.Shape" Label="@StockTexts.Shape" Variant="Variant.Outlined" Class="mt-3" Clearable="true" ToStringFunc="s => s?.Label() ?? string.Empty">
+                    @foreach (var shape in Enum.GetValues<BlankShape>())
+                    {
+                        <MudSelectItem T="BlankShape?" Value="shape">@shape.Label()</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudTextField @bind-Value="_input.Dimensions" Label="@StockTexts.Dimensions" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" Placeholder="@StockTexts.DimensionsExample" />
+                <MudSelect T="StockUnit" @bind-Value="_input.Unit" Label="@StockTexts.Unit" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="u => u.Label()"
+                           Error="_form.HasError(nameof(ItemInput.Unit))" ErrorText="@_form.ErrorFor(nameof(ItemInput.Unit))">
+                    @foreach (var unit in Enum.GetValues<StockUnit>())
+                    {
+                        <MudSelectItem T="StockUnit" Value="unit">@unit.Label()</MudSelectItem>
+                    }
+                </MudSelect>
+            </section>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <section class="bz-card pa-4">
+                <CustomerPicker Value="_input.OwnerCustomerId" ValueChanged="v => _input.OwnerCustomerId = v" Label="@StockTexts.ProvidedByCustomer" HelperText="@StockTexts.OwnerHelp"
+                                Error="_form.HasError(nameof(ItemInput.OwnerCustomerId))" ErrorText="@_form.ErrorFor(nameof(ItemInput.OwnerCustomerId))" />
+                <MudNumericField T="decimal?" @bind-Value="_input.MinimumThreshold" Label="@StockTexts.Threshold" Variant="Variant.Outlined" Class="mt-3" Min="0" HideSpinButtons="true"
+                                 Adornment="Adornment.End" AdornmentText="@_input.Unit.Symbol()" InputMode="@(InputMode.@decimal)" HelperText="@StockTexts.ThresholdHelp"
+                                 Error="_form.HasError(nameof(ItemInput.MinimumThreshold))" ErrorText="@_form.ErrorFor(nameof(ItemInput.MinimumThreshold))" />
+                <div class="mt-3">
+                    <LocationSelect Value="_input.DefaultLocationId" ValueChanged="v => _input.DefaultLocationId = v" Label="@StockTexts.DefaultLocation" Clearable="true" />
+                </div>
+                <MudNumericField T="decimal?" @bind-Value="_input.ReferenceUnitCost" Label="@StockTexts.ReferenceUnitCost" Variant="Variant.Outlined" Class="mt-3" Min="0" HideSpinButtons="true"
+                                 Adornment="Adornment.End" AdornmentText="@($"€ / {_input.Unit.Symbol()}")" InputMode="@(InputMode.@decimal)" HelperText="@StockTexts.ReferenceUnitCostHelp"
+                                 Error="_form.HasError(nameof(ItemInput.ReferenceUnitCost))" ErrorText="@_form.ErrorFor(nameof(ItemInput.ReferenceUnitCost))" />
+                <MudTextField @bind-Value="_input.UsualSupplier" Label="@StockTexts.UsualSupplier" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
+                <MudSwitch T="bool" @bind-Value="_input.TrackLots" Color="Color.Primary" Label="@StockTexts.TrackLotsLabel" Class="mt-3" />
+                <MudTextField @bind-Value="_input.Notes" Label="@StockTexts.Notes" Variant="Variant.Outlined" Lines="3" Class="mt-3" MaxLength="4000" />
+            </section>
+        </MudItem>
+    </MudGrid>
+    <div class="d-flex justify-end gap-2 mt-4">
+        <MudButton Href="@(IsNew ? "stock/articles" : $"stock/articles/{Uri.EscapeDataString(Code!)}")">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving" StartIcon="@Icons.Material.Filled.Save">@SharedTexts.Save</MudButton>
+    </div>
+}
+
+@code {
+    private readonly FormState _form = new();
+    private ItemInput _input = new();
+    private Guid? _id;
+    private bool _loaded;
+    private bool _saving;
+
+    [Parameter] public string? Code { get; set; }
+
+    private bool IsNew => Code is null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (CurrentUser.Role < UserRole.Editor)
+        {
+            return;
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _form.Clear();
+        if (IsNew)
+        {
+            var code = await Items.SuggestCodeAsync();
+            _input = new ItemInput { Code = code.IsSuccess ? code.Value : string.Empty };
+        }
+        else
+        {
+            var result = await Items.GetByCodeAsync(Code!);
+            if (!Notifier.Handle(result))
+            {
+                return;
+            }
+
+            var i = result.Value;
+            _id = i.Id;
+            _input = new ItemInput
+            {
+                Code = i.Code, Designation = i.Designation, Kind = i.Kind, MaterialId = i.MaterialId, Shape = i.Shape, Dimensions = i.Dimensions, Unit = i.Unit,
+                OwnerCustomerId = i.OwnerCustomerId, MinimumThreshold = i.MinimumThreshold, DefaultLocationId = i.DefaultLocationId,
+                ReferenceUnitCost = i.ReferenceUnitCost, UsualSupplier = i.UsualSupplier, TrackLots = i.TrackLots, Notes = i.Notes, Version = i.Version,
+            };
+        }
+
+        _form.Snapshot(_input);
+        _loaded = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = await Items.SaveAsync(_id, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(StockTexts.Saved);
+            Navigation.NavigateTo($"stock/articles/{Uri.EscapeDataString(result.Value.Code)}");
+            return;
+        }
+
+        _saving = false;
+    }
+}

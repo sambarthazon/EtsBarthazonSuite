@@ -1,0 +1,37 @@
+@inject ICustomerLookup Customers
+
+@* Création rapide d'un client (propriétaire d'un article fourni par le client). *@
+
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudTextField @bind-Value="_code" Label="@StockTexts.CustomerCode" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" AutoFocus="true" MaxLength="20"
+                      Error="@(_form.HasError(CodeField))" ErrorText="@(_form.ErrorFor(CodeField))" />
+        <MudTextField @bind-Value="_name" Label="@StockTexts.CustomerName" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" Class="mt-3"
+                      Error="@(_form.HasError(NameField))" ErrorText="@(_form.ErrorFor(NameField))" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private const string CodeField = "Code";
+    private const string NameField = "Name";
+    private readonly FormState _form = new();
+    private string _code = string.Empty;
+    private string _name = string.Empty;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    private async Task CreateAsync()
+    {
+        var result = await Customers.QuickCreateAsync(_code, _name);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Dialog!.Close(DialogResult.Ok(result.Value));
+        }
+    }
+}

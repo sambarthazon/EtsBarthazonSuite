@@ -1,0 +1,12 @@
+@* Quantité d'un article, en couleur d'alerte sous le seuil ou en rupture. *@
+<span class="@ToneClass" style="font-weight:600" title="@Tooltip">@StockLabels.Quantity(Item.Quantity, Item.Unit)</span>
+
+@code {
+    [Parameter, EditorRequired] public ItemListItem Item { get; set; } = default!;
+
+    private string? ToneClass => Item.Quantity <= 0 && Item.MinimumThreshold is not null ? "bz-tone-error"
+        : Item.IsBelowThreshold ? "bz-tone-warning"
+        : null;
+
+    private string? Tooltip => Item.IsBelowThreshold ? StockTexts.BelowThreshold : null;
+}

@@ -1,0 +1,45 @@
+@* Saisie d'une quantité : clavier numérique sur téléphone, unité affichée, boutons −/+ pour des pièces. *@
+<div class="d-flex align-start gap-1 @Class">
+    @if (Unit == StockUnit.Piece && Steppers)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Remove" Variant="Variant.Outlined" OnClick="() => StepAsync(-1)" Class="mt-2 bz-touch"
+                       aria-label="@StockTexts.Decrease" Disabled="@(Value is null || Value <= Minimum)" />
+    }
+    <MudNumericField T="decimal?" Value="Value" ValueChanged="v => ValueChanged.InvokeAsync(v)" Label="@Label" Variant="Variant.Outlined"
+                     Min="Minimum" HideSpinButtons="true" Immediate="true" Adornment="Adornment.End" AdornmentText="@Unit.Symbol()"
+                     Required="Required" RequiredError="@SharedTexts.RequiredField" Error="Error" ErrorText="@ErrorText" HelperText="@HelperText"
+                     AutoFocus="AutoFocus" Class="flex-grow-1" Culture="CultureInfo.CurrentCulture"
+                     InputMode="@(Unit == StockUnit.Piece ? InputMode.numeric : InputMode.@decimal)" Pattern="@(Unit == StockUnit.Piece ? "[0-9]*" : null)" />
+    @if (Unit == StockUnit.Piece && Steppers)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" OnClick="() => StepAsync(1)" Class="mt-2 bz-touch" aria-label="@StockTexts.Increase" />
+    }
+</div>
+
+@code {
+    [Parameter] public decimal? Value { get; set; }
+
+    [Parameter] public EventCallback<decimal?> ValueChanged { get; set; }
+
+    [Parameter] public StockUnit Unit { get; set; } = StockUnit.Piece;
+
+    [Parameter] public string? Label { get; set; }
+
+    [Parameter] public string? HelperText { get; set; }
+
+    [Parameter] public decimal Minimum { get; set; }
+
+    [Parameter] public bool Required { get; set; } = true;
+
+    [Parameter] public bool Steppers { get; set; } = true;
+
+    [Parameter] public bool AutoFocus { get; set; }
+
+    [Parameter] public bool Error { get; set; }
+
+    [Parameter] public string? ErrorText { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    private Task StepAsync(int step) => ValueChanged.InvokeAsync(Math.Max(Minimum, (Value ?? 0) + step));
+}

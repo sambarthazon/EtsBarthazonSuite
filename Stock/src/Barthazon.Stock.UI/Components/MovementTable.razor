@@ -1,0 +1,56 @@
+@inject IDialogService Dialogs
+
+@* Liste de mouvements (journal, fiche article, emplacement) : un clic ouvre le détail et l'annulation. *@
+<AdaptiveList T="MovementItem" Items="Items" Loading="Loading" Dense="true" OnItemClick="OpenAsync" AriaLabel="@StockTexts.MovementsTitle">
+    <HeaderContent>
+        <MudTh>@StockTexts.ColNumber</MudTh>
+        <MudTh>@StockTexts.ColDate</MudTh>
+        <MudTh>@StockTexts.ColType</MudTh>
+        <MudTh>@StockTexts.ColLines</MudTh>
+        <MudTh>@StockTexts.ColReference</MudTh>
+        <MudTh>@StockTexts.ColUser</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="m">
+        <MudTd><span class="@(m.IsReversed ? "bz-struck" : null)">@m.Number</span></MudTd>
+        <MudTd>@m.OccurredAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</MudTd>
+        <MudTd><MovementTypeChip Movement="m" /></MudTd>
+        <MudTd>
+            @foreach (var line in m.Lines.Take(3))
+            {
+                <div class="@(m.IsReversed ? "bz-struck" : null)"><b>@StockLabels.Delta(line.Delta, line.Unit)</b> @line.SubjectCode · @line.LocationCode@(line.Lot is null ? null : $" · {line.Lot}")</div>
+            }
+            @if (m.Lines.Count > 3) { <div class="bz-muted">…</div> }
+        </MudTd>
+        <MudTd>@m.Reference</MudTd>
+        <MudTd>@m.RecordedByName</MudTd>
+    </RowTemplate>
+    <CardTemplate Context="m">
+        <div class="d-flex justify-space-between align-center gap-2">
+            <MudText Typo="Typo.subtitle2" Class="@(m.IsReversed ? "bz-struck" : null)"><b>@m.Number</b> · @m.OccurredAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</MudText>
+            <MovementTypeChip Movement="m" />
+        </div>
+        @foreach (var line in m.Lines.Take(3))
+        {
+            <MudText Typo="Typo.body2"><b>@StockLabels.Delta(line.Delta, line.Unit)</b> @line.SubjectCode · @line.LocationCode@(line.Lot is null ? null : $" · {line.Lot}")</MudText>
+        }
+        <MudText Typo="Typo.caption" Class="bz-muted">@m.RecordedByName @(m.Reference is null ? null : $"· {m.Reference}")</MudText>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@StockTexts.NoMovements" Icon="@Icons.Material.Outlined.SwapHoriz" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    [Parameter] public IReadOnlyList<MovementItem>? Items { get; set; }
+
+    [Parameter] public bool Loading { get; set; }
+
+    /// <summary>Appelé après une annulation (pour recharger la page).</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private async Task OpenAsync(MovementItem movement)
+    {
+        if (await MovementDetailsDialog.ShowAsync(Dialogs, movement.Id))
+        {
+            await OnChanged.InvokeAsync();
+        }
+    }
+}

@@ -1,0 +1,21 @@
+@inject ICurrentUser CurrentUser
+
+@* Actions sur une case de stock (sortie, transfert, correction), regroupées dans un menu compact. *@
+@if (CurrentUser.IsAuthenticated)
+{
+    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@StockTexts.ColActions" Dense="true">
+        <ActivatorContent><MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" OnClick="@context.ToggleAsync" aria-label="@StockTexts.ColActions" /></ActivatorContent>
+        <ChildContent>
+            <MudMenuItem Icon="@Icons.Material.Filled.Output" OnClick="() => OnAction.InvokeAsync(StockAction.Issue)">@StockTexts.ActionIssue</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.SwapHoriz" OnClick="() => OnAction.InvokeAsync(StockAction.Transfer)">@StockTexts.ActionTransfer</MudMenuItem>
+            @if (CurrentUser.Role >= UserRole.Editor)
+            {
+                <MudMenuItem Icon="@Icons.Material.Filled.Tune" OnClick="() => OnAction.InvokeAsync(StockAction.Adjustment)">@StockTexts.ActionAdjustment</MudMenuItem>
+            }
+        </ChildContent>
+    </MudMenu>
+}
+
+@code {
+    [Parameter] public EventCallback<StockAction> OnAction { get; set; }
+}

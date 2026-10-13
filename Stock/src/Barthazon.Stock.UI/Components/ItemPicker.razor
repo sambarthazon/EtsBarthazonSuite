@@ -1,0 +1,61 @@
+@inject IItemService Items
+
+@* Recherche d'un article (code, désignation, dimensions), tolérante aux accents et aux séparateurs. *@
+<MudAutocomplete T="ItemListItem" Value="_selected" ValueChanged="OnChangedAsync" SearchFunc="SearchAsync"
+                 ToStringFunc="@(i => i is null ? string.Empty : $"{i.Code} — {i.Designation}")" Label="@(Label ?? StockTexts.Item)"
+                 Placeholder="@StockTexts.SearchItem" Variant="Variant.Outlined" Required="Required" RequiredError="@SharedTexts.RequiredField"
+                 Clearable="true" ResetValueOnEmptyText="true" DebounceInterval="200" MaxItems="30" OpenOnFocus="true"
+                 Error="Error" ErrorText="@ErrorText" Margin="Margin" AutoFocus="AutoFocus">
+    <ItemTemplate Context="item">
+        <div>
+            <b>@item.Code</b> — @item.Designation
+            <div class="bz-muted" style="font-size:.85em">@item.Kind.Label() @(item.Dimensions is null ? null : $"· {item.Dimensions}") · @StockLabels.Quantity(item.Quantity, item.Unit)</div>
+        </div>
+    </ItemTemplate>
+</MudAutocomplete>
+
+@code {
+    private ItemListItem? _selected;
+
+    [Parameter] public Guid? Value { get; set; }
+
+    [Parameter] public EventCallback<Guid?> ValueChanged { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+
+    [Parameter] public bool Required { get; set; }
+
+    [Parameter] public bool AutoFocus { get; set; }
+
+    [Parameter] public bool Error { get; set; }
+
+    [Parameter] public string? ErrorText { get; set; }
+
+    [Parameter] public Margin Margin { get; set; } = Margin.Normal;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Value != _selected?.Id)
+        {
+            _selected = null;
+            if (Value is { } id && (await Items.GetAsync(id)) is { IsSuccess: true } found)
+            {
+                var d = found.Value;
+                _selected = new ItemListItem(d.Id, d.Code, d.Designation, d.Kind, d.MaterialId, d.MaterialName, d.Dimensions, d.Unit,
+                    d.OwnerCustomerId, d.OwnerName, d.Quantity, d.MinimumThreshold, d.Value, d.IsArchived);
+            }
+        }
+    }
+
+    private async Task<IEnumerable<ItemListItem>> SearchAsync(string? text, CancellationToken cancellationToken)
+    {
+        var result = await Items.SearchAsync(new ItemSearchRequest { Query = text }, cancellationToken);
+        return result.IsSuccess ? result.Value.Take(30) : [];
+    }
+
+    private async Task OnChangedAsync(ItemListItem? item)
+    {
+        _selected = item;
+        await ValueChanged.InvokeAsync(item?.Id);
+    }
+}

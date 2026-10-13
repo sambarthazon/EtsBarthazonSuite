@@ -1,3 +1,103 @@
 @page "/stock/saisie"
+@inject IItemService Items
+@inject ILocationService Locations
+@inject ICurrentUser CurrentUser
+@inject Notifier Notifier
+@inject NavigationManager Navigation
 
-<UpcomingPage Title="@StockTexts.MenuQuickEntry" Icon="@Icons.Material.Filled.QrCodeScanner" />
+@* Saisie rapide hors lancement, utilisable debout avec un téléphone ; ouverte aussi par les QR codes (?article=, ?emplacement=). *@
+<PageHeader Title="@StockTexts.QuickEntryTitle" Subtitle="@StockTexts.QuickEntrySubtitle" />
+
+@if (!CurrentUser.IsAuthenticated)
+{
+    <EmptyState Title="@StockTexts.LoginToDeclare" Text="@StockTexts.LoginToDeclareText" Icon="@Icons.Material.Outlined.Lock">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"connexion?returnUrl={Uri.EscapeDataString("/" + Navigation.ToBaseRelativePath(Navigation.Uri))}")">@StockTexts.Login</MudButton>
+    </EmptyState>
+}
+else if (_last is not null)
+{
+    <section class="bz-card pa-4 bz-quick-done" role="status" aria-live="polite">
+        <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" /> @string.Format(CultureInfo.CurrentCulture, StockTexts.MovementSaved, _last.Number)</MudText>
+        @foreach (var line in _last.Lines)
+        {
+            <MudText><b>@StockLabels.Delta(line.Delta, line.Unit)</b> @line.SubjectCode — @line.SubjectLabel · @line.LocationCode@(line.Lot is null ? null : $" · {line.Lot}")</MudText>
+        }
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" StartIcon="@Icons.Material.Filled.Add" OnClick="NewEntry">@StockTexts.NewEntry</MudButton>
+            <MudButton Variant="Variant.Outlined" Size="Size.Large" OnClick="SameItemAgain">@StockTexts.SameItemAgain</MudButton>
+        </div>
+    </section>
+}
+else
+{
+    <section class="bz-card pa-4">
+        <MudChipSet T="StockAction" SelectedValue="_action" SelectedValueChanged="OnActionChanged" SelectionMode="SelectionMode.SingleSelection" CheckMark="true"
+                    Class="mb-3" aria-label="@StockTexts.ChooseAction">
+            @foreach (var action in AvailableActions)
+            {
+                <MudChip T="StockAction" Value="action" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Large">@MovementDialog.ActionTitle(action)</MudChip>
+            }
+        </MudChipSet>
+        <MovementForm @key="_formKey" Action="_action" ItemId="_itemId" LocationId="_locationId" OnSaved="OnSaved" />
+    </section>
+}
+
+@code {
+    private StockAction _action = StockAction.Receipt;
+    private Guid? _itemId;
+    private Guid? _locationId;
+    private MovementItem? _last;
+    private int _formKey;
+
+    [SupplyParameterFromQuery(Name = "action")] public string? ActionParameter { get; set; }
+
+    [SupplyParameterFromQuery(Name = "article")] public string? ItemCode { get; set; }
+
+    [SupplyParameterFromQuery(Name = "emplacement")] public string? LocationCode { get; set; }
+
+    private IEnumerable<StockAction> AvailableActions => CurrentUser.Role >= UserRole.Editor
+        ? Enum.GetValues<StockAction>()
+        : Enum.GetValues<StockAction>().Where(a => a != StockAction.Adjustment);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _action = ActionParameter switch
+        {
+            "sortie" => StockAction.Issue,
+            "transfert" => StockAction.Transfer,
+            "correction" when CurrentUser.Role >= UserRole.Editor => StockAction.Adjustment,
+            _ => StockAction.Receipt,
+        };
+        _itemId = !string.IsNullOrWhiteSpace(ItemCode) && await Items.GetByCodeAsync(ItemCode) is { IsSuccess: true } item ? item.Value.Id : null;
+        _locationId = !string.IsNullOrWhiteSpace(LocationCode) && await Locations.GetByCodeAsync(LocationCode) is { IsSuccess: true } location
+            ? location.Value.Location.Id
+            : null;
+        _formKey++;
+    }
+
+    private void OnActionChanged(StockAction action)
+    {
+        _action = action;
+        _formKey++;
+    }
+
+    private void OnSaved(MovementItem movement)
+    {
+        _last = movement;
+        Notifier.Success(string.Format(CultureInfo.CurrentCulture, StockTexts.MovementSaved, movement.Number));
+    }
+
+    private void NewEntry()
+    {
+        _last = null;
+        _itemId = null;
+        _formKey++;
+    }
+
+    private void SameItemAgain()
+    {
+        _itemId = _last?.Lines.FirstOrDefault(l => l.Key.IsItem)?.Key.ItemId ?? _itemId;
+        _last = null;
+        _formKey++;
+    }
+}

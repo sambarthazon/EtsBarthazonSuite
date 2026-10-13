@@ -1,0 +1,41 @@
+@inject IMaterialLookup Materials
+
+@* Création rapide d'une matière sans quitter le formulaire de l'article. *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudTextField @bind-Value="_designation" Label="@StockTexts.MaterialDesignation" Required="true" RequiredError="@SharedTexts.RequiredField" Variant="Variant.Outlined" AutoFocus="true"
+                      Error="@(_form.HasError(DesignationField))" ErrorText="@(_form.ErrorFor(DesignationField))" />
+        <MudTextField @bind-Value="_grade" Label="@StockTexts.MaterialGrade" Variant="Variant.Outlined" Class="mt-3" />
+        <MudSelect @bind-Value="_family" Label="@StockTexts.MaterialFamily" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="f => f.Label()">
+            @foreach (var family in Enum.GetValues<MaterialFamily>())
+            {
+                <MudSelectItem Value="family">@family.Label()</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private const string DesignationField = "Designation";
+    private readonly FormState _form = new();
+    private string _designation = string.Empty;
+    private string? _grade;
+    private MaterialFamily _family = MaterialFamily.Steel;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    private async Task CreateAsync()
+    {
+        var result = await Materials.QuickCreateAsync(_designation, _grade, _family);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Dialog!.Close(DialogResult.Ok(result.Value));
+        }
+    }
+}

@@ -1,0 +1,96 @@
+@inject ILocationService Locations
+@inject ICurrentUser CurrentUser
+@inject Notifier Notifier
+@inject IDialogService Dialogs
+
+@* Onglet « Emplacements » de la page Référentiels (inséré par le stock). *@
+<div class="d-flex flex-wrap align-center justify-space-between gap-3 mb-3">
+    <MudSwitch T="bool" Value="_includeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@StockTexts.ShowArchived" />
+    @if (CanEdit)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => EditAsync(null)">@StockTexts.NewLocation</MudButton>
+    }
+</div>
+
+<AdaptiveList T="LocationItem" Items="_items" Loading="_loading" Dense="true" OnItemClick="EditAsync" AriaLabel="@StockTexts.TabLocations">
+    <HeaderContent>
+        <MudTh>@StockTexts.ColCode</MudTh>
+        <MudTh>@StockTexts.LocationName</MudTh>
+        <MudTh>@StockTexts.LocationKind</MudTh>
+        <MudTh Style="text-align:right">@StockTexts.SortOrder</MudTh>
+        <MudTh>@StockTexts.ColActions</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="l">
+        <MudTd><a href="@($"stock/emplacements/{Uri.EscapeDataString(l.Code)}")" @onclick:stopPropagation="true"><b>@l.Code</b></a>
+            @if (l.IsArchived) { <StatusChip Text="@StockTexts.Archived" Tone="StatusTone.Disabled" Class="ml-2" /> }</MudTd>
+        <MudTd>@l.Name</MudTd>
+        <MudTd>@l.Kind.Label()</MudTd>
+        <MudTd Style="text-align:right">@l.SortOrder</MudTd>
+        <MudTd>
+            @if (CanEdit)
+            {
+                <span @onclick:stopPropagation="true">
+                <MudIconButton Icon="@(l.IsArchived ? Icons.Material.Filled.Unarchive : Icons.Material.Filled.Archive)" Size="Size.Small"
+                               OnClick="() => SetArchivedAsync(l)" Disabled="@(!l.IsArchived && l.HasStock)"
+                               aria-label="@(l.IsArchived ? StockTexts.Restore : StockTexts.Archive)" title="@(l.HasStock && !l.IsArchived ? StockTexts.LocationHasStock : l.IsArchived ? StockTexts.Restore : StockTexts.Archive)" />
+                </span>
+            }
+        </MudTd>
+    </RowTemplate>
+    <CardTemplate Context="l">
+        <MudText Typo="Typo.subtitle1"><b>@l.Code</b> — @l.Name</MudText>
+        <MudText Typo="Typo.body2" Class="bz-muted">@l.Kind.Label() @(l.IsArchived ? $"· {StockTexts.Archived}" : null)</MudText>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@StockTexts.NoLocations" Icon="@Icons.Material.Outlined.Inventory2" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<LocationItem>? _items;
+    private bool _includeArchived;
+    private bool _loading = true;
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task OnArchivedChangedAsync(bool value)
+    {
+        _includeArchived = value;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var result = await Locations.ListAsync(_includeArchived);
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private async Task EditAsync(LocationItem? item)
+    {
+        if (!CanEdit)
+        {
+            return;
+        }
+
+        var dialog = await Dialogs.ShowAsync<LocationDialog>(item is null ? StockTexts.NewLocation : StockTexts.EditLocation,
+            new DialogParameters<LocationDialog> { { d => d.Item, item } }, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task SetArchivedAsync(LocationItem item)
+    {
+        if (Notifier.Handle(await Locations.SetArchivedAsync(item.Id, !item.IsArchived), StockTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+}

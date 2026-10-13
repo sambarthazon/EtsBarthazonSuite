@@ -1,4 +1,72 @@
 @page "/stock"
+@inject IItemService Items
+@inject IMovementService Movements
+@inject ICurrentUser CurrentUser
+@inject Notifier Notifier
 
-<PageHeader Title="@StockTexts.DashboardTitle" Subtitle="@StockTexts.ModuleDescription" />
-<EmptyState Title="@StockTexts.UpcomingTitle" Text="@StockTexts.UpcomingText" Icon="@Icons.Material.Filled.Inventory" />
+<PageHeader Title="@StockTexts.DashboardTitle" Subtitle="@StockTexts.ModuleDescription">
+    <Actions>
+        @if (CurrentUser.IsAuthenticated)
+        {
+            <MudButton Href="stock/saisie" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.QrCodeScanner">@StockTexts.MenuQuickEntry</MudButton>
+        }
+        <MudButton Href="stock/articles" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Category">@StockTexts.MenuItems</MudButton>
+    </Actions>
+</PageHeader>
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="5">
+        <section class="bz-card bz-dashboard-card pa-4" aria-labelledby="bz-stock-alerts">
+            <h2 id="bz-stock-alerts" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Size="Size.Small" Color="Color.Warning" /> @StockTexts.Alerts</h2>
+            @if (_belowThreshold is null)
+            {
+                <MudSkeleton Height="60px" SkeletonType="SkeletonType.Rectangle" />
+            }
+            else if (_belowThreshold.Count == 0)
+            {
+                <MudText Class="bz-muted">@StockTexts.NoAlerts</MudText>
+            }
+            else
+            {
+                <a href="stock/articles?seuil=1" class="d-block mb-2"><b>@string.Format(CultureInfo.CurrentCulture, StockTexts.ItemsBelowThreshold, _belowThreshold.Count)</b></a>
+                <ul class="bz-part-mini-list">
+                    @foreach (var item in _belowThreshold.Take(8))
+                    {
+                        <li>
+                            <a href="@($"stock/articles/{Uri.EscapeDataString(item.Code)}")"><b>@item.Code</b> @item.Designation</a>
+                            <span class="ml-2"><ItemQuantity Item="item" /> / @StockLabels.Quantity(item.MinimumThreshold ?? 0, item.Unit)</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </MudItem>
+    <MudItem xs="12" md="7">
+        <section aria-labelledby="bz-stock-last">
+            <div class="d-flex justify-space-between align-center mb-2">
+                <h2 id="bz-stock-last" class="bz-dashboard-title">@StockTexts.LastMovements</h2>
+                <MudButton Variant="Variant.Text" Href="stock/mouvements" EndIcon="@Icons.Material.Filled.ArrowForward">@StockTexts.AllMovements</MudButton>
+            </div>
+            <MovementTable Items="_movements" Loading="@(_movements is null)" OnChanged="LoadAsync" />
+        </section>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private IReadOnlyList<ItemListItem>? _belowThreshold;
+    private IReadOnlyList<MovementItem>? _movements;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var items = await Items.SearchAsync(new ItemSearchRequest { BelowThresholdOnly = true });
+        if (Notifier.Handle(items))
+        {
+            _belowThreshold = items.Value;
+        }
+
+        var movements = await Movements.SearchAsync(new MovementSearchRequest { PageSize = 10 });
+        _movements = movements.IsSuccess ? movements.Value.Items : [];
+    }
+}

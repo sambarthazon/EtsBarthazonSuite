@@ -1,3 +1,136 @@
 @page "/stock/mouvements"
+@inject IMovementService Movements
+@inject IItemService Items
+@inject ILocationService Locations
+@inject NavigationManager Navigation
+@inject Notifier Notifier
 
-<UpcomingPage Title="@StockTexts.MenuMovements" Icon="@Icons.Material.Filled.SwapHoriz" />
+<PageHeader Title="@StockTexts.MovementsTitle" Subtitle="@(_result is null ? null : string.Format(CultureInfo.CurrentCulture, StockTexts.MovementsCount, _result.TotalCount))" />
+
+<MudPaper Class="pa-3 mb-3 bz-card" Elevation="0">
+    <MudGrid Spacing="2">
+        <MudItem xs="6" sm="4" md="2">
+            <MudDatePicker Date="@ToDate(Du)" DateChanged="d => Navigate(du: FromDate(d))" Label="@StockTexts.FromDate" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" Clearable="true" />
+        </MudItem>
+        <MudItem xs="6" sm="4" md="2">
+            <MudDatePicker Date="@ToDate(Au)" DateChanged="d => Navigate(au: FromDate(d))" Label="@StockTexts.ToDate" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" Clearable="true" />
+        </MudItem>
+        <MudItem xs="12" sm="4" md="2">
+            <MudSelect T="string" Value="@(Type ?? string.Empty)" ValueChanged="v => Navigate(type: v)" Label="@StockTexts.ColType" Variant="Variant.Outlined" Margin="Margin.Dense">
+                <MudSelectItem T="string" Value="@string.Empty">@StockTexts.All</MudSelectItem>
+                @foreach (var type in Enum.GetValues<StockTransactionType>())
+                {
+                    <MudSelectItem T="string" Value="@type.ToString()">@type.Label()</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <ItemPicker Value="Article" ValueChanged="v => Navigate(article: v?.ToString() ?? string.Empty)" Margin="Margin.Dense" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <LocationSelect Value="Emplacement" ValueChanged="v => Navigate(emplacement: v?.ToString() ?? string.Empty)" Clearable="true" Margin="Margin.Dense" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField T="string" Value="Utilisateur" ValueChanged="v => Navigate(utilisateur: v ?? string.Empty)" Label="@StockTexts.ColUser" Variant="Variant.Outlined" Margin="Margin.Dense"
+                          DebounceInterval="400" Immediate="true" Clearable="true" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3" Class="d-flex align-center">
+            <MudSwitch T="bool" Value="IncludeReversed" ValueChanged="v => Navigate(annules: HideFlag(v))" Color="Color.Primary" Label="@StockTexts.ShowReversed" />
+        </MudItem>
+        <MudItem xs="12" md="6" Class="d-flex justify-end align-center">
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.FilterListOff" Href="stock/mouvements">@StockTexts.ClearFilters</MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MovementTable Items="_result?.Items" Loading="_loading" OnChanged="LoadAsync" />
+
+@if (_result is not null && _result.TotalCount > PageSize)
+{
+    <div class="d-flex justify-center mt-4">
+        <MudPagination Count="@((_result.TotalCount + PageSize - 1) / PageSize)" Selected="PageNumber" SelectedChanged="p => Navigate(page: p)" Color="Color.Primary" />
+    </div>
+}
+
+@code {
+    private const int PageSize = 50;
+    private PagedResult<MovementItem>? _result;
+    private bool _loading = true;
+
+    [SupplyParameterFromQuery(Name = "du")] public string? Du { get; set; }
+
+    [SupplyParameterFromQuery(Name = "au")] public string? Au { get; set; }
+
+    [SupplyParameterFromQuery(Name = "type")] public string? Type { get; set; }
+
+    [SupplyParameterFromQuery(Name = "article")] public Guid? Article { get; set; }
+
+    [SupplyParameterFromQuery(Name = "piece")] public Guid? Piece { get; set; }
+
+    [SupplyParameterFromQuery(Name = "lancement")] public Guid? Lancement { get; set; }
+
+    [SupplyParameterFromQuery(Name = "emplacement")] public Guid? Emplacement { get; set; }
+
+    [SupplyParameterFromQuery(Name = "utilisateur")] public string? Utilisateur { get; set; }
+
+    [SupplyParameterFromQuery(Name = "annules")] public string? Annules { get; set; }
+
+    [SupplyParameterFromQuery(Name = "page")] public int? PageParameter { get; set; }
+
+    private bool IncludeReversed => Annules != "0";
+
+    private static string HideFlag(bool show) => show ? string.Empty : "0";
+
+    private int PageNumber => Math.Max(1, PageParameter ?? 1);
+
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var result = await Movements.SearchAsync(new MovementSearchRequest
+        {
+            From = ParseDate(Du),
+            To = ParseDate(Au),
+            Type = Enum.TryParse<StockTransactionType>(Type, true, out var type) ? type : null,
+            ItemId = Article,
+            PartId = Piece,
+            BatchId = Lancement,
+            LocationId = Emplacement,
+            UserName = Utilisateur,
+            IncludeReversed = Annules != "0",
+            PageIndex = PageNumber - 1,
+            PageSize = PageSize,
+        });
+        if (Notifier.Handle(result))
+        {
+            _result = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private static DateOnly? ParseDate(string? value) =>
+        DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ? date : null;
+
+    private static DateTime? ToDate(string? value) => ParseDate(value)?.ToDateTime(TimeOnly.MinValue);
+
+    private static string FromDate(DateTime? value) => value?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? string.Empty;
+
+    private void Navigate(string? du = null, string? au = null, string? type = null, string? article = null, string? emplacement = null,
+        string? utilisateur = null, string? annules = null, int? page = null)
+    {
+        static string? Pick(string? value, string? current) => value is null ? current : value.Length == 0 ? null : value;
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["du"] = Pick(du, Du),
+            ["au"] = Pick(au, Au),
+            ["type"] = Pick(type, Type),
+            ["article"] = Pick(article, Article?.ToString()),
+            ["emplacement"] = Pick(emplacement, Emplacement?.ToString()),
+            ["utilisateur"] = Pick(utilisateur, Utilisateur),
+            ["annules"] = Pick(annules, Annules),
+            ["page"] = page is { } p && p > 1 ? p.ToString(CultureInfo.InvariantCulture) : null,
+        }));
+    }
+}

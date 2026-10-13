@@ -1,0 +1,51 @@
+@inject Notifier Notifier
+
+@* Saisie d'un mouvement depuis une fiche (article, emplacement). Renvoie le mouvement enregistré. *@
+<MudDialog>
+    <DialogContent>
+        <MovementForm Action="Action" ItemId="ItemId" ItemFixed="@(ItemId is not null)" LocationId="LocationId" Cell="Cell"
+                      OnSaved="OnSaved" OnCancel="() => Dialog!.Cancel()" />
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter] public StockAction Action { get; set; }
+
+    [Parameter] public Guid? ItemId { get; set; }
+
+    [Parameter] public Guid? LocationId { get; set; }
+
+    [Parameter] public StockKey? Cell { get; set; }
+
+    private void OnSaved(MovementItem movement)
+    {
+        Notifier.Success(string.Format(CultureInfo.CurrentCulture, StockTexts.MovementSaved, movement.Number));
+        Dialog!.Close(DialogResult.Ok(movement));
+    }
+
+    /// <summary>Ouvre la saisie ; renvoie vrai si un mouvement a été enregistré.</summary>
+    public static async Task<bool> ShowAsync(IDialogService dialogs, StockAction action, Guid? itemId = null, Guid? locationId = null, StockKey? cell = null)
+    {
+        ArgumentNullException.ThrowIfNull(dialogs);
+        var parameters = new DialogParameters<MovementDialog>
+        {
+            { d => d.Action, action },
+            { d => d.ItemId, itemId },
+            { d => d.LocationId, locationId },
+            { d => d.Cell, cell },
+        };
+        var dialog = await dialogs.ShowAsync<MovementDialog>(ActionTitle(action), parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
+        return await dialog.Result is { Canceled: false };
+    }
+
+    public static string ActionTitle(StockAction action) => action switch
+    {
+        StockAction.Receipt => StockTexts.ActionReceipt,
+        StockAction.Issue => StockTexts.ActionIssue,
+        StockAction.Transfer => StockTexts.ActionTransfer,
+        _ => StockTexts.ActionAdjustment,
+    };
+}

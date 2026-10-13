@@ -10,9 +10,9 @@ namespace Barthazon.Stock.Tests;
 /// <summary>Jalon S0 : base du stock (contexte, migrations, historique propres) et données de première installation.</summary>
 public sealed class SkeletonTests : IAsyncLifetime
 {
-    private TestApplication _app = default!;
+    private StockTestApp _app = default!;
 
-    public async Task InitializeAsync() => (_app, _) = await StockTestApp.CreateAsync();
+    public async Task InitializeAsync() => _app = await StockTestApp.CreateAsync();
 
     public async Task DisposeAsync() => await _app.DisposeAsync();
 

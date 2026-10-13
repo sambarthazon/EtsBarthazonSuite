@@ -1,0 +1,297 @@
+@inject IItemService Items
+@inject IMovementService Movements
+@inject ICurrentUser CurrentUser
+@inject TimeProvider Clock
+@inject StockOptions Options
+
+@* Saisie d'un mouvement d'article : réception, sortie, transfert ou correction. *@
+<FormErrors State="_form" />
+
+@if (!ItemFixed)
+{
+    <ItemPicker Value="_itemId" ValueChanged="OnItemChangedAsync" Required="true" AutoFocus="@(_itemId is null)"
+                Error="_form.HasError(nameof(ItemMovementInput.ItemId))" ErrorText="@_form.ErrorFor(nameof(ItemMovementInput.ItemId))" />
+}
+
+@if (_item is not null)
+{
+    <div class="bz-movement-item mt-2 mb-3">
+        <MudText Typo="Typo.subtitle1"><b>@_item.Code</b> — @_item.Designation</MudText>
+        <MudText Typo="Typo.body2" Class="bz-muted">
+            @string.Format(CultureInfo.CurrentCulture, StockTexts.InStockNow, StockLabels.Quantity(_item.Quantity, _item.Unit))
+            @if (_item.OwnerName is not null) { <span> · @string.Format(CultureInfo.CurrentCulture, StockTexts.OwnedBy, _item.OwnerName)</span> }
+            @if (_item.TrackLots) { <span> · @StockTexts.TrackedByLot</span> }
+        </MudText>
+    </div>
+
+    @switch (Action)
+    {
+        case StockAction.Receipt:
+            <LocationSelect Value="_locationId" ValueChanged="v => _locationId = v" Required="true"
+                            Error="_form.HasError(nameof(ItemMovementInput.LocationId))" ErrorText="@_form.ErrorFor(nameof(ItemMovementInput.LocationId))" />
+            @if (_item.TrackLots)
+            {
+                <MudTextField @bind-Value="_lot" Label="@StockTexts.Lot" Variant="Variant.Outlined" Class="mt-3" Required="true" RequiredError="@SharedTexts.RequiredField" MaxLength="50"
+                              HelperText="@StockTexts.LotHelp" Error="_form.HasError(nameof(ItemMovementInput.Lot))" ErrorText="@_form.ErrorFor(nameof(ItemMovementInput.Lot))" />
+            }
+            @if (_item.Unit != StockUnit.Piece)
+            {
+                @* Aide au calcul : « 6 barres de 3 m » = 18 m. *@
+                <div class="d-flex flex-wrap gap-2 mt-3 align-center">
+                    <MudNumericField T="int?" Value="_pieceCount" ValueChanged="OnPieceCountChanged" Label="@StockTexts.PieceCount" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                     Min="1" HideSpinButtons="true" Immediate="true" Style="max-width:160px" InputMode="InputMode.numeric" />
+                    <span aria-hidden="true">×</span>
+                    <MudNumericField T="decimal?" Value="_pieceSize" ValueChanged="OnPieceSizeChanged" Label="@string.Format(CultureInfo.CurrentCulture, StockTexts.PieceSize, _item.Unit.Symbol())"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense" HideSpinButtons="true" Immediate="true" Style="max-width:160px" InputMode="@(InputMode.@decimal)" />
+                </div>
+            }
+            <QuantityField Value="_quantity" ValueChanged="v => _quantity = v" Unit="_item.Unit" Label="@StockTexts.QuantityReceived" Class="mt-3"
+                           Error="_form.HasError(nameof(ItemMovementInput.Quantity))" ErrorText="@_form.ErrorFor(nameof(ItemMovementInput.Quantity))" />
+            <MudTextField @bind-Value="_reference" Label="@StockTexts.ReceiptReference" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
+            break;
+
+        case StockAction.Issue:
+        case StockAction.Transfer:
+            @if (_item.Stock.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-2">@StockTexts.NothingInStock</MudAlert>
+            }
+            else
+            {
+                <CellSelect Cells="_item.Stock" Value="_source" ValueChanged="v => _source = v" Label="@StockTexts.FromCell" />
+                @if (Action == StockAction.Transfer)
+                {
+                    <LocationSelect Value="_toLocationId" ValueChanged="v => _toLocationId = v" Label="@StockTexts.ToLocation" Required="true"
+                                    Exclude="@(_source is { } s ? [s.LocationId] : [])"
+                                    Error="_form.HasError(nameof(TransferInput.ToLocationId))" ErrorText="@_form.ErrorFor(nameof(TransferInput.ToLocationId))" />
+                }
+                <QuantityField Value="_quantity" ValueChanged="v => _quantity = v" Unit="_item.Unit" Class="mt-3"
+                               Label="@(Action == StockAction.Issue ? StockTexts.QuantityIssued : StockTexts.QuantityMoved)"
+                               HelperText="@(SourceCell is { } cell ? string.Format(CultureInfo.CurrentCulture, StockTexts.AvailableHere, StockLabels.Quantity(cell.Quantity, cell.Unit)) : null)"
+                               Error="_form.HasError(nameof(ItemMovementInput.Quantity))" ErrorText="@_form.ErrorFor(nameof(ItemMovementInput.Quantity))" />
+                @if (Action == StockAction.Issue)
+                {
+                    <MudTextField @bind-Value="_reference" Label="@StockTexts.IssueReference" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
+                }
+            }
+            break;
+
+        case StockAction.Adjustment:
+            <MudRadioGroup T="bool" Value="_adjustNewCell" ValueChanged="v => _adjustNewCell = v" Class="mb-1">
+                <MudRadio T="bool" Value="false" Disabled="@(_item.Stock.Count == 0)">@StockTexts.AdjustExistingCell</MudRadio>
+                <MudRadio T="bool" Value="true">@StockTexts.AdjustOtherCell</MudRadio>
+            </MudRadioGroup>
+            @if (_adjustNewCell)
+            {
+                <LocationSelect Value="_locationId" ValueChanged="v => _locationId = v" Required="true" />
+                @if (_item.TrackLots)
+                {
+                    <MudTextField @bind-Value="_lot" Label="@StockTexts.Lot" Variant="Variant.Outlined" Class="mt-3" MaxLength="50" />
+                }
+            }
+            else
+            {
+                <CellSelect Cells="_item.Stock" Value="_source" ValueChanged="v => _source = v" Label="@StockTexts.CellToAdjust" />
+            }
+            <QuantityField Value="_quantity" ValueChanged="v => _quantity = v" Unit="_item.Unit" Label="@StockTexts.CountedQuantity" Class="mt-3" Steppers="false"
+                           HelperText="@string.Format(CultureInfo.CurrentCulture, StockTexts.KnownQuantity, StockLabels.Quantity(AdjustedCell?.Quantity ?? 0, _item.Unit))"
+                           Error="_form.HasError(nameof(AdjustmentInput.CountedQuantity))" ErrorText="@_form.ErrorFor(nameof(AdjustmentInput.CountedQuantity))" />
+            <MudSelect T="StockReason" @bind-Value="_reason" Label="@StockTexts.Reason" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="r => r.Label()">
+                @foreach (var reason in AdjustmentReasons)
+                {
+                    <MudSelectItem T="StockReason" Value="reason">@reason.Label()</MudSelectItem>
+                }
+            </MudSelect>
+            break;
+    }
+
+    <MudExpansionPanels Elevation="0" Class="mt-3">
+        <MudExpansionPanel Text="@StockTexts.MoreOptions" Expanded="@(_date is not null || _comment is not null)">
+            <MudDatePicker Date="_date" DateChanged="v => _date = v" Label="@StockTexts.OccurredOn" Variant="Variant.Outlined" Editable="true"
+                           MaxDate="Today" MinDate="Today.AddDays(-Options.BackdatingDays)" HelperText="@StockTexts.OccurredOnHelp" Clearable="true"
+                           Error="_form.HasError(OccurredAtField)" ErrorText="@_form.ErrorFor(OccurredAtField)" />
+            <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Lines="2" Class="mt-3" MaxLength="1000" />
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+
+    <div class="d-flex justify-end gap-2 mt-4">
+        @if (OnCancel.HasDelegate)
+        {
+            <MudButton OnClick="OnCancel">@SharedTexts.Cancel</MudButton>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" Disabled="_saving" Size="Size.Large" StartIcon="@Icons.Material.Filled.Check">
+            @SubmitText
+        </MudButton>
+    </div>
+}
+
+@code {
+    private const string OccurredAtField = "OccurredAt";
+    private static readonly StockReason[] AdjustmentReasons =
+        [StockReason.Inventory, StockReason.InitialStock, StockReason.Handling, StockReason.Material, StockReason.Other];
+
+    private readonly FormState _form = new();
+    private Guid? _itemId;
+    private ItemDetails? _item;
+    private decimal? _quantity;
+    private int? _pieceCount;
+    private decimal? _pieceSize;
+    private Guid? _locationId;
+    private Guid? _toLocationId;
+    private string? _lot;
+    private StockKey? _source;
+    private bool _adjustNewCell;
+    private StockReason _reason = StockReason.Inventory;
+    private string? _reference;
+    private string? _comment;
+    private DateTime? _date;
+    private bool _saving;
+
+    [Parameter] public StockAction Action { get; set; }
+
+    [Parameter] public Guid? ItemId { get; set; }
+
+    /// <summary>Article imposé (fiche article) : pas de sélecteur.</summary>
+    [Parameter] public bool ItemFixed { get; set; }
+
+    /// <summary>Emplacement proposé (page d'un emplacement, QR code).</summary>
+    [Parameter] public Guid? LocationId { get; set; }
+
+    /// <summary>Case proposée (ligne du stock d'un article).</summary>
+    [Parameter] public StockKey? Cell { get; set; }
+
+    [Parameter] public EventCallback<MovementItem> OnSaved { get; set; }
+
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private DateTime Today => TimeZoneInfo.ConvertTime(Clock.GetUtcNow(), Clock.LocalTimeZone).Date;
+
+    private StockCellView? SourceCell => _item?.Stock.FirstOrDefault(c => c.Key == _source);
+
+    private StockCellView? AdjustedCell => _adjustNewCell
+        ? _item?.Stock.FirstOrDefault(c => c.Key.LocationId == _locationId && c.Key.Lot == StockKey.NormalizeLot(_lot))
+        : SourceCell;
+
+    private string SubmitText => Action switch
+    {
+        StockAction.Receipt => StockTexts.SubmitReceipt,
+        StockAction.Issue => StockTexts.SubmitIssue,
+        StockAction.Transfer => StockTexts.SubmitTransfer,
+        _ => StockTexts.SubmitAdjustment,
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ItemId != _itemId)
+        {
+            await OnItemChangedAsync(ItemId);
+        }
+    }
+
+    /// <summary>Remet le formulaire à zéro pour une nouvelle saisie du même type.</summary>
+    public async Task ResetAsync(bool keepItem)
+    {
+        _quantity = null;
+        _pieceCount = null;
+        _pieceSize = null;
+        _reference = null;
+        _comment = null;
+        _lot = null;
+        _form.Clear();
+        await OnItemChangedAsync(keepItem ? _itemId : null);
+    }
+
+    private async Task OnItemChangedAsync(Guid? itemId)
+    {
+        _itemId = itemId;
+        _item = null;
+        _source = null;
+        if (itemId is { } id && await Items.GetAsync(id) is { IsSuccess: true } loaded)
+        {
+            _item = loaded.Value;
+            _locationId = LocationId ?? _item.DefaultLocationId;
+            _source = Cell is { } cell && _item.Stock.Any(c => c.Key == cell) ? cell
+                : _item.Stock.Where(c => LocationId is null || c.Key.LocationId == LocationId).Select(c => (StockKey?)c.Key).FirstOrDefault();
+            _adjustNewCell = _item.Stock.Count == 0 || (LocationId is { } location && _item.Stock.All(c => c.Key.LocationId != location));
+        }
+    }
+
+    private void OnPieceCountChanged(int? count)
+    {
+        _pieceCount = count;
+        UpdateQuantityFromPieces();
+    }
+
+    private void OnPieceSizeChanged(decimal? size)
+    {
+        _pieceSize = size;
+        UpdateQuantityFromPieces();
+    }
+
+    private void UpdateQuantityFromPieces()
+    {
+        if (_pieceCount is { } count && _pieceSize is { } size)
+        {
+            _quantity = StockFormat.Round(count * size);
+        }
+    }
+
+    private DateTimeOffset? OccurredAt()
+    {
+        if (_date is not { } date || date.Date >= Today)
+        {
+            return null;
+        }
+
+        // Jour antérieur (saisie d'un document papier) : midi, heure locale.
+        var local = date.Date.AddHours(12);
+        return new DateTimeOffset(local, Clock.LocalTimeZone.GetUtcOffset(local));
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_item is null || _saving)
+        {
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            var quantity = _quantity ?? 0;
+            Result<MovementItem> result = Action switch
+            {
+                StockAction.Receipt => await Movements.ReceiveItemAsync(new ItemMovementInput
+                {
+                    ItemId = _item.Id, Quantity = quantity, LocationId = _locationId, Lot = _lot, Reference = _reference, Comment = _comment, OccurredAt = OccurredAt(),
+                }),
+                StockAction.Issue when _source is { } source => await Movements.IssueItemAsync(new ItemMovementInput
+                {
+                    ItemId = _item.Id, Quantity = quantity, LocationId = source.LocationId, Lot = source.Lot, Reference = _reference, Comment = _comment, OccurredAt = OccurredAt(),
+                }),
+                StockAction.Transfer when _source is { } source => await Movements.TransferAsync(new TransferInput
+                {
+                    From = source, ToLocationId = _toLocationId ?? Guid.Empty, Quantity = quantity, Comment = _comment, OccurredAt = OccurredAt(),
+                }),
+                StockAction.Adjustment when _adjustNewCell && _locationId is { } location => await Movements.AdjustAsync(new AdjustmentInput
+                {
+                    Cell = StockKey.ForItem(_item.Id, location, _item.TrackLots ? _lot : null), CountedQuantity = quantity, Reason = _reason, Comment = _comment, OccurredAt = OccurredAt(),
+                }),
+                StockAction.Adjustment when !_adjustNewCell && _source is { } source => await Movements.AdjustAsync(new AdjustmentInput
+                {
+                    Cell = source, CountedQuantity = quantity, Reason = _reason, Comment = _comment, OccurredAt = OccurredAt(),
+                }),
+                _ => Result<MovementItem>.Failure(Error.Validation(StockTexts.ChooseCell)),
+            };
+            _form.Apply(result);
+            if (result.IsSuccess)
+            {
+                await OnSaved.InvokeAsync(result.Value);
+            }
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

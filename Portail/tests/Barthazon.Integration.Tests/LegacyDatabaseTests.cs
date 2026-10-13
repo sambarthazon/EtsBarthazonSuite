@@ -138,7 +138,10 @@ public sealed class LegacyDatabaseTests
         {
             await using var context = database.CreateContext();
             (await context.Database.GetPendingMigrationsAsync()).Should().BeEmpty();
-            (await context.Database.GetAppliedMigrationsAsync()).Should().ContainSingle();
+            if (database.Info.AdoptsLegacySchema)
+            {
+                (await context.Database.GetAppliedMigrationsAsync()).Should().ContainSingle("seule la migration initiale est inscrite à la reprise");
+            }
         }
 
         (await app.Get<IPartService>().SearchAsync(new PartSearchRequest())).IsSuccess.Should().BeTrue();

@@ -1,7 +1,9 @@
 using System.Reflection;
 using Barthazon.Shared.Kernel.Modules;
 using Barthazon.Shared.Kernel.Security;
+using Barthazon.Shared.UI.Services;
 using Barthazon.Stock.Core;
+using Barthazon.Stock.UI.Components;
 using Barthazon.Stock.UI.Resources;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,5 +51,8 @@ public sealed class StockModule : IModule
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddStockCore();
+
+        // Onglet « Emplacements » de la page Référentiels.
+        services.AddUiExtension(new UiExtension(UiSlots.ReferentialTabs, typeof(LocationsPanel), StockTexts.TabLocations, 30, Icons.Material.Filled.Place));
     }
 }

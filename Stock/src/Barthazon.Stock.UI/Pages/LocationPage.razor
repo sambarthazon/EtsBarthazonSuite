@@ -1,0 +1,89 @@
+@page "/stock/emplacements/{Code}"
+@inject ILocationService Locations
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+
+@* Page d'un emplacement (ouverte par son QR code) : tout ce qui s'y trouve, avec les saisies pré-remplies. *@
+@if (_notFound)
+{
+    <PageHeader Title="@StockTexts.LocationNotFound" BackHref="stock" />
+    <EmptyState Title="@StockTexts.LocationNotFound" Icon="@Icons.Material.Outlined.SearchOff" />
+}
+else if (_details is null)
+{
+    <MudSkeleton Height="48px" Width="40%" />
+}
+else
+{
+    var location = _details.Location;
+    <PageHeader Title="@($"{location.Code} — {location.Name}")" Subtitle="@location.Kind.Label()" BackHref="stock">
+        <SubContent>
+            @if (location.IsArchived) { <StatusChip Text="@StockTexts.Archived" Tone="StatusTone.Disabled" Class="mt-1" /> }
+            @if (location.Description is not null) { <MudText Typo="Typo.body2" Class="bz-muted mt-1">@location.Description</MudText> }
+        </SubContent>
+        <Actions>
+            @if (CurrentUser.IsAuthenticated && !location.IsArchived)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Input"
+                           Href="@($"stock/saisie?emplacement={Uri.EscapeDataString(location.Code)}")">@StockTexts.ActionReceipt</MudButton>
+            }
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.SwapHoriz" Href="@($"stock/mouvements?emplacement={location.Id}")">@StockTexts.MovementsTitle</MudButton>
+        </Actions>
+    </PageHeader>
+
+    <AdaptiveList T="StockCellView" Items="_details.Contents" Dense="true" AriaLabel="@StockTexts.LocationContents"
+                  ItemHref="@(c => c.Key.IsItem ? $"stock/articles/{Uri.EscapeDataString(c.SubjectCode)}" : null)">
+        <HeaderContent>
+            <MudTh>@StockTexts.ColSubject</MudTh>
+            <MudTh>@StockTexts.Lot</MudTh>
+            <MudTh Style="text-align:right">@StockTexts.ColQuantity</MudTh>
+            <MudTh><span class="sr-only">@StockTexts.ColActions</span></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="c">
+            <MudTd><b>@c.SubjectCode</b> <span class="bz-muted">@c.SubjectLabel</span></MudTd>
+            <MudTd>@c.Lot</MudTd>
+            <MudTd Style="text-align:right;white-space:nowrap">@StockLabels.Quantity(c.Quantity, c.Unit)</MudTd>
+            <MudTd Style="width:1%">@if (c.Key.IsItem) { <span @onclick:stopPropagation="true"><CellActions OnAction="a => RecordAsync(a, c)" /></span> }</MudTd>
+        </RowTemplate>
+        <CardTemplate Context="c">
+            <div class="d-flex justify-space-between gap-2">
+                <MudText Typo="Typo.subtitle1"><b>@c.SubjectCode</b></MudText>
+                <b>@StockLabels.Quantity(c.Quantity, c.Unit)</b>
+            </div>
+            <MudText Typo="Typo.body2">@c.SubjectLabel @(c.Lot is null ? null : $"· {c.Lot}")</MudText>
+        </CardTemplate>
+        <EmptyContent><EmptyState Title="@StockTexts.LocationEmpty" Icon="@Icons.Material.Outlined.Inbox" /></EmptyContent>
+    </AdaptiveList>
+}
+
+@code {
+    private LocationDetails? _details;
+    private bool _notFound;
+
+    [Parameter] public string Code { get; set; } = string.Empty;
+
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await Locations.GetByCodeAsync(Code);
+        _notFound = result.HasError(ErrorKind.NotFound);
+        if (result.IsSuccess)
+        {
+            _details = result.Value;
+        }
+        else if (!_notFound)
+        {
+            Notifier.Handle(result);
+        }
+    }
+
+    private async Task RecordAsync(StockAction action, StockCellView cell)
+    {
+        if (await MovementDialog.ShowAsync(Dialogs, action, cell.Key.ItemId, cell.Key.LocationId, cell.Key))
+        {
+            await LoadAsync();
+        }
+    }
+}

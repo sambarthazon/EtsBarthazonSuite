@@ -1,3 +1,136 @@
 @page "/stock/articles"
+@inject IItemService Items
+@inject IMaterialLookup Materials
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+@inject Notifier Notifier
 
-<UpcomingPage Title="@StockTexts.MenuItems" Icon="@Icons.Material.Filled.Category" />
+<PageHeader Title="@StockTexts.ItemsTitle" Subtitle="@(_items is null ? null : string.Format(CultureInfo.CurrentCulture, StockTexts.ItemsCount, _items.Count))">
+    <Actions>
+        @if (CurrentUser.Role >= UserRole.Editor)
+        {
+            <MudButton Href="stock/articles/nouveau" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">@StockTexts.NewItem</MudButton>
+        }
+    </Actions>
+</PageHeader>
+
+<div class="d-flex flex-wrap align-center gap-3 mb-3">
+    <MudTextField T="string" Value="Q" ValueChanged="v => Navigate(q: v ?? string.Empty)" Placeholder="@StockTexts.SearchItem"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Immediate="true" DebounceInterval="300" Clearable="true" Style="max-width:480px;min-width:220px" Class="flex-grow-1" aria-label="@StockTexts.SearchItem" />
+    <MudSelect T="string" Value="@(Type ?? string.Empty)" ValueChanged="v => Navigate(type: v)" Label="@StockTexts.ItemKind" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:200px">
+        <MudSelectItem T="string" Value="@string.Empty">@StockTexts.All</MudSelectItem>
+        @foreach (var kind in Enum.GetValues<StockItemKind>())
+        {
+            <MudSelectItem T="string" Value="@kind.ToString()">@kind.Label()</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSelect T="Guid?" Value="Matiere" ValueChanged="v => Navigate(matiere: v?.ToString() ?? string.Empty)" Label="@StockTexts.Material" Variant="Variant.Outlined" Margin="Margin.Dense"
+               Clearable="true" Style="max-width:240px" ToStringFunc="id => _materials.FirstOrDefault(m => m.Id == id)?.Display ?? string.Empty">
+        @foreach (var m in _materials)
+        {
+            <MudSelectItem T="Guid?" Value="m.Id">@m.Display</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSelect T="string" Value="@(Proprietaire ?? string.Empty)" ValueChanged="v => Navigate(proprietaire: v)" Label="@StockTexts.Owner" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:220px">
+        <MudSelectItem T="string" Value="@string.Empty">@StockTexts.All</MudSelectItem>
+        <MudSelectItem T="string" Value="@("societe")">@StockTexts.OwnerCompany</MudSelectItem>
+        <MudSelectItem T="string" Value="@("clients")">@StockTexts.OwnerCustomers</MudSelectItem>
+    </MudSelect>
+    <MudSwitch T="bool" Value="BelowThresholdOnly" ValueChanged="v => Navigate(seuil: Flag(v))" Color="Color.Warning" Label="@StockTexts.BelowThresholdOnly" />
+    <MudSwitch T="bool" Value="IncludeArchived" ValueChanged="v => Navigate(archives: Flag(v))" Color="Color.Primary" Label="@StockTexts.ShowArchived" />
+</div>
+
+<AdaptiveList T="ItemListItem" Items="_items" Loading="_loading" ItemHref="@(i => $"stock/articles/{Uri.EscapeDataString(i.Code)}")" AriaLabel="@StockTexts.ItemsTitle">
+    <HeaderContent>
+        <MudTh>@StockTexts.ColCode</MudTh>
+        <MudTh>@StockTexts.ColDesignation</MudTh>
+        <MudTh>@StockTexts.ItemKind</MudTh>
+        <MudTh>@StockTexts.Material</MudTh>
+        <MudTh>@StockTexts.Dimensions</MudTh>
+        <MudTh>@StockTexts.Owner</MudTh>
+        <MudTh Style="text-align:right">@StockTexts.ColQuantity</MudTh>
+        <MudTh Style="text-align:right">@StockTexts.Threshold</MudTh>
+        <MudTh Style="text-align:right">@StockTexts.ColValue</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="i">
+        <MudTd><b>@i.Code</b> @if (i.IsArchived) { <StatusChip Text="@StockTexts.Archived" Tone="StatusTone.Disabled" Class="ml-1" /> }</MudTd>
+        <MudTd>@i.Designation</MudTd>
+        <MudTd>@i.Kind.Label()</MudTd>
+        <MudTd>@i.MaterialName</MudTd>
+        <MudTd>@i.Dimensions</MudTd>
+        <MudTd>@if (i.OwnerName is not null) { <StatusChip Text="@i.OwnerName" Tone="StatusTone.Info" Tooltip="@StockTexts.ProvidedByCustomer" /> }</MudTd>
+        <MudTd Style="text-align:right;white-space:nowrap"><ItemQuantity Item="i" /></MudTd>
+        <MudTd Style="text-align:right">@(i.MinimumThreshold is { } t ? StockLabels.Quantity(t, i.Unit) : null)</MudTd>
+        <MudTd Style="text-align:right">@i.Value?.ToString("C0", CultureInfo.CurrentCulture)</MudTd>
+    </RowTemplate>
+    <CardTemplate Context="i">
+        <div class="d-flex justify-space-between gap-2">
+            <MudText Typo="Typo.subtitle1"><b>@i.Code</b></MudText>
+            <ItemQuantity Item="i" />
+        </div>
+        <MudText Typo="Typo.body2">@i.Designation</MudText>
+        <MudText Typo="Typo.caption" Class="bz-muted">@i.Kind.Label() @(i.Dimensions is null ? null : $"· {i.Dimensions}") @(i.OwnerName is null ? null : $"· {i.OwnerName}")</MudText>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@StockTexts.NoItems" Icon="@Icons.Material.Outlined.Category" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<ItemListItem>? _items;
+    private IReadOnlyList<MaterialSummary> _materials = [];
+    private bool _loading = true;
+
+    [SupplyParameterFromQuery(Name = "q")] public string? Q { get; set; }
+
+    [SupplyParameterFromQuery(Name = "type")] public string? Type { get; set; }
+
+    [SupplyParameterFromQuery(Name = "matiere")] public Guid? Matiere { get; set; }
+
+    [SupplyParameterFromQuery(Name = "proprietaire")] public string? Proprietaire { get; set; }
+
+    [SupplyParameterFromQuery(Name = "seuil")] public string? Seuil { get; set; }
+
+    [SupplyParameterFromQuery(Name = "archives")] public string? Archives { get; set; }
+
+    private bool BelowThresholdOnly => Seuil == "1";
+
+    private bool IncludeArchived => Archives == "1";
+
+    private static string Flag(bool value) => value ? "1" : string.Empty;
+
+    protected override async Task OnInitializedAsync() => _materials = await Materials.ListAsync();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        var result = await Items.SearchAsync(new ItemSearchRequest
+        {
+            Query = Q,
+            Kind = Enum.TryParse<StockItemKind>(Type, true, out var kind) ? kind : null,
+            MaterialId = Matiere,
+            Owner = Proprietaire switch { "societe" => ItemOwnerFilter.Company, "clients" => ItemOwnerFilter.Customers, _ => ItemOwnerFilter.All },
+            BelowThresholdOnly = Seuil == "1",
+            IncludeArchived = Archives == "1",
+        });
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private void Navigate(string? q = null, string? type = null, string? matiere = null, string? proprietaire = null, string? seuil = null, string? archives = null)
+    {
+        static string? Pick(string? value, string? current) => value is null ? current : value.Length == 0 ? null : value;
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["q"] = Pick(q, Q),
+            ["type"] = Pick(type, Type),
+            ["matiere"] = Pick(matiere, Matiere?.ToString()),
+            ["proprietaire"] = Pick(proprietaire, Proprietaire),
+            ["seuil"] = Pick(seuil, Seuil),
+            ["archives"] = Pick(archives, Archives),
+        }));
+    }
+}

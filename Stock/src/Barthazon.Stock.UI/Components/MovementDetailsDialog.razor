@@ -1,0 +1,104 @@
+@inject IMovementService Movements
+@inject Notifier Notifier
+@inject IDialogService Dialogs
+
+@* Détail d'un mouvement : lignes, auteur, dates, mouvements liés ; annulation selon les droits. *@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_details is null ? StockTexts.Movement : $"{_details.Movement.Number} — {_details.Movement.Type.Label()}")</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_details is null)
+        {
+            <MudSkeleton Height="120px" SkeletonType="SkeletonType.Rectangle" />
+        }
+        else
+        {
+            var m = _details.Movement;
+            @if (m.IsReversed)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-3">@string.Format(CultureInfo.CurrentCulture, StockTexts.ReversedBy, m.ReversedByNumber)</MudAlert>
+            }
+            @if (m.IsReversal)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-3">@string.Format(CultureInfo.CurrentCulture, StockTexts.ReversalOf, m.ReversesNumber)</MudAlert>
+            }
+            <div class="bz-fields">
+                <FieldView Label="@StockTexts.OccurredOn">@m.OccurredAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</FieldView>
+                <FieldView Label="@StockTexts.RecordedOn">@m.RecordedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture) — @m.RecordedByName</FieldView>
+                @if (m.Reference is not null) { <FieldView Label="@StockTexts.ColReference">@m.Reference</FieldView> }
+                @if (m.Reason is { } reason) { <FieldView Label="@StockTexts.Reason">@reason.Label()</FieldView> }
+                @if (m.Comment is not null) { <FieldView Label="@StockTexts.Comment">@m.Comment</FieldView> }
+            </div>
+            <MudSimpleTable Dense="true" Elevation="0" Class="mt-3 bz-card">
+                <thead><tr><th>@StockTexts.ColSubject</th><th>@StockTexts.Location</th><th>@StockTexts.Lot</th><th style="text-align:right">@StockTexts.ColDelta</th></tr></thead>
+                <tbody>
+                    @foreach (var line in m.Lines)
+                    {
+                        <tr>
+                            <td><b>@line.SubjectCode</b> <span class="bz-muted">@line.SubjectLabel</span>@(line.StageLabel is null ? null : $" — {line.StageLabel}")</td>
+                            <td>@line.LocationCode</td>
+                            <td>@line.Lot</td>
+                            <td style="text-align:right;white-space:nowrap"><b>@StockLabels.Delta(line.Delta, line.Unit)</b></td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+            @if (!_details.CanReverse && _details.CannotReverseReason is not null && !m.IsReversed && !m.IsReversal)
+            {
+                <MudText Typo="Typo.caption" Class="bz-muted mt-2 d-block">@_details.CannotReverseReason</MudText>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Close(DialogResult.Ok(_changed))">@SharedTexts.Close</MudButton>
+        @if (_details?.CanReverse == true)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Undo" OnClick="ReverseAsync">@StockTexts.Reverse</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private MovementDetails? _details;
+    private bool _changed;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter] public Guid MovementId { get; set; }
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await Movements.GetAsync(MovementId);
+        if (Notifier.Handle(result))
+        {
+            _details = result.Value;
+        }
+    }
+
+    private async Task ReverseAsync()
+    {
+        if (!await Dialogs.ConfirmAsync(StockTexts.ReverseTitle, string.Format(CultureInfo.CurrentCulture, StockTexts.ReverseText, _details!.Movement.Number), StockTexts.Reverse, danger: true))
+        {
+            return;
+        }
+
+        var result = await Movements.ReverseAsync(MovementId);
+        if (Notifier.Handle(result, string.Format(CultureInfo.CurrentCulture, StockTexts.MovementReversed, _details.Movement.Number)))
+        {
+            _changed = true;
+            await LoadAsync();
+        }
+    }
+
+    /// <summary>Ouvre le détail ; renvoie vrai si le mouvement a été annulé.</summary>
+    public static async Task<bool> ShowAsync(IDialogService dialogs, Guid movementId)
+    {
+        ArgumentNullException.ThrowIfNull(dialogs);
+        var dialog = await dialogs.ShowAsync<MovementDetailsDialog>(StockTexts.Movement, new DialogParameters<MovementDetailsDialog> { { d => d.MovementId, movementId } },
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true });
+        return await dialog.Result is { Canceled: false, Data: true };
+    }
+}

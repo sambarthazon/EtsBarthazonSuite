@@ -135,6 +135,8 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
 .bz-page-header .bz-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .bz-muted { color: var(--bz-text-secondary); }
+/* Élément annulé mais conservé (mouvement annulé…). */
+.bz-struck { text-decoration: line-through; color: var(--bz-text-secondary); }
 
 .bz-highlight {
     background: var(--bz-highlight);
