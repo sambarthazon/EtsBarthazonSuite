@@ -1,0 +1,13 @@
+@* Page du stock prévue pour un jalon suivant : en-tête et état vide explicite. *@
+<PageHeader Title="@Title" Subtitle="@Subtitle" />
+<EmptyState Title="@StockTexts.UpcomingTitle" Text="@StockTexts.UpcomingText" Icon="@Icon">
+    <MudButton Href="stock" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Dashboard">@StockTexts.BackToDashboard</MudButton>
+</EmptyState>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+
+    [Parameter] public string? Subtitle { get; set; }
+
+    [Parameter] public string? Icon { get; set; }
+}

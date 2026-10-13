@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Cœur du stock : entités, règles, interfaces de repository, services applicatifs. Ni EF Core, ni ASP.NET, ni MudBlazor. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Shared.Kernel\Barthazon.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Referential.Contracts\Barthazon.Referential.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Contracts\Barthazon.Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\Barthazon.Stock.Contracts\Barthazon.Stock.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Barthazon.Stock.Tests" />
+  </ItemGroup>
+</Project>

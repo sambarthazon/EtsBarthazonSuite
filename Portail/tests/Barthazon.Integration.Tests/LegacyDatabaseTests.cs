@@ -120,7 +120,8 @@ public sealed class LegacyDatabaseTests
         {
             var legacyId = context.Database.IsNpgsql() ? "20261011022423_Initial" : "20261011022402_Initial";
 #pragma warning disable EF1002 // Noms de tables constants (test).
-            foreach (var database in databases)
+            // Seules les applications de la version 1 (socle, annuaire) ont un historique à reprendre.
+            foreach (var database in databases.Where(d => d.Info.AdoptsLegacySchema))
             {
                 await context.Database.ExecuteSqlRawAsync($"DROP TABLE \"{database.Info.HistoryTable}\"");
             }

@@ -21,6 +21,7 @@ public sealed class PublicApiTests
         "Barthazon.Shared.UI",
         "Barthazon.Referential.Contracts",
         "Barthazon.Catalog.Contracts",
+        "Barthazon.Stock.Contracts",
     ];
 
     [Theory]

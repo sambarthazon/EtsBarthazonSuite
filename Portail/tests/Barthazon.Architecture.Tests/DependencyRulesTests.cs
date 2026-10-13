@@ -23,6 +23,8 @@ public class DependencyRulesTests
             "Barthazon.Catalog.Contracts", "Barthazon.Catalog.Core", "Barthazon.Catalog.Infrastructure", "Barthazon.Catalog.UI",
             "Barthazon.Socle.Migrations.Sqlite", "Barthazon.Socle.Migrations.Postgres",
             "Barthazon.Catalog.Migrations.Sqlite", "Barthazon.Catalog.Migrations.Postgres",
+            "Barthazon.Stock.Contracts", "Barthazon.Stock.Core", "Barthazon.Stock.Infrastructure", "Barthazon.Stock.UI",
+            "Barthazon.Stock.Migrations.Sqlite", "Barthazon.Stock.Migrations.Postgres",
             "Barthazon.Portal",
         ]);
     }
@@ -112,6 +114,15 @@ public class DependencyRulesTests
                 allowed.Should().BeTrue($"{project.Name} ({project.Area}) ne doit pas référencer {reference} ({target.Area})");
             }
         }
+    }
+
+    [Fact]
+    public void Stock_tests_use_only_the_catalog_contracts()
+    {
+        // Les tests du stock utilisent une doublure (FakeCatalog) : ils ne cassent pas quand l'annuaire change (6.5).
+        var tests = SolutionProjects.All["Barthazon.Stock.Tests"];
+        SolutionProjects.TransitiveReferences(tests).Where(r => r.StartsWith("Barthazon.Catalog.", StringComparison.Ordinal))
+            .Should().Equal("Barthazon.Catalog.Contracts");
     }
 
     [Fact]

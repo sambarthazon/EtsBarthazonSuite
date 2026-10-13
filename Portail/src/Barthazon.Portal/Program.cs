@@ -8,8 +8,10 @@ using Barthazon.Shared.Infrastructure.Backup;
 using Barthazon.Shared.Infrastructure.Hosting;
 using Barthazon.Shared.Infrastructure.Persistence;
 using Barthazon.Shared.Infrastructure.Security;
+using Barthazon.Shared.Kernel.Features;
 using Barthazon.Shared.Kernel.Modules;
 using Barthazon.Shared.UI.Services;
+using Barthazon.Stock.Core;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 using Serilog.Events;
@@ -38,6 +40,10 @@ builder.Host.UseSerilog((context, configuration) => configuration
 
 // Validation de la configuration : en cas d'erreur, arrêt immédiat avec un message clair.
 var report = ConfigurationValidator.Validate(builder.Configuration, builder.Environment.ContentRootPath);
+if (builder.Configuration.GetValue("Features:" + FeatureNames.Stock, false))
+{
+    report = report with { Errors = [.. report.Errors, .. StockOptions.Validate(builder.Configuration)] };
+}
 if (!report.IsValid)
 {
     var message = "Configuration invalide — l'application ne peut pas démarrer :" + Environment.NewLine
@@ -80,7 +86,7 @@ builder.Services.AddSingleton(new ConfigurationWarnings(report.Warnings));
 builder.Services.AddSharedInfrastructure(builder.Configuration, builder.Environment.ContentRootPath, PortalModules.Persistence);
 
 // Modules : chaque module enregistre ses propres services.
-var modules = PortalModules.All;
+var modules = PortalModules.Create(builder.Configuration);
 builder.Services.AddSingleton<IModuleCatalog>(new ModuleCatalog(modules));
 foreach (var module in modules)
 {

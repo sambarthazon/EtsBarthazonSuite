@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Migrations EF Core du stock (tables stk_), fournisseur Sqlite. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Barthazon.Stock.Infrastructure\Barthazon.Stock.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

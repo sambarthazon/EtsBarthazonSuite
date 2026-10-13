@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ModuleName" xml:space="preserve"><value>Stocks</value></data>
+  <data name="ModuleDescription" xml:space="preserve"><value>Matières, bruts, pièces en cours à chaque opération et pièces finies.</value></data>
+  <data name="MenuDashboard" xml:space="preserve"><value>Tableau de bord</value></data>
+  <data name="MenuQuickEntry" xml:space="preserve"><value>Saisie rapide</value></data>
+  <data name="MenuBatches" xml:space="preserve"><value>Lancements</value></data>
+  <data name="MenuParts" xml:space="preserve"><value>Pièces</value></data>
+  <data name="MenuItems" xml:space="preserve"><value>Articles</value></data>
+  <data name="MenuMovements" xml:space="preserve"><value>Mouvements</value></data>
+  <data name="MenuInventories" xml:space="preserve"><value>Inventaires</value></data>
+  <data name="DashboardTitle" xml:space="preserve"><value>Stock</value></data>
+  <data name="UpcomingTitle" xml:space="preserve"><value>Bientôt disponible</value></data>
+  <data name="UpcomingText" xml:space="preserve"><value>Cette partie du stock est en cours de réalisation.</value></data>
+  <data name="BackToDashboard" xml:space="preserve"><value>Tableau de bord du stock</value></data>
+</root>

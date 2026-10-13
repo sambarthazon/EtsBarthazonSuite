@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ConfigItemPatternInvalid" xml:space="preserve"><value>Stock:ItemReferencePattern « {0} » invalide : il doit contenir {{0}} (numéro), par exemple « A-{{0:0000}} ».</value></data>
+  <data name="ConfigBatchPatternInvalid" xml:space="preserve"><value>Stock:BatchNumberPattern « {0} » invalide : il doit contenir {{1}} (séquence annuelle), par exemple « L{{0:yyyy}}-{{1:000}} ».</value></data>
+  <data name="ConfigDefaultLocationMissing" xml:space="preserve"><value>Stock:DefaultStorageLocationCode et Stock:DefaultWorkInProgressLocationCode sont obligatoires.</value></data>
+  <data name="ConfigNegativeNumber" xml:space="preserve"><value>Stock:BackdatingDays et Stock:SelfUndoMinutes doivent être positifs ou nuls, Stock:StaleBatchDays strictement positif.</value></data>
+  <data name="ConfigNumberInvalid" xml:space="preserve"><value>{0} : « {1} » n'est pas un nombre entier.</value></data>
+  <data name="ConfigBooleanInvalid" xml:space="preserve"><value>{0} : « {1} » doit valoir true ou false.</value></data>
+  <data name="LocationNotFound" xml:space="preserve"><value>Emplacement introuvable.</value></data>
+</root>

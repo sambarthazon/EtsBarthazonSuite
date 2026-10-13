@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Persistance du stock : StockDbContext (tables stk_), mappings, repositories, Excel. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Shared.Infrastructure\Barthazon.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\Barthazon.Stock.Core\Barthazon.Stock.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Barthazon.Stock.Tests" />
+  </ItemGroup>
+</Project>

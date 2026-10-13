@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Contrats publics du stock : ce que les autres applications ont le droit d'utiliser. N'évolue que par ajout. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Shared.Kernel\Barthazon.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Contracts\Barthazon.Catalog.Contracts.csproj" />
+  </ItemGroup>
+</Project>

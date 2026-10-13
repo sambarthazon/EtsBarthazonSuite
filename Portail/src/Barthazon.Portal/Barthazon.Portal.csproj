@@ -17,6 +17,8 @@
     <ProjectReference Include="..\..\..\Socle\src\Barthazon.Socle.Migrations.Postgres\Barthazon.Socle.Migrations.Postgres.csproj" />
     <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Migrations.Sqlite\Barthazon.Catalog.Migrations.Sqlite.csproj" />
     <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Migrations.Postgres\Barthazon.Catalog.Migrations.Postgres.csproj" />
+    <ProjectReference Include="..\..\..\Stock\src\Barthazon.Stock.Migrations.Sqlite\Barthazon.Stock.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\..\..\Stock\src\Barthazon.Stock.Migrations.Postgres\Barthazon.Stock.Migrations.Postgres.csproj" />
     <ProjectReference Include="..\..\..\Socle\src\Barthazon.Shared.Kernel\Barthazon.Shared.Kernel.csproj" />
     <ProjectReference Include="..\..\..\Socle\src\Barthazon.Shared.Infrastructure\Barthazon.Shared.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\Socle\src\Barthazon.Shared.UI\Barthazon.Shared.UI.csproj" />
@@ -24,8 +26,11 @@
     <ProjectReference Include="..\..\..\Socle\src\Barthazon.Referential.UI\Barthazon.Referential.UI.csproj" />
     <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Infrastructure\Barthazon.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.UI\Barthazon.Catalog.UI.csproj" />
+    <ProjectReference Include="..\..\..\Stock\src\Barthazon.Stock.Infrastructure\Barthazon.Stock.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Stock\src\Barthazon.Stock.UI\Barthazon.Stock.UI.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Barthazon.Architecture.Tests" />
+    <InternalsVisibleTo Include="Barthazon.Integration.Tests" />
   </ItemGroup>
 </Project>

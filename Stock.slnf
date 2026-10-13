@@ -1,0 +1,26 @@
+{
+  "solution": {
+    "path": "Barthazon.sln",
+    "projects": [
+      "Annuaire\\src\\Barthazon.Catalog.Contracts\\Barthazon.Catalog.Contracts.csproj",
+      "Socle\\src\\Barthazon.Referential.Contracts\\Barthazon.Referential.Contracts.csproj",
+      "Socle\\src\\Barthazon.Referential.Core\\Barthazon.Referential.Core.csproj",
+      "Socle\\src\\Barthazon.Referential.Infrastructure\\Barthazon.Referential.Infrastructure.csproj",
+      "Socle\\src\\Barthazon.Referential.UI\\Barthazon.Referential.UI.csproj",
+      "Socle\\src\\Barthazon.Shared.Infrastructure\\Barthazon.Shared.Infrastructure.csproj",
+      "Socle\\src\\Barthazon.Shared.Kernel\\Barthazon.Shared.Kernel.csproj",
+      "Socle\\src\\Barthazon.Shared.UI\\Barthazon.Shared.UI.csproj",
+      "Socle\\src\\Barthazon.Socle.Migrations.Postgres\\Barthazon.Socle.Migrations.Postgres.csproj",
+      "Socle\\src\\Barthazon.Socle.Migrations.Sqlite\\Barthazon.Socle.Migrations.Sqlite.csproj",
+      "Socle\\tests\\Barthazon.Referential.Tests\\Barthazon.Referential.Tests.csproj",
+      "Socle\\tests\\Barthazon.Shared.Tests\\Barthazon.Shared.Tests.csproj",
+      "Stock\\src\\Barthazon.Stock.Contracts\\Barthazon.Stock.Contracts.csproj",
+      "Stock\\src\\Barthazon.Stock.Core\\Barthazon.Stock.Core.csproj",
+      "Stock\\src\\Barthazon.Stock.Infrastructure\\Barthazon.Stock.Infrastructure.csproj",
+      "Stock\\src\\Barthazon.Stock.Migrations.Postgres\\Barthazon.Stock.Migrations.Postgres.csproj",
+      "Stock\\src\\Barthazon.Stock.Migrations.Sqlite\\Barthazon.Stock.Migrations.Sqlite.csproj",
+      "Stock\\src\\Barthazon.Stock.UI\\Barthazon.Stock.UI.csproj",
+      "Stock\\tests\\Barthazon.Stock.Tests\\Barthazon.Stock.Tests.csproj"
+    ]
+  }
+}

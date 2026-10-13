@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Tests du stock : doublures des contrats de l'annuaire (FakeCatalog), jamais l'annuaire réel. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <PackageReference Include="coverlet.collector" PrivateAssets="all" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="bunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\..\Socle\tests\Support\*.cs" Link="Support\%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Socle.Migrations.Sqlite\Barthazon.Socle.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Socle.Migrations.Postgres\Barthazon.Socle.Migrations.Postgres.csproj" />
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Referential.Infrastructure\Barthazon.Referential.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Barthazon.Stock.Migrations.Sqlite\Barthazon.Stock.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\..\src\Barthazon.Stock.Migrations.Postgres\Barthazon.Stock.Migrations.Postgres.csproj" />
+    <ProjectReference Include="..\..\src\Barthazon.Stock.Infrastructure\Barthazon.Stock.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Barthazon.Stock.UI\Barthazon.Stock.UI.csproj" />
+  </ItemGroup>
+</Project>
