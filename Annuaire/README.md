@@ -5,18 +5,12 @@ Outil interne pour retrouver en quelques secondes une pièce usinée, ses plans,
 C'est la première application d'un **portail** qui accueillera ensuite les stocks, les commandes et livraisons, et le pointage.
 
 - Spécification : [docs/specification.md](docs/specification.md)
-- Conventions et commandes pour les développeurs : [CLAUDE.md](CLAUDE.md)
+- Conventions et commandes pour les développeurs : [CLAUDE.md](CLAUDE.md) (et [`CLAUDE.md`](../CLAUDE.md) à la racine du dépôt)
 - Décisions de réalisation : [docs/decisions.md](docs/decisions.md)
 
 ## Exploitation
 
-| Document | Contenu |
-|---|---|
-| [Installation](docs/installation.md) | PC Windows vierge : publication, script `deploy/windows/install.ps1`, premier démarrage, configuration |
-| [Mise à jour](docs/mise-a-jour.md) | Installer une nouvelle version, revenir en arrière |
-| [Sauvegarde et restauration](docs/sauvegarde-restauration.md) | Sauvegarde quotidienne, fichiers, restauration, export JSON, PostgreSQL |
-| [Migration vers un Raspberry Pi](docs/migration-raspberry-pi.md) | Scénario SQLite (déplacement) et scénario PostgreSQL (import JSON) |
-| [Changement de thème](docs/changement-de-theme.md) | Couleurs (un seul fichier), logo, nom |
+L'annuaire est publié et installé avec le **portail** (une seule application installée) : voir [`Portail/docs/`](../Portail/docs/) — [installation](../Portail/docs/installation.md), [mise à jour](../Portail/docs/mise-a-jour.md), [sauvegarde et restauration](../Portail/docs/sauvegarde-restauration.md), [migration vers un Raspberry Pi](../Portail/docs/migration-raspberry-pi.md), [changement de thème](../Portail/docs/changement-de-theme.md).
 
 ## Fonctions
 
@@ -28,8 +22,8 @@ C'est la première application d'un **portail** qui accueillera ensuite les stoc
 ## Démarrage rapide (développement)
 
 ```bash
-cd Annuaire
-dotnet run --project src/Host/Barthazon.Portal
+# depuis la racine du dépôt
+dotnet run --project Portail/src/Barthazon.Portal
 # puis ouvrir http://localhost:5080 (données de démonstration chargées)
 ```
 

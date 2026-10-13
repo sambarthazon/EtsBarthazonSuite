@@ -29,7 +29,7 @@ public sealed class HistoryDisplayTests
     [Fact]
     public async Task Technical_fields_do_not_appear_in_the_history()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         var part = await data.CreatePartAsync("P-0900", "Axe", inForce: false);

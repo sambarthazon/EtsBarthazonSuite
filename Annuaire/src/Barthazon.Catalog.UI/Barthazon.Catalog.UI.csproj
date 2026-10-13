@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <!-- Pages et composants du module (n'appelle que les services applicatifs du Core). -->
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MudBlazor" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Shared.UI\Barthazon.Shared.UI.csproj" />
+    <ProjectReference Include="..\Barthazon.Catalog.Core\Barthazon.Catalog.Core.csproj" />
+    <ProjectReference Include="..\..\..\Socle\src\Barthazon.Referential.Contracts\Barthazon.Referential.Contracts.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,18 @@
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+TestResults/
+publish/
+# Données locales (base, fichiers, sauvegardes, journaux) en développement
+**/App_Data/
+*.db
+*.db-shm
+*.db-wal
+# Exception : bases de test versionnées (fixtures)
+!**/Fixtures/*.db
+logs/
+node_modules/

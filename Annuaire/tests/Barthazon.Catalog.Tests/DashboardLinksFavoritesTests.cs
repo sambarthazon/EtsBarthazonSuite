@@ -13,7 +13,7 @@ public sealed class DashboardLinksFavoritesTests
     [Fact]
     public async Task Dashboard_counts_parts_by_status_and_customer_and_lists_quality_issues()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         await data.CreatePartAsync("P-0001", "Axe");
@@ -36,7 +36,7 @@ public sealed class DashboardLinksFavoritesTests
     [Fact]
     public async Task Parts_remembered_by_the_browser_are_returned_in_the_same_order()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         await data.CreatePartAsync("P-0001", "Axe");
@@ -50,7 +50,7 @@ public sealed class DashboardLinksFavoritesTests
     [Fact]
     public async Task A_logged_in_reader_manages_personal_favorites()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         var axe = await data.CreatePartAsync("P-0001", "Axe");
@@ -72,7 +72,7 @@ public sealed class DashboardLinksFavoritesTests
     [Fact]
     public async Task An_anonymous_visitor_has_no_server_favorites()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         var axe = await data.CreatePartAsync("P-0001", "Axe");
@@ -87,7 +87,7 @@ public sealed class DashboardLinksFavoritesTests
     [Fact]
     public async Task A_link_is_shown_with_its_inverse_label_on_the_other_part()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         var assembly = await data.CreatePartAsync("P-0001", "Ensemble");
@@ -114,7 +114,7 @@ public sealed class DashboardLinksFavoritesTests
     [Fact]
     public async Task Invalid_links_are_refused()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         var a = await data.CreatePartAsync("P-0001", "Axe");
@@ -134,7 +134,7 @@ public sealed class DashboardLinksFavoritesTests
     [Fact]
     public async Task A_reader_cannot_add_or_remove_links()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         var a = await data.CreatePartAsync("P-0001", "Axe");

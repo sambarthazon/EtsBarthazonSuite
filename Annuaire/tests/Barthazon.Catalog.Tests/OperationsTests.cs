@@ -21,7 +21,7 @@ public sealed class OperationsTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _app = await TestApplication.CreateAsync();
+        _app = await CatalogTestApp.CreateAsync();
         _data = new CatalogTestData(_app);
         await _data.SeedAsync();
         await _data.CreatePartAsync("P-0700", "Arbre", customerReference: "AR-7");
@@ -33,7 +33,7 @@ public sealed class OperationsTests : IAsyncLifetime
     /// <summary>La sauvegarde intégrée (VACUUM INTO) ne concerne que SQLite, même quand les tests tournent sur PostgreSQL.</summary>
     private static async Task<TestApplication> SqliteApplicationAsync()
     {
-        var app = await TestApplication.CreateAsync(settings: new() { ["Database:Provider"] = "Sqlite" });
+        var app = await CatalogTestApp.CreateAsync(settings: new() { ["Database:Provider"] = "Sqlite" });
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         await data.CreatePartAsync("P-0700", "Arbre", customerReference: "AR-7");
@@ -75,7 +75,7 @@ public sealed class OperationsTests : IAsyncLifetime
 
         var restoredFile = Path.Combine(app.Root, "restauree.db");
         File.Copy(Path.Combine(app.Root, "backups", backup.Name), restoredFile);
-        await using var restored = await TestApplication.CreateAsync(settings: new()
+        await using var restored = await CatalogTestApp.CreateAsync(settings: new()
         {
             ["Database:Provider"] = "Sqlite",
             ["Database:ConnectionString"] = $"Data Source={restoredFile};Pooling=False",
@@ -123,7 +123,7 @@ public sealed class OperationsTests : IAsyncLifetime
         await _app.Get<IUserService>().CreateFirstAdministratorAsync(new UserInput { UserName = "admin", DisplayName = "Admin", Password = "motdepasse" });
         var export = (await _app.Get<AdministrationService>().ExportAllAsync()).Value;
 
-        await using var target = await TestApplication.CreateAsync();
+        await using var target = await CatalogTestApp.CreateAsync();
         target.User.As(UserRole.Administrator, "admin");
         using var stream = new MemoryStream(export.Content);
         var report = await target.Get<AdministrationService>().ImportAllAsync(stream);
@@ -149,7 +149,7 @@ public sealed class OperationsTests : IAsyncLifetime
         await source.Get<IUserService>().CreateFirstAdministratorAsync(new UserInput { UserName = "admin", DisplayName = "Admin", Password = "motdepasse" });
         var export = (await source.Get<AdministrationService>().ExportAllAsync()).Value;
 
-        await using var target = await TestApplication.CreateAsync();
+        await using var target = await CatalogTestApp.CreateAsync();
         target.User.As(UserRole.Administrator, "admin");
         using var stream = new MemoryStream(export.Content);
         var report = await target.Get<AdministrationService>().ImportAllAsync(stream);

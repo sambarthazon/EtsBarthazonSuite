@@ -2,45 +2,31 @@
 
 Spécification complète : [`docs/specification.md`](docs/specification.md). Décisions prises en cours de route : [`docs/decisions.md`](docs/decisions.md).
 
-## Commandes utiles
+Voir d'abord le `CLAUDE.md` à la racine du dépôt (carte, règles entre applications, commandes communes) et `Socle/CLAUDE.md` (socle commun).
 
-Toutes les commandes se lancent depuis ce dossier (`Annuaire/`). SDK requis : .NET 10.
+## Contenu
+
+| Projet | Rôle |
+|---|---|
+| `Barthazon.Catalog.Contracts` | Ce que les autres applications ont le droit d'utiliser : `IPartLookup`, énumérations, points d'extension (`IPartStockInfoProvider`…). **N'évolue que par ajout.** |
+| `Barthazon.Catalog.Core` | Entités (pièce, indices, gamme, documents), règles, services applicatifs |
+| `Barthazon.Catalog.Infrastructure` | Mappings EF Core (tables `cat_`), repositories, Excel |
+| `Barthazon.Catalog.UI` | Pages et composants Razor (`/pieces…`) |
+| `tests/Barthazon.Catalog.Tests` | Tests (hôte : `CatalogTestApp`) |
+
+## Commandes (depuis la racine du dépôt)
 
 | Action | Commande |
 |---|---|
-| Compiler (avertissements = erreurs) | `dotnet build Barthazon.sln` |
-| Tests | `dotnet test Barthazon.sln` |
-| Tests sur PostgreSQL | `BZ_TEST_POSTGRES="Host=localhost;Port=5432;Username=postgres" dotnet test Barthazon.sln` (une base jetable par test) |
-| Lancer en développement (http://localhost:5080) | `dotnet run --project src/Host/Barthazon.Portal` |
-| Nouvelle migration (les **deux** fournisseurs) | `dotnet ef migrations add <Nom> --project src/Host/Barthazon.Migrations.Sqlite --startup-project src/Host/Barthazon.Migrations.Sqlite --output-dir Migrations` puis la même commande avec `Barthazon.Migrations.Postgres` |
-| Publier Windows | `dotnet publish src/Host/Barthazon.Portal -c Release -r win-x64 --self-contained -o publish/win-x64` |
-| Publier Raspberry Pi | `dotnet publish src/Host/Barthazon.Portal -c Release -r linux-arm64 --self-contained -o publish/linux-arm64` |
+| Compiler / tester l'annuaire et le socle | `dotnet build Annuaire.slnf` / `dotnet test Annuaire.slnf` |
+| Nouvelle migration (les **deux** fournisseurs) | `dotnet ef migrations add <Nom> --project Portail/src/Barthazon.Migrations.Sqlite --startup-project Portail/src/Barthazon.Migrations.Sqlite --output-dir Migrations` puis la même commande avec `Barthazon.Migrations.Postgres` |
 
-Déploiement : `deploy/windows/install.ps1`, `deploy/raspberry/install.sh` ; documentation d'exploitation dans `docs/` (installation, mise à jour, sauvegarde-restauration, migration-raspberry-pi, changement-de-theme).
+En développement, la base, les fichiers, les sauvegardes et les journaux sont dans `Portail/src/Barthazon.Portal/App_Data/` et les données de démonstration sont chargées.
 
-En développement (`appsettings.Development.json`), la base, les fichiers, les sauvegardes et les journaux sont dans `src/Host/Barthazon.Portal/App_Data/` et les données de démonstration sont chargées.
+## Règles propres à l'annuaire
 
-## Architecture (section 6)
-
-- `src/Shared/` : socle commun (`Kernel` sans dépendance, `Infrastructure` EF Core/fichiers/sauvegarde/audit, `UI` thème/layout/composants).
-- `src/Modules/<Module>/` : `Contracts` (interfaces + DTO publics), `Core` (entités, règles, services applicatifs), `Infrastructure` (EF Core), `UI` (pages Razor).
-- `src/Host/Barthazon.Portal` : seul projet qui connaît tout le monde (injection de dépendances, configuration).
-- Règles de dépendance vérifiées par `tests/Barthazon.Architecture.Tests` :
-  - `*.Core` → uniquement `Shared.Kernel` et des `*.Contracts` (ni EF Core, ni ASP.NET, ni MudBlazor).
-  - `*.UI` → jamais `*.Infrastructure` ni EF Core : uniquement les services applicatifs du `Core`.
-  - un module n'utilise un autre module que via son projet `*.Contracts`.
+- L'annuaire **ne connaît pas** les autres applications : il expose des contrats (`Catalog.Contracts`) et des emplacements d'interface ; jamais de référence à `Stock/`.
 - L'interface ne manipule que des DTO renvoyés par des services applicatifs (`IPartService`…), jamais des entités.
-- Une unité de travail = un appel de service = un `DbContext` de courte durée (`IDbContextFactory`). Ne jamais injecter de `DbContext` dans un composant.
-- Aucun `IQueryable` ni type EF Core ne sort d'un repository.
-
-## Conventions (section 15)
-
-- Code en anglais ; interface et documentation en français.
-- Textes d'interface dans `Resources/*.resx` de chaque projet (classe fortement typée générée à la compilation, ex. `CatalogTexts.PartListTitle`). Pas de chaîne d'interface en dur dans les `.razor`.
-- Couleurs : **uniquement** dans `src/Shared/Barthazon.Shared.UI/Theme/BrandTokens.cs` ; ailleurs utiliser `var(--bz-…)` ou les couleurs MudBlazor (`Color.Primary`…). Un test vérifie l'absence de couleur en dur.
-- Services applicatifs : renvoient `Result` / `Result<T>` (pas d'exception pour les cas métier) ; contrôlent les droits via `IAccessGuard` et valident les entrées.
-- Entités : identifiant `Guid`, champs d'audit automatiques, archivage (`IsArchived`) au lieu de suppression, jeton de concurrence `Version`.
-- Tables préfixées : `ref_` (référentiel), `cat_` (annuaire), `sys_` (socle).
-- Versions de paquets uniquement dans `Directory.Packages.props`. `nullable` activé, avertissements traités comme erreurs.
-- Aucune ressource chargée depuis Internet (polices, scripts, styles servis en local).
-- Jalon terminé = compilation sans avertissement + tests verts + commit.
+- Services : `Result` / `Result<T>`, droits via `IAccessGuard`, validation des entrées.
+- Entités : identifiant `Guid`, champs d'audit automatiques, archivage (`IsArchived`) au lieu de suppression, jeton de concurrence `Version`. Tables préfixées `cat_`.
+- Textes dans `Resources/*.resx` (ex. `CatalogTexts`) ; couleurs uniquement via `var(--bz-…)` ou les couleurs MudBlazor.

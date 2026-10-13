@@ -19,7 +19,7 @@ public sealed class DocumentServiceTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _app = await TestApplication.CreateAsync();
+        _app = await CatalogTestApp.CreateAsync();
         _data = new CatalogTestData(_app);
         await _data.SeedAsync();
         _part = await _data.CreatePartAsync("P-0200", "Bride");

@@ -21,7 +21,7 @@ public sealed class ExtensionPointTests
     [Fact]
     public async Task By_default_stock_deliveries_and_orders_are_not_available()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
 
         app.Get<IPartStockInfoProvider>().IsAvailable.Should().BeFalse();
         (await app.Get<IPartStockInfoProvider>().GetAsync(Guid.NewGuid())).Should().BeNull();
@@ -32,7 +32,7 @@ public sealed class ExtensionPointTests
     [Fact]
     public async Task A_future_module_replaces_the_provider_without_changing_the_catalog()
     {
-        await using var app = await TestApplication.CreateAsync(s => s.AddSingleton<IPartStockInfoProvider, FakeStock>());
+        await using var app = await CatalogTestApp.CreateAsync(s => s.AddSingleton<IPartStockInfoProvider, FakeStock>());
 
         var stock = await app.Get<IPartStockInfoProvider>().GetAsync(Guid.NewGuid());
 
@@ -42,7 +42,7 @@ public sealed class ExtensionPointTests
     [Fact]
     public async Task Other_modules_read_parts_through_the_lookup_contract()
     {
-        await using var app = await TestApplication.CreateAsync();
+        await using var app = await CatalogTestApp.CreateAsync();
         var data = new CatalogTestData(app);
         await data.SeedAsync();
         await data.CreatePartAsync("P-0300", "Axe", customerReference: "X-1");

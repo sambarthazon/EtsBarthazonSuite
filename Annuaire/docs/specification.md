@@ -110,6 +110,8 @@ Langue : **code en anglais** (classes, méthodes, tables), **interface et docume
 
 ## 6. Architecture
 
+> **Structure mise à jour** : le dépôt a été réorganisé (dossiers `Socle/`, `Annuaire/`, `Stock/`, `Portail/`, un contexte de données par application). Voir `Stock/docs/specification.md` §6 et le `CLAUDE.md` à la racine. Le reste de cette section décrit l'organisation d'origine.
+
 ### 6.1 Principe : un portail, des modules
 
 Chaque « application » (annuaire, stock, commandes, pointage) est un **module indépendant**. Tous les modules sont hébergés par **un seul portail web** : une seule adresse, une seule installation, un seul thème, une seule base. Pour l'utilisateur, ce sont bien des applications distinctes (tuiles sur la page d'accueil, menu propre à chacune). Pour le développeur, ce sont des briques séparées qui partagent un socle.

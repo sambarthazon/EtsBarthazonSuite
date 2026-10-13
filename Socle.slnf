@@ -1,0 +1,16 @@
+{
+  "solution": {
+    "path": "Barthazon.sln",
+    "projects": [
+      "Socle\\src\\Barthazon.Referential.Contracts\\Barthazon.Referential.Contracts.csproj",
+      "Socle\\src\\Barthazon.Referential.Core\\Barthazon.Referential.Core.csproj",
+      "Socle\\src\\Barthazon.Referential.Infrastructure\\Barthazon.Referential.Infrastructure.csproj",
+      "Socle\\src\\Barthazon.Referential.UI\\Barthazon.Referential.UI.csproj",
+      "Socle\\src\\Barthazon.Shared.Infrastructure\\Barthazon.Shared.Infrastructure.csproj",
+      "Socle\\src\\Barthazon.Shared.Kernel\\Barthazon.Shared.Kernel.csproj",
+      "Socle\\src\\Barthazon.Shared.UI\\Barthazon.Shared.UI.csproj",
+      "Socle\\tests\\Barthazon.Referential.Tests\\Barthazon.Referential.Tests.csproj",
+      "Socle\\tests\\Barthazon.Shared.Tests\\Barthazon.Shared.Tests.csproj"
+    ]
+  }
+}

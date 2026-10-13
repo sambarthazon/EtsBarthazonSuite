@@ -13,7 +13,7 @@ public sealed class RevisionLifecycleTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _app = await TestApplication.CreateAsync();
+        _app = await CatalogTestApp.CreateAsync();
         _data = new CatalogTestData(_app);
         await _data.SeedAsync();
     }

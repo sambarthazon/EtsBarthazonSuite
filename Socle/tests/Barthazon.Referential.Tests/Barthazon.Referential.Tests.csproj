@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <PackageReference Include="coverlet.collector" PrivateAssets="all" />
+    <PackageReference Include="FluentAssertions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Support\*.cs" Link="Support\%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Barthazon.Referential.Infrastructure\Barthazon.Referential.Infrastructure.csproj" />
+    <!-- TEMPORAIRE (jalon R1) : migrations encore communes ; retiré au jalon R2 (contexte par application). -->
+    <ProjectReference Include="..\..\..\Annuaire\src\Barthazon.Catalog.Infrastructure\Barthazon.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Portail\src\Barthazon.Migrations.Sqlite\Barthazon.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\..\..\Portail\src\Barthazon.Migrations.Postgres\Barthazon.Migrations.Postgres.csproj" />
+  </ItemGroup>
+</Project>

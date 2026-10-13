@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PortalTitle" xml:space="preserve"><value>Applications</value></data>
+  <data name="PortalWelcome" xml:space="preserve"><value>Bienvenue. Choisissez une application.</value></data>
+  <data name="StockName" xml:space="preserve"><value>Stocks</value></data>
+  <data name="StockDescription" xml:space="preserve"><value>Quantités en stock, emplacements, seuils et mouvements.</value></data>
+  <data name="OrdersName" xml:space="preserve"><value>Commandes &amp; livraisons</value></data>
+  <data name="OrdersDescription" xml:space="preserve"><value>Commandes clients en cours, livraisons et bons de livraison.</value></data>
+  <data name="TimeTrackingName" xml:space="preserve"><value>Pointage</value></data>
+  <data name="TimeTrackingDescription" xml:space="preserve"><value>Pointage des temps passés à l'atelier.</value></data>
+  <data name="OpenApplication" xml:space="preserve"><value>Ouvrir l'application {0}</value></data>
+  <data name="ComingSoonApplication" xml:space="preserve"><value>{0} — bientôt disponible</value></data>
+  <data name="LoginTitle" xml:space="preserve"><value>Connexion</value></data>
+  <data name="LoginSubtitle" xml:space="preserve"><value>Connectez-vous pour créer ou modifier des données. La consultation reste possible sans connexion.</value></data>
+  <data name="LoginSubtitleRequired" xml:space="preserve"><value>Connectez-vous pour accéder aux applications.</value></data>
+  <data name="UserName" xml:space="preserve"><value>Identifiant</value></data>
+  <data name="Password" xml:space="preserve"><value>Mot de passe</value></data>
+  <data name="PasswordConfirm" xml:space="preserve"><value>Confirmer le mot de passe</value></data>
+  <data name="SignIn" xml:space="preserve"><value>Se connecter</value></data>
+  <data name="BackWithoutSignIn" xml:space="preserve"><value>Continuer sans se connecter</value></data>
+  <data name="SetupTitle" xml:space="preserve"><value>Premier démarrage</value></data>
+  <data name="SetupSubtitle" xml:space="preserve"><value>Aucun compte n'existe encore. Créez le compte administrateur.</value></data>
+  <data name="DisplayName" xml:space="preserve"><value>Nom affiché</value></data>
+  <data name="CreateAdministrator" xml:space="preserve"><value>Créer le compte administrateur</value></data>
+  <data name="PasswordsDiffer" xml:space="preserve"><value>Les deux mots de passe ne sont pas identiques.</value></data>
+  <data name="PasswordHint" xml:space="preserve"><value>8 caractères minimum.</value></data>
+  <data name="AccessDeniedTitle" xml:space="preserve"><value>Accès refusé</value></data>
+  <data name="AccessDeniedText" xml:space="preserve"><value>Votre compte ne permet pas d'accéder à cette page.</value></data>
+  <data name="AdminTitle" xml:space="preserve"><value>Administration</value></data>
+  <data name="AdminSubtitle" xml:space="preserve"><value>Comptes, paramètres, sauvegardes, journal et état du système.</value></data>
+  <data name="AdminUsers" xml:space="preserve"><value>Utilisateurs</value></data>
+  <data name="AdminUsersText" xml:space="preserve"><value>Comptes, rôles (lecteur, éditeur, administrateur), mots de passe.</value></data>
+  <data name="AdminSettings" xml:space="preserve"><value>Paramètres</value></data>
+  <data name="AdminSettingsText" xml:space="preserve"><value>Nom de l'application, modèle de référence, adresse publique (QR codes).</value></data>
+  <data name="AdminBackups" xml:space="preserve"><value>Sauvegardes</value></data>
+  <data name="AdminBackupsText" xml:space="preserve"><value>Sauvegarde quotidienne de la base, sauvegarde immédiate, historique.</value></data>
+  <data name="AdminAudit" xml:space="preserve"><value>Journal des modifications</value></data>
+  <data name="AdminAuditText" xml:space="preserve"><value>Toutes les modifications, filtrables par date, utilisateur et type.</value></data>
+  <data name="AdminData" xml:space="preserve"><value>Export / import complet</value></data>
+  <data name="AdminDataText" xml:space="preserve"><value>Toutes les données en JSON (transfert vers PostgreSQL, archivage).</value></data>
+  <data name="AdminStatus" xml:space="preserve"><value>État du système</value></data>
+  <data name="StatusVersion" xml:space="preserve"><value>Version</value></data>
+  <data name="StatusProvider" xml:space="preserve"><value>Base de données</value></data>
+  <data name="StatusDatabasePath" xml:space="preserve"><value>Fichier de base</value></data>
+  <data name="StatusFilesPath" xml:space="preserve"><value>Dossier des fichiers</value></data>
+  <data name="StatusBackupPath" xml:space="preserve"><value>Dossier des sauvegardes</value></data>
+  <data name="StatusAnonymousRead" xml:space="preserve"><value>Consultation sans connexion</value></data>
+  <data name="StatusDisk" xml:space="preserve"><value>Espace libre</value></data>
+  <data name="StatusDiskUnknown" xml:space="preserve"><value>Espace libre sur {0} : inconnu (partage réseau)</value></data>
+  <data name="StatusLastBackup" xml:space="preserve"><value>Dernière sauvegarde réussie</value></data>
+  <data name="StatusNoBackup" xml:space="preserve"><value>Aucune sauvegarde réussie à ce jour.</value></data>
+  <data name="StatusBackupOverdue" xml:space="preserve"><value>La dernière sauvegarde réussie date de plus de 48 heures : vérifiez le dossier des sauvegardes.</value></data>
+  <data name="StatusLastBackupError" xml:space="preserve"><value>Dernière erreur de sauvegarde : {0}</value></data>
+  <data name="StatusFilesReminder" xml:space="preserve"><value>Le dossier des fichiers (plans, photos…) n'est pas inclus dans la sauvegarde de la base : il doit être sauvegardé lui aussi (voir docs/sauvegarde-restauration.md).</value></data>
+  <data name="Yes" xml:space="preserve"><value>Oui</value></data>
+  <data name="No" xml:space="preserve"><value>Non</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>Paramètres</value></data>
+  <data name="SettingsName" xml:space="preserve"><value>Nom de l'application</value></data>
+  <data name="SettingsPattern" xml:space="preserve"><value>Modèle de référence interne</value></data>
+  <data name="SettingsPatternHelp" xml:space="preserve"><value>{0} est remplacé par le numéro : P-{0:0000} donne P-0042.</value></data>
+  <data name="SettingsUrl" xml:space="preserve"><value>Adresse publique</value></data>
+  <data name="SettingsUrlHelp" xml:space="preserve"><value>Adresse utilisée dans les QR codes, par exemple http://pc-bureau:5080 (les étiquettes déjà imprimées gardent l'ancienne adresse).</value></data>
+  <data name="SettingsSaved" xml:space="preserve"><value>Paramètres enregistrés.</value></data>
+  <data name="BackupsTitle" xml:space="preserve"><value>Sauvegardes</value></data>
+  <data name="BackupNow" xml:space="preserve"><value>Sauvegarder maintenant</value></data>
+  <data name="BackupRunning" xml:space="preserve"><value>Sauvegarde en cours…</value></data>
+  <data name="BackupDone" xml:space="preserve"><value>Sauvegarde effectuée : {0}</value></data>
+  <data name="BackupSchedule" xml:space="preserve"><value>Sauvegarde automatique chaque jour à {0}, conservée {1} jours.</value></data>
+  <data name="BackupFiles" xml:space="preserve"><value>Fichiers de sauvegarde</value></data>
+  <data name="BackupFileName" xml:space="preserve"><value>Fichier</value></data>
+  <data name="BackupFileSize" xml:space="preserve"><value>Taille</value></data>
+  <data name="BackupFileDate" xml:space="preserve"><value>Date</value></data>
+  <data name="BackupNone" xml:space="preserve"><value>Aucun fichier de sauvegarde.</value></data>
+  <data name="AuditTitle" xml:space="preserve"><value>Journal des modifications</value></data>
+  <data name="AuditFrom" xml:space="preserve"><value>Du</value></data>
+  <data name="AuditTo" xml:space="preserve"><value>Au</value></data>
+  <data name="AuditUser" xml:space="preserve"><value>Utilisateur</value></data>
+  <data name="AuditEntityType" xml:space="preserve"><value>Type</value></data>
+  <data name="AuditAll" xml:space="preserve"><value>Tous</value></data>
+  <data name="AuditDate" xml:space="preserve"><value>Date</value></data>
+  <data name="AuditEntity" xml:space="preserve"><value>Élément</value></data>
+  <data name="AuditAction" xml:space="preserve"><value>Action</value></data>
+  <data name="AuditDetails" xml:space="preserve"><value>Détail</value></data>
+  <data name="AuditEmpty" xml:space="preserve"><value>Aucune entrée.</value></data>
+  <data name="AuditTotal" xml:space="preserve"><value>{0} entrée(s)</value></data>
+  <data name="DataTitle" xml:space="preserve"><value>Export / import complet</value></data>
+  <data name="DataExportText" xml:space="preserve"><value>Télécharge toutes les données (pièces, indices, clients, référentiels, utilisateurs, journal) dans un fichier JSON indépendant de la base de données. Les fichiers (plans, photos) ne sont pas inclus : copiez le dossier des fichiers séparément.</value></data>
+  <data name="DataExport" xml:space="preserve"><value>Exporter toutes les données</value></data>
+  <data name="DataImportText" xml:space="preserve"><value>Remplace TOUTES les données de cette installation par celles d'un export. À utiliser sur une installation neuve (par exemple le passage à PostgreSQL sur le Raspberry Pi). Vous devrez vous reconnecter.</value></data>
+  <data name="DataImport" xml:space="preserve"><value>Importer un export complet</value></data>
+  <data name="DataImportConfirmTitle" xml:space="preserve"><value>Remplacer toutes les données ?</value></data>
+  <data name="DataImportConfirmText" xml:space="preserve"><value>Toutes les données actuelles seront effacées et remplacées par celles du fichier « {0} ». Cette opération est irréversible. Continuer ?</value></data>
+  <data name="DataImportDone" xml:space="preserve"><value>Import terminé : {0} lignes chargées. Reconnectez-vous.</value></data>
+  <data name="Entity_Customer" xml:space="preserve"><value>Client</value></data>
+  <data name="Entity_CustomerContact" xml:space="preserve"><value>Contact client</value></data>
+  <data name="Entity_Material" xml:space="preserve"><value>Matière</value></data>
+  <data name="Entity_Machine" xml:space="preserve"><value>Machine</value></data>
+  <data name="Entity_User" xml:space="preserve"><value>Utilisateur</value></data>
+  <data name="Entity_PartFamily" xml:space="preserve"><value>Famille</value></data>
+  <data name="Entity_Tag" xml:space="preserve"><value>Étiquette</value></data>
+  <data name="Entity_Settings" xml:space="preserve"><value>Paramètres</value></data>
+  <data name="Action_LoggedIn" xml:space="preserve"><value>Connexion</value></data>
+  <data name="StatusDiskValue" xml:space="preserve"><value>{0} : {1:0.0} Go libres sur {2:0} Go</value></data>
+  <data name="StatusDiskUnknownValue" xml:space="preserve"><value>{0} : inconnu (partage réseau)</value></data>
+  <data name="LoginLocked" xml:space="preserve"><value>Trop de tentatives de connexion. Réessayez dans {0} minute(s).</value></data>
+  <data name="StatusVersions" xml:space="preserve"><value>Versions</value></data>
+  <data name="VersionSocle" xml:space="preserve"><value>Socle</value></data>
+  <data name="VersionPortal" xml:space="preserve"><value>Portail</value></data>
+</root>

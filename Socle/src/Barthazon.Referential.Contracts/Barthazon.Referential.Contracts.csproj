@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Contrats publics du module : interfaces et DTO utilisables par les autres modules. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Barthazon.Shared.Kernel\Barthazon.Shared.Kernel.csproj" />
+  </ItemGroup>
+
+</Project>

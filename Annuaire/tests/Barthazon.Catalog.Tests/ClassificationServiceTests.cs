@@ -12,7 +12,7 @@ public sealed class ClassificationServiceTests : IAsyncLifetime
 
     private IClassificationService Service => _app.Get<IClassificationService>();
 
-    public async Task InitializeAsync() => _app = await TestApplication.CreateAsync();
+    public async Task InitializeAsync() => _app = await CatalogTestApp.CreateAsync();
 
     public async Task DisposeAsync() => await _app.DisposeAsync();
 

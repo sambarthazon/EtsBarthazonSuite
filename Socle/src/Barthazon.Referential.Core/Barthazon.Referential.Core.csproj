@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Cœur du module : entités, règles métier, interfaces de repository, services applicatifs. Ni EF Core, ni ASP.NET, ni MudBlazor. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Barthazon.Shared.Kernel\Barthazon.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\Barthazon.Referential.Contracts\Barthazon.Referential.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Barthazon.Referential.Tests" />
+  </ItemGroup>
+</Project>
