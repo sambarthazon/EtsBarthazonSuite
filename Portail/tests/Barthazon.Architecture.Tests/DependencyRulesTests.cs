@@ -99,7 +99,8 @@ public class DependencyRulesTests
     [Fact]
     public void Applications_reference_only_allowed_areas()
     {
-        foreach (var project in SolutionProjects.Source.Where(p => AllowedAreas.ContainsKey(p.Area)))
+        // Projets de sources ET de tests : les tests d'une application ne dépendent pas des autres (6.5).
+        foreach (var project in SolutionProjects.All.Values.Where(p => AllowedAreas.ContainsKey(p.Area)))
         {
             foreach (var reference in SolutionProjects.TransitiveReferences(project))
             {

@@ -8,7 +8,7 @@ namespace Barthazon.Catalog.UI.Components;
 
 /// <summary>
 /// Filtres de la liste des pièces lus dans l'adresse (q, client, famille, matiere, statut, etiquettes, machine,
-/// plan, archives, qualite, tri, ordre) : utilisés par la liste, l'export et la planche d'étiquettes.
+/// plan, archives, qualite, stock, tri, ordre) : utilisés par la liste, l'export et la planche d'étiquettes.
 /// </summary>
 public static class PartFilterQuery
 {
@@ -41,8 +41,24 @@ public static class PartFilterQuery
             HasDrawing = Get("plan") switch { "avec" => true, "sans" => false, _ => null },
             IncludeArchived = Get("archives") == "1",
             Quality = Enum.TryParse<PartQualityIssue>(Get("qualite"), true, out var quality) ? quality : PartQualityIssue.None,
+            StockFilter = ParseStockFilter(Get("stock")),
             Sort = Enum.TryParse<PartSort>(Get("tri"), true, out var sort) ? sort : PartSort.Reference,
             Descending = string.Equals(Get("ordre"), "desc", StringComparison.OrdinalIgnoreCase),
         };
     }
+
+    /// <summary>Valeur du paramètre d'URL « stock » : « rupture » ou « seuil ».</summary>
+    public static PartStockFilter? ParseStockFilter(string? value) => value switch
+    {
+        "rupture" => PartStockFilter.OutOfStock,
+        "seuil" => PartStockFilter.BelowThreshold,
+        _ => null,
+    };
+
+    public static string? StockFilterValue(PartStockFilter? filter) => filter switch
+    {
+        PartStockFilter.OutOfStock => "rupture",
+        PartStockFilter.BelowThreshold => "seuil",
+        _ => null,
+    };
 }

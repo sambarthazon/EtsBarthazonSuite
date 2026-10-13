@@ -19,6 +19,7 @@ public static class CatalogCoreServiceCollectionExtensions
         services.AddScoped<PartService>();
         services.AddScoped<IPartService>(sp => sp.GetRequiredService<PartService>());
         services.AddScoped<IPartLookup>(sp => sp.GetRequiredService<PartService>());
+        services.AddScoped<IPartRoutingLookup, PartRoutingLookup>();
         services.AddScoped<IRevisionService, RevisionService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IPartExchangeService, PartExchangeService>();
@@ -30,6 +31,7 @@ public static class CatalogCoreServiceCollectionExtensions
         services.TryAddSingleton<IPartStockInfoProvider, UnavailablePartInfoProvider>();
         services.TryAddSingleton<IPartDeliveryInfoProvider, UnavailablePartInfoProvider>();
         services.TryAddSingleton<IPartOrderInfoProvider, UnavailablePartInfoProvider>();
+        services.TryAddSingleton<IPartStockFilterProvider, UnavailablePartStockFilterProvider>();
         return services;
     }
 }

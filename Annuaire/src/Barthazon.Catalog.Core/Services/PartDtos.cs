@@ -39,6 +39,12 @@ public sealed record PartSearchRequest
 
     public PartQualityIssue Quality { get; init; }
 
+    /// <summary>Filtre de stock (rupture, sous le seuil), résolu par <see cref="IPartStockFilterProvider"/>.</summary>
+    public PartStockFilter? StockFilter { get; init; }
+
+    /// <summary>Restreint la recherche à ces pièces (null = pas de restriction).</summary>
+    public IReadOnlyCollection<Guid>? RestrictToPartIds { get; init; }
+
     public PartSort Sort { get; init; } = PartSort.Reference;
 
     public bool Descending { get; init; }

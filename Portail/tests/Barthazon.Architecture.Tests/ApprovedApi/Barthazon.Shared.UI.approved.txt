@@ -1,0 +1,439 @@
+namespace Barthazon.Shared.UI.Components
+{
+    public class AdaptiveList<T> : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public AdaptiveList() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? AriaLabel { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment<T> CardTemplate { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public bool Dense { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? EmptyContent { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment HeaderContent { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public System.Func<T, string?>? ItemHref { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public System.Collections.Generic.IEnumerable<T>? Items { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public bool Loading { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.EventCallback<T> OnItemClick { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment<T> RowTemplate { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class ComingSoon : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public ComingSoon() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Application { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? ChildContent { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Class { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public bool Inline { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class ConfirmDialog : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public ConfirmDialog() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? CancelText { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? ConfirmText { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public bool Danger { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string Message { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string Title { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public static class DialogServiceExtensions
+    {
+        public static System.Threading.Tasks.Task<bool> ConfirmAsync(this MudBlazor.IDialogService dialogs, string title, string message, string? confirmText = null, bool danger = false) { }
+    }
+    public class EmptyState : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public EmptyState() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? ChildContent { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Icon { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Text { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string Title { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class FeatureGate : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public FeatureGate() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Application { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? ChildContent { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Class { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string Feature { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public bool Inline { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? Placeholder { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class FieldView : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public FieldView() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? ChildContent { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Class { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string Label { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Value { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class FormErrors : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public FormErrors() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.EventCallback OnReload { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Barthazon.Shared.UI.Components.FormState State { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public sealed class FormState
+    {
+        public FormState() { }
+        public System.Collections.Generic.IReadOnlyList<string> GeneralErrors { get; }
+        public bool HasConflict { get; }
+        public void Apply(Barthazon.Shared.Kernel.Results.Result result) { }
+        public void Clear() { }
+        public string? ErrorFor(string field) { }
+        public bool HasError(string field) { }
+        public bool IsDirty(object model) { }
+        public void Snapshot(object model) { }
+    }
+    public class GlobalSearch : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public GlobalSearch() { }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class Highlight : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public Highlight() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Query { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Text { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class PageHeader : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public PageHeader() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? Actions { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? BackHref { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? BackText { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? PageTitleText { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? SubContent { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Subtitle { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string Title { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class PdfViewer : Microsoft.AspNetCore.Components.ComponentBase, System.IAsyncDisposable
+    {
+        public PdfViewer() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public int MaxPages { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Style { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string Url { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+        public System.Threading.Tasks.ValueTask DisposeAsync() { }
+        protected override System.Threading.Tasks.Task OnAfterRenderAsync(bool firstRender) { }
+    }
+    public class PickerField : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public PickerField() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public bool CanQuickCreate { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? ChildContent { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Class { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.EventCallback OnQuickCreate { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? QuickCreateLabel { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class StatusChip : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public StatusChip() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Class { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string Text { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Barthazon.Shared.UI.Components.StatusTone Tone { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string? Tooltip { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public enum StatusTone
+    {
+        Neutral = 0,
+        Success = 1,
+        Warning = 2,
+        Error = 3,
+        Info = 4,
+        Disabled = 5,
+    }
+    public class UiSlot : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public UiSlot() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.RenderFragment? Fallback { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        [System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Extension",
+                "Content"})]
+        public Microsoft.AspNetCore.Components.RenderFragment<System.ValueTuple<Barthazon.Shared.UI.Services.UiExtension, Microsoft.AspNetCore.Components.RenderFragment>>? ItemTemplate { get; set; }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public string Name { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public System.Collections.Generic.IDictionary<string, object>? Parameters { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class UnsavedChangesGuard : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public UnsavedChangesGuard() { }
+        [Microsoft.AspNetCore.Components.EditorRequired]
+        [Microsoft.AspNetCore.Components.Parameter]
+        public System.Func<bool> IsDirty { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public bool ShowBanner { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+}
+namespace Barthazon.Shared.UI.Layout
+{
+    public class AppLayout : Microsoft.AspNetCore.Components.LayoutComponentBase, System.IDisposable
+    {
+        public AppLayout() { }
+        [Microsoft.AspNetCore.Components.CascadingParameter(Name="BzDarkMode")]
+        public bool? InitialDarkMode { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+        public void Dispose() { }
+        protected override System.Threading.Tasks.Task OnAfterRenderAsync(bool firstRender) { }
+        protected override System.Threading.Tasks.Task OnInitializedAsync() { }
+    }
+    public class BottomNav : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public BottomNav() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Barthazon.Shared.Kernel.Modules.IModule? ActiveModule { get; set; }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Microsoft.AspNetCore.Components.EventCallback OnMenuClick { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class ModuleNav : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public ModuleNav() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public Barthazon.Shared.Kernel.Modules.IModule? ActiveModule { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class PrintLayout : Microsoft.AspNetCore.Components.LayoutComponentBase
+    {
+        public PrintLayout() { }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public class UserMenu : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public UserMenu() { }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+}
+namespace Barthazon.Shared.UI.Services
+{
+    public sealed class BrandingOptions
+    {
+        public const string SectionName = "App";
+        public BrandingOptions() { }
+        public string CompanyName { get; set; }
+        public string LogoUrl { get; set; }
+        public string Name { get; set; }
+    }
+    public sealed class BrowserInterop
+    {
+        public BrowserInterop(Microsoft.JSInterop.IJSRuntime js) { }
+        public System.Threading.Tasks.ValueTask DownloadAsync(string fileName, byte[] content) { }
+        public System.Threading.Tasks.ValueTask FocusAsync(string elementId) { }
+        public System.Threading.Tasks.ValueTask<string?> GetStorageAsync(string key) { }
+        public System.Threading.Tasks.ValueTask<bool?> PrefersDarkAsync() { }
+        public System.Threading.Tasks.ValueTask PrintAsync() { }
+        public System.Threading.Tasks.ValueTask RegisterShortcutsAsync() { }
+        public System.Threading.Tasks.ValueTask SetStorageAsync(string key, string? value) { }
+        public System.Threading.Tasks.ValueTask SetThemeAsync(bool dark) { }
+    }
+    public sealed class GlobalSearchHit : System.IEquatable<Barthazon.Shared.UI.Services.GlobalSearchHit>
+    {
+        public GlobalSearchHit(string Title, string? Subtitle, string Href, string? Icon = null, string? Badge = null) { }
+        public string? Badge { get; init; }
+        public string Href { get; init; }
+        public string? Icon { get; init; }
+        public string? Subtitle { get; init; }
+        public string Title { get; init; }
+    }
+    public interface IGlobalSearchProvider
+    {
+        int Order { get; }
+        string FullResultsUrl(string query);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Shared.UI.Services.GlobalSearchHit>> SearchAsync(string query, int maxResults, System.Threading.CancellationToken cancellationToken);
+    }
+    public sealed class Notifier
+    {
+        public Notifier(MudBlazor.ISnackbar snackbar) { }
+        public void Error(string message) { }
+        public bool Handle(Barthazon.Shared.Kernel.Results.Result result, string? successMessage = null) { }
+        public void Info(string message) { }
+        public void Success(string message) { }
+        public void Warning(string message) { }
+    }
+    public static class SharedUiServiceCollectionExtensions
+    {
+        public static Microsoft.Extensions.DependencyInjection.IServiceCollection AddSharedUi(this Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
+        public static Microsoft.Extensions.DependencyInjection.IServiceCollection AddUiExtension(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, Barthazon.Shared.UI.Services.UiExtension extension) { }
+    }
+    public sealed class UiExtension : System.IEquatable<Barthazon.Shared.UI.Services.UiExtension>
+    {
+        public UiExtension(string Slot, System.Type ComponentType, string Title, int Order = 0, string? Icon = null) { }
+        public System.Type ComponentType { get; init; }
+        public string? Icon { get; init; }
+        public int Order { get; init; }
+        public string Slot { get; init; }
+        public string Title { get; init; }
+    }
+    public sealed class UiExtensionRegistry
+    {
+        public UiExtensionRegistry(System.Collections.Generic.IEnumerable<Barthazon.Shared.UI.Services.UiExtension> extensions) { }
+        public System.Collections.Generic.IReadOnlyList<Barthazon.Shared.UI.Services.UiExtension> For(string slot) { }
+    }
+    public static class UiSlots
+    {
+        public const string AdminSections = "admin-sections";
+        public const string CustomerDetails = "customer-details";
+        public const string ReferentialTabs = "referential-tabs";
+    }
+}
+namespace Barthazon.Shared.UI.Theme
+{
+    public class BrandStyles : Microsoft.AspNetCore.Components.ComponentBase
+    {
+        public BrandStyles() { }
+        [Microsoft.AspNetCore.Components.Parameter]
+        public bool IsDarkMode { get; set; }
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder @__builder) { }
+    }
+    public static class BrandTheme
+    {
+        public static MudBlazor.MudTheme Theme { get; }
+    }
+    public static class BrandTokens
+    {
+        public const string BorderRadius = "10px";
+        public const string BorderRadiusSmall = "6px";
+        public const string BottomBarHeight = "64px";
+        public const string TouchTarget = "48px";
+        public static readonly Barthazon.Shared.UI.Theme.BrandTokens.ColorSet Dark;
+        public static readonly string[] FontFamily;
+        public static readonly Barthazon.Shared.UI.Theme.BrandTokens.ColorSet Light;
+        [System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Text",
+                "Background",
+                "Lines"})]
+        public static readonly System.ValueTuple<string, string, string> Print;
+        public static string ToCssVariables(Barthazon.Shared.UI.Theme.BrandTokens.ColorSet colors) { }
+        public sealed class ColorSet : System.IEquatable<Barthazon.Shared.UI.Theme.BrandTokens.ColorSet>
+        {
+            public ColorSet(
+                        string Primary,
+                        string PrimaryContrast,
+                        string Accent,
+                        string AccentContrast,
+                        string AccentText,
+                        string Background,
+                        string Surface,
+                        string SurfaceAlt,
+                        string Text,
+                        string TextSecondary,
+                        string Success,
+                        string Warning,
+                        string Error,
+                        string Info,
+                        string Disabled,
+                        string Lines,
+                        string AppBar,
+                        string AppBarText,
+                        string Highlight,
+                        string Shadow,
+                        string Overlay) { }
+            public string Accent { get; init; }
+            public string AccentContrast { get; init; }
+            public string AccentText { get; init; }
+            public string AppBar { get; init; }
+            public string AppBarText { get; init; }
+            public string Background { get; init; }
+            public string Disabled { get; init; }
+            public string Error { get; init; }
+            public string Highlight { get; init; }
+            public string Info { get; init; }
+            public string Lines { get; init; }
+            public string Overlay { get; init; }
+            public string Primary { get; init; }
+            public string PrimaryContrast { get; init; }
+            public string Shadow { get; init; }
+            public string Success { get; init; }
+            public string Surface { get; init; }
+            public string SurfaceAlt { get; init; }
+            public string Text { get; init; }
+            public string TextSecondary { get; init; }
+            public string Warning { get; init; }
+        }
+    }
+}
+namespace Barthazon.Shared.UI
+{
+    public class _Imports
+    {
+        public _Imports() { }
+        protected void Execute() { }
+    }
+}

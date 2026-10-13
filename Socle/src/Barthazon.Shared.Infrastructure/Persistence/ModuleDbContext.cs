@@ -31,6 +31,12 @@ public abstract class ModuleDbContext : DbContext
         "RevisionsChangedAt", "CurrentRevisionId", "StorageKey", "Sha256",
     ];
 
+    /// <summary>
+    /// Propriétés dont la seule modification n'incrémente pas la version : une connexion ne doit pas faire
+    /// échouer l'enregistrement d'un administrateur qui modifie le compte au même moment.
+    /// </summary>
+    private static readonly HashSet<string> VersionNeutralProperties = [nameof(IAuditable.Version), "LastLoginAt"];
+
     /// <summary>Propriétés dont la valeur est masquée dans le journal.</summary>
     private static readonly HashSet<string> MaskedAuditProperties = ["PasswordHash", "SecurityStamp"];
 
@@ -144,6 +150,14 @@ public abstract class ModuleDbContext : DbContext
             var changes = DescribeChanges(entry);
             if (entry.State == EntityState.Modified && changes.Count == 0)
             {
+                // Seuls des champs techniques changent (ex. indice courant d'une pièce) : rien à journaliser,
+                // mais la version augmente quand même, sinon deux sessions concurrentes ne se verraient pas.
+                if (entry.Entity is IAuditable && entry.Properties.Any(p => p.IsModified && !VersionNeutralProperties.Contains(p.Metadata.Name)))
+                {
+                    var version = entry.Property(nameof(IAuditable.Version));
+                    version.CurrentValue = (long)version.OriginalValue! + 1;
+                }
+
                 continue;
             }
 

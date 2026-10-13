@@ -1,0 +1,97 @@
+namespace Barthazon.Referential.Contracts
+{
+    public sealed class CustomerSummary : System.IEquatable<Barthazon.Referential.Contracts.CustomerSummary>
+    {
+        public CustomerSummary(System.Guid Id, string Code, string Name, string? City, bool IsActive, bool IsArchived) { }
+        public string? City { get; init; }
+        public string Code { get; init; }
+        public string Display { get; }
+        public System.Guid Id { get; init; }
+        public bool IsActive { get; init; }
+        public bool IsArchived { get; init; }
+        public string Name { get; init; }
+    }
+    public interface ICustomerLookup
+    {
+        System.Threading.Tasks.Task<Barthazon.Referential.Contracts.CustomerSummary?> GetAsync(System.Guid id, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Barthazon.Referential.Contracts.CustomerSummary?> GetByCodeAsync(string code, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyDictionary<System.Guid, Barthazon.Referential.Contracts.CustomerSummary>> GetManyAsync(System.Collections.Generic.IEnumerable<System.Guid> ids, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Referential.Contracts.CustomerSummary>> ListAsync(bool includeArchived = false, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Barthazon.Shared.Kernel.Results.Result<Barthazon.Referential.Contracts.CustomerSummary>> QuickCreateAsync(string code, string name, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Referential.Contracts.CustomerSummary>> SearchAsync(string? query, int maxResults = 20, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IMachineLookup
+    {
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyDictionary<System.Guid, Barthazon.Referential.Contracts.MachineSummary>> GetManyAsync(System.Collections.Generic.IEnumerable<System.Guid> ids, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Referential.Contracts.MachineSummary>> ListAsync(bool includeArchived = false, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IMaterialLookup
+    {
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyDictionary<System.Guid, Barthazon.Referential.Contracts.MaterialSummary>> GetManyAsync(System.Collections.Generic.IEnumerable<System.Guid> ids, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Referential.Contracts.MaterialSummary>> ListAsync(bool includeArchived = false, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Barthazon.Shared.Kernel.Results.Result<Barthazon.Referential.Contracts.MaterialSummary>> QuickCreateAsync(string designation, string? grade, Barthazon.Referential.Contracts.MaterialFamily family, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IReferentialChangeObserver
+    {
+        System.Threading.Tasks.Task OnCustomerChangedAsync(System.Guid customerId, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task OnMaterialChangedAsync(System.Guid materialId, System.Threading.CancellationToken cancellationToken);
+    }
+    public interface IReferentialUsageProvider
+    {
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyDictionary<System.Guid, int>> CountUsagesAsync(Barthazon.Referential.Contracts.ReferentialItemKind kind, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public sealed class MachineSummary : System.IEquatable<Barthazon.Referential.Contracts.MachineSummary>
+    {
+        public MachineSummary(System.Guid Id, string Name, Barthazon.Referential.Contracts.MachineType Type, bool IsActive, bool IsArchived) { }
+        public System.Guid Id { get; init; }
+        public bool IsActive { get; init; }
+        public bool IsArchived { get; init; }
+        public string Name { get; init; }
+        public Barthazon.Referential.Contracts.MachineType Type { get; init; }
+    }
+    public enum MachineType
+    {
+        ConventionalLathe = 0,
+        CncLathe = 1,
+        ConventionalMill = 2,
+        CncMill = 3,
+        Drill = 4,
+        Grinder = 5,
+        Saw = 6,
+        Inspection = 7,
+        Other = 99,
+    }
+    public enum MaterialFamily
+    {
+        Steel = 0,
+        Stainless = 1,
+        Aluminium = 2,
+        CopperAlloy = 3,
+        CastIron = 4,
+        Plastic = 5,
+        Titanium = 6,
+        Other = 99,
+    }
+    public sealed class MaterialSummary : System.IEquatable<Barthazon.Referential.Contracts.MaterialSummary>
+    {
+        public MaterialSummary(System.Guid Id, string Designation, string? Grade, Barthazon.Referential.Contracts.MaterialFamily Family, decimal? DensityKgDm3, bool IsArchived) { }
+        public decimal? DensityKgDm3 { get; init; }
+        public string Designation { get; init; }
+        public string Display { get; }
+        public Barthazon.Referential.Contracts.MaterialFamily Family { get; init; }
+        public string? Grade { get; init; }
+        public System.Guid Id { get; init; }
+        public bool IsArchived { get; init; }
+    }
+    public static class ReferentialEnumLabels
+    {
+        public static string Label(this Barthazon.Referential.Contracts.MachineType type) { }
+        public static string Label(this Barthazon.Referential.Contracts.MaterialFamily family) { }
+    }
+    public enum ReferentialItemKind
+    {
+        Customer = 0,
+        Material = 1,
+        Machine = 2,
+    }
+}

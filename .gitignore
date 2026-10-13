@@ -16,3 +16,5 @@ publish/
 !**/Fixtures/*.db
 logs/
 node_modules/
+# Tests d'approbation d'API : fichiers produits en cas d'écart (à relire, puis renommer en .approved.txt)
+*.received.txt

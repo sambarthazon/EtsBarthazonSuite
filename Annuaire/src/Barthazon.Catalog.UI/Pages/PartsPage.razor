@@ -10,6 +10,7 @@
 @inject BrowserInterop Browser
 @inject Notifier Notifier
 @inject IPartStockInfoProvider StockProvider
+@inject IFeatureFlags Features
 
 <PageHeader Title="@CatalogTexts.PartsTitle" Subtitle="@(_result is null ? null : string.Format(CultureInfo.CurrentCulture, CatalogTexts.PartsSubtitle, _result.TotalCount))">
     <Actions>
@@ -124,7 +125,7 @@
                 <MudSwitch T="bool" Value="IncludeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@CatalogTexts.FilterArchived" />
             </MudItem>
             <MudItem xs="12" sm="6" md="4" Class="d-flex align-center">
-                <StockFilterPlaceholder />
+                <StockFilterPlaceholder Value="StockFilter" ValueChanged="v => NavigateAsync(stock: PartFilterQuery.StockFilterValue(v) ?? string.Empty, page: 1)" />
             </MudItem>
             <MudItem xs="12" Class="d-flex justify-end">
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.FilterListOff" OnClick="ClearFilters" Disabled="ActiveFilterCount == 0 && string.IsNullOrEmpty(Q)">@CatalogTexts.ClearFilters</MudButton>
@@ -245,6 +246,8 @@
 
     [SupplyParameterFromQuery(Name = "qualite")] public string? Qualite { get; set; }
 
+    [SupplyParameterFromQuery(Name = "stock")] public string? Stock { get; set; }
+
     [SupplyParameterFromQuery(Name = "tri")] public string? Tri { get; set; }
 
     [SupplyParameterFromQuery(Name = "ordre")] public string? Ordre { get; set; }
@@ -261,6 +264,8 @@
 
     private bool IncludeArchived => Archives == "1";
 
+    private PartStockFilter? StockFilter => Features.IsEnabled(FeatureNames.Stock) ? PartFilterQuery.ParseStockFilter(Stock) : null;
+
     private PartQualityIssue Quality => Enum.TryParse<PartQualityIssue>(Qualite, ignoreCase: true, out var quality) ? quality : PartQualityIssue.None;
 
     private IReadOnlyCollection<PartStatus> Statuses => (Statut ?? string.Empty)
@@ -274,7 +279,7 @@
     private int ActiveFilterCount =>
         (string.IsNullOrEmpty(Client) ? 0 : 1) + (Famille is null ? 0 : 1) + (Matiere is null ? 0 : 1) + (Statuses.Count > 0 ? 1 : 0)
         + (TagIds.Count > 0 ? 1 : 0) + (Machine is null ? 0 : 1) + (string.IsNullOrEmpty(Plan) ? 0 : 1) + (IncludeArchived ? 1 : 0)
-        + (Quality == PartQualityIssue.None ? 0 : 1);
+        + (Quality == PartQualityIssue.None ? 0 : 1) + (StockFilter is null ? 0 : 1);
 
     private IEnumerable<(string Key, string Label)> AllColumns =>
     [
@@ -300,6 +305,7 @@
         _filtersOpen = _filtersOpen || ActiveFilterCount > 0;
         _request = PartFilterQuery.Parse(new Uri(Navigation.Uri).Query, _customers) with
         {
+            StockFilter = StockFilter,
             PageIndex = PageNumber - 1,
             PageSize = PageSize,
         };
@@ -351,7 +357,7 @@
     /// <summary>Met à jour l'URL (lien partageable, bouton retour) ; une chaîne vide retire le paramètre.</summary>
     private Task NavigateAsync(
         string? q = null, string? client = null, string? famille = null, string? matiere = null, string? statut = null, string? etiquettes = null,
-        string? machine = null, string? plan = null, string? archives = null, string? qualite = null, string? tri = null, string? ordre = null, int? page = null)
+        string? machine = null, string? plan = null, string? archives = null, string? qualite = null, string? stock = null, string? tri = null, string? ordre = null, int? page = null)
     {
         var parameters = new Dictionary<string, object?>
         {
@@ -365,6 +371,7 @@
             ["plan"] = Pick(plan, Plan),
             ["archives"] = Pick(archives, Archives),
             ["qualite"] = Pick(qualite, Qualite),
+            ["stock"] = Pick(stock, Stock),
             ["tri"] = Pick(tri, Tri),
             ["ordre"] = Pick(ordre, Ordre),
             ["page"] = (page ?? PageNumber) is var p && p > 1 ? p.ToString(CultureInfo.InvariantCulture) : null,

@@ -6,6 +6,7 @@
 @inject ICurrentUser CurrentUser
 @inject NavigationManager Navigation
 @inject BrowserInterop Browser
+@inject IFeatureFlags Features
 
 <PageTitle>@CatalogTexts.DashboardTitle</PageTitle>
 <PageHeader Title="@CatalogTexts.DashboardTitle" Subtitle="@(_summary is null ? null : string.Format(CultureInfo.CurrentCulture, CatalogTexts.DashboardTotal, _summary.TotalParts))">
@@ -186,21 +187,17 @@
         </section>
     </MudItem>
 
-    @* Zones à venir (application Stock, Commandes & livraisons). *@
-    <MudItem xs="12" md="6">
-        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-threshold">
-            <h2 id="bz-dash-threshold" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" /> @CatalogTexts.BelowThresholdCard</h2>
-            <FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock">
-                <ChildContent><MudText Class="bz-muted">@CatalogTexts.NotAvailable</MudText></ChildContent>
-                <Placeholder>
-                    <ul class="bz-count-list pa-2">
-                        <li class="bz-count-row">@CatalogTexts.DemoBelowThreshold1</li>
-                        <li class="bz-count-row">@CatalogTexts.DemoBelowThreshold2</li>
-                    </ul>
-                </Placeholder>
-            </FeatureGate>
-        </section>
-    </MudItem>
+    @* Cartes fournies par d'autres applications (ex. Stock) ; à défaut, carte « Pièces sous le seuil » (zone à venir). *@
+    @if (Features.IsEnabled(FeatureNames.Stock))
+    {
+        <UiSlot Name="@CatalogUiSlots.DashboardCards" ItemTemplate="DashboardCardTemplate">
+            <Fallback>@BelowThresholdCard</Fallback>
+        </UiSlot>
+    }
+    else
+    {
+        @BelowThresholdCard
+    }
 
     <MudItem xs="12" md="6">
         <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-deliveries">
@@ -275,5 +272,28 @@
                 </span>
             </a>
         </li>
+    };
+
+    private static readonly RenderFragment<(UiExtension Extension, RenderFragment Content)> DashboardCardTemplate = item => __builder =>
+    {
+        <MudItem xs="12" md="6">@item.Content</MudItem>
+    };
+
+    private static readonly RenderFragment BelowThresholdCard = __builder =>
+    {
+    <MudItem xs="12" md="6">
+        <section class="bz-card bz-dashboard-card" aria-labelledby="bz-dash-threshold">
+            <h2 id="bz-dash-threshold" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" /> @CatalogTexts.BelowThresholdCard</h2>
+            <FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock">
+                <ChildContent><MudText Class="bz-muted">@CatalogTexts.NotAvailable</MudText></ChildContent>
+                <Placeholder>
+                    <ul class="bz-count-list pa-2">
+                        <li class="bz-count-row">@CatalogTexts.DemoBelowThreshold1</li>
+                        <li class="bz-count-row">@CatalogTexts.DemoBelowThreshold2</li>
+                    </ul>
+                </Placeholder>
+            </FeatureGate>
+        </section>
+    </MudItem>
     };
 }

@@ -20,4 +20,7 @@ public interface IPartLookup
     Task<PartSummary?> GetByReferenceAsync(string internalReference, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<PartSummary>> SearchAsync(string? query, int maxResults = 20, CancellationToken cancellationToken = default);
+
+    /// <summary>Plusieurs pièces d'un coup (archivées comprises) ; les identifiants inconnus sont absents du résultat.</summary>
+    Task<IReadOnlyDictionary<Guid, PartSummary>> GetManyAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
 }

@@ -1,0 +1,212 @@
+namespace Barthazon.Catalog.Contracts
+{
+    public enum BlankShape
+    {
+        Round = 0,
+        Square = 1,
+        Flat = 2,
+        Hexagonal = 3,
+        Tube = 4,
+        Sheet = 5,
+        Block = 6,
+        CastOrForged = 7,
+        Other = 99,
+    }
+    public static class CatalogUiSlots
+    {
+        public const string DashboardCards = "catalog.dashboard.cards";
+        public const string PartStockTab = "catalog.part.stock";
+    }
+    public enum ChangeOrigin
+    {
+        CustomerRequest = 0,
+        Correction = 1,
+        InternalImprovement = 2,
+        Creation = 3,
+        Other = 99,
+    }
+    public enum DocumentKind
+    {
+        File = 0,
+        Paper = 1,
+    }
+    public enum DocumentType
+    {
+        Drawing = 0,
+        Model3D = 1,
+        NcProgram = 2,
+        InspectionSheet = 3,
+        Photo = 4,
+        Routing = 5,
+        Certificate = 6,
+        Other = 99,
+    }
+    public interface IPartDeliveryInfoProvider
+    {
+        bool IsAvailable { get; }
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Catalog.Contracts.PartDeliveryInfo>> GetHistoryAsync(System.Guid partId, int maxResults = 20, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IPartLookup
+    {
+        System.Threading.Tasks.Task<Barthazon.Catalog.Contracts.PartSummary?> GetAsync(System.Guid id, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Barthazon.Catalog.Contracts.PartSummary?> GetByReferenceAsync(string internalReference, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyDictionary<System.Guid, Barthazon.Catalog.Contracts.PartSummary>> GetManyAsync(System.Collections.Generic.IEnumerable<System.Guid> ids, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Catalog.Contracts.PartSummary>> SearchAsync(string? query, int maxResults = 20, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IPartOrderInfoProvider
+    {
+        bool IsAvailable { get; }
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Catalog.Contracts.PartOrderInfo>> GetOpenOrdersAsync(System.Guid partId, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IPartRoutingLookup
+    {
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Catalog.Contracts.PartRevisionSummary>> GetRevisionsAsync(System.Guid partId, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Barthazon.Catalog.Contracts.RevisionRouting?> GetRoutingAsync(System.Guid revisionId, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IPartStockFilterProvider
+    {
+        bool IsAvailable { get; }
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlySet<System.Guid>> GetPartIdsAsync(Barthazon.Catalog.Contracts.PartStockFilter filter, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IPartStockInfoProvider
+    {
+        bool IsAvailable { get; }
+        System.Threading.Tasks.Task<Barthazon.Catalog.Contracts.PartStockInfo?> GetAsync(System.Guid partId, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyDictionary<System.Guid, Barthazon.Catalog.Contracts.PartStockInfo>> GetManyAsync(System.Collections.Generic.IEnumerable<System.Guid> partIds, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public enum OperationType
+    {
+        Cutting = 0,
+        Turning = 1,
+        Milling = 2,
+        DrillingTapping = 3,
+        Grinding = 4,
+        Deburring = 5,
+        Treatment = 6,
+        Inspection = 7,
+        Subcontracting = 8,
+        Other = 99,
+    }
+    public sealed class PartDeliveryInfo : System.IEquatable<Barthazon.Catalog.Contracts.PartDeliveryInfo>
+    {
+        public PartDeliveryInfo(System.DateOnly Date, decimal Quantity, string? DeliveryNoteNumber, string? CustomerName) { }
+        public string? CustomerName { get; init; }
+        public System.DateOnly Date { get; init; }
+        public string? DeliveryNoteNumber { get; init; }
+        public decimal Quantity { get; init; }
+    }
+    public enum PartLinkType
+    {
+        ComponentOf = 0,
+        Replaces = 1,
+        Variant = 2,
+        Related = 3,
+    }
+    public sealed class PartOrderInfo : System.IEquatable<Barthazon.Catalog.Contracts.PartOrderInfo>
+    {
+        public PartOrderInfo(string OrderNumber, System.DateOnly? DueDate, decimal OrderedQuantity, decimal RemainingQuantity, string? CustomerName) { }
+        public string? CustomerName { get; init; }
+        public System.DateOnly? DueDate { get; init; }
+        public string OrderNumber { get; init; }
+        public decimal OrderedQuantity { get; init; }
+        public decimal RemainingQuantity { get; init; }
+    }
+    public sealed class PartRevisionSummary : System.IEquatable<Barthazon.Catalog.Contracts.PartRevisionSummary>
+    {
+        public PartRevisionSummary(System.Guid Id, System.Guid PartId, string Index, Barthazon.Catalog.Contracts.RevisionStatus Status, System.DateOnly? EffectiveDate, System.Guid? MaterialId, Barthazon.Catalog.Contracts.BlankShape? BlankShape, string? BlankDimensions) { }
+        public string? BlankDimensions { get; init; }
+        public Barthazon.Catalog.Contracts.BlankShape? BlankShape { get; init; }
+        public System.DateOnly? EffectiveDate { get; init; }
+        public System.Guid Id { get; init; }
+        public string Index { get; init; }
+        public System.Guid? MaterialId { get; init; }
+        public System.Guid PartId { get; init; }
+        public Barthazon.Catalog.Contracts.RevisionStatus Status { get; init; }
+    }
+    public enum PartStatus
+    {
+        Prototype = 0,
+        Active = 1,
+        Dormant = 2,
+        Obsolete = 3,
+    }
+    public enum PartStockFilter
+    {
+        OutOfStock = 0,
+        BelowThreshold = 1,
+    }
+    public sealed class PartStockInfo : System.IEquatable<Barthazon.Catalog.Contracts.PartStockInfo>
+    {
+        public PartStockInfo(decimal Quantity, string? Unit, string? Location, decimal? MinimumThreshold, decimal? Value) { }
+        public bool IsBelowThreshold { get; }
+        public bool IsOutOfStock { get; }
+        public string? Location { get; init; }
+        public decimal? MinimumThreshold { get; init; }
+        public decimal Quantity { get; init; }
+        public string? Unit { get; init; }
+        public decimal? Value { get; init; }
+    }
+    public sealed class PartSummary : System.IEquatable<Barthazon.Catalog.Contracts.PartSummary>
+    {
+        public PartSummary(System.Guid Id, string InternalReference, string Designation, System.Guid CustomerId, string? CustomerReference, string? CurrentRevisionIndex, Barthazon.Catalog.Contracts.RevisionStatus? CurrentRevisionStatus, Barthazon.Catalog.Contracts.PartStatus Status, bool IsArchived) { }
+        public string? CurrentRevisionIndex { get; init; }
+        public Barthazon.Catalog.Contracts.RevisionStatus? CurrentRevisionStatus { get; init; }
+        public System.Guid CustomerId { get; init; }
+        public string? CustomerReference { get; init; }
+        public string Designation { get; init; }
+        public System.Guid Id { get; init; }
+        public string InternalReference { get; init; }
+        public bool IsArchived { get; init; }
+        public Barthazon.Catalog.Contracts.PartStatus Status { get; init; }
+    }
+    public sealed class RevisionRouting : System.IEquatable<Barthazon.Catalog.Contracts.RevisionRouting>
+    {
+        public RevisionRouting(Barthazon.Catalog.Contracts.PartRevisionSummary Revision, System.Collections.Generic.IReadOnlyList<Barthazon.Catalog.Contracts.RoutingOperationSummary> Operations) { }
+        public System.Collections.Generic.IReadOnlyList<Barthazon.Catalog.Contracts.RoutingOperationSummary> Operations { get; init; }
+        public Barthazon.Catalog.Contracts.PartRevisionSummary Revision { get; init; }
+    }
+    public enum RevisionStatus
+    {
+        Draft = 0,
+        InForce = 1,
+        Superseded = 2,
+        Cancelled = 3,
+    }
+    public sealed class RoutingOperationSummary : System.IEquatable<Barthazon.Catalog.Contracts.RoutingOperationSummary>
+    {
+        public RoutingOperationSummary(System.Guid Id, int Number, Barthazon.Catalog.Contracts.OperationType Type, System.Guid? MachineId, string? Description, decimal? SetupTimeMin, decimal? CycleTimeMin, string? Subcontractor) { }
+        public decimal? CycleTimeMin { get; init; }
+        public string? Description { get; init; }
+        public System.Guid Id { get; init; }
+        public System.Guid? MachineId { get; init; }
+        public int Number { get; init; }
+        public decimal? SetupTimeMin { get; init; }
+        public string? Subcontractor { get; init; }
+        public Barthazon.Catalog.Contracts.OperationType Type { get; init; }
+    }
+    public enum TagColor
+    {
+        Neutral = 0,
+        Primary = 1,
+        Accent = 2,
+        Success = 3,
+        Warning = 4,
+        Error = 5,
+        Info = 6,
+    }
+    public sealed class UnavailablePartInfoProvider : Barthazon.Catalog.Contracts.IPartDeliveryInfoProvider, Barthazon.Catalog.Contracts.IPartOrderInfoProvider, Barthazon.Catalog.Contracts.IPartStockInfoProvider
+    {
+        public UnavailablePartInfoProvider() { }
+        public bool IsAvailable { get; }
+        public System.Threading.Tasks.Task<Barthazon.Catalog.Contracts.PartStockInfo?> GetAsync(System.Guid partId, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Catalog.Contracts.PartDeliveryInfo>> GetHistoryAsync(System.Guid partId, int maxResults = 20, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyDictionary<System.Guid, Barthazon.Catalog.Contracts.PartStockInfo>> GetManyAsync(System.Collections.Generic.IEnumerable<System.Guid> partIds, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Catalog.Contracts.PartOrderInfo>> GetOpenOrdersAsync(System.Guid partId, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public sealed class UnavailablePartStockFilterProvider : Barthazon.Catalog.Contracts.IPartStockFilterProvider
+    {
+        public UnavailablePartStockFilterProvider() { }
+        public bool IsAvailable { get; }
+        public System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlySet<System.Guid>> GetPartIdsAsync(Barthazon.Catalog.Contracts.PartStockFilter filter, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+}

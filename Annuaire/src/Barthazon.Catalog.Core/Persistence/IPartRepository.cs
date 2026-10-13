@@ -75,6 +75,9 @@ public interface IPartRepository : IRepository<Part>
     /// <summary>Pièce complète : indices, caractéristiques, gamme, documents, étiquettes.</summary>
     Task<Part?> GetAggregateAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>Pièce complète contenant l'indice donné.</summary>
+    Task<Part?> GetAggregateByRevisionIdAsync(Guid revisionId, CancellationToken cancellationToken = default);
+
     Task<Part?> GetAggregateByReferenceAsync(string internalReference, CancellationToken cancellationToken = default);
 
     /// <summary>Toutes les références internes (contrôle d'unicité insensible à la casse, proposition de référence).</summary>

@@ -52,6 +52,7 @@ internal sealed partial class PartService(
     IApplicationSettingsStore settings,
     IAuditReader auditReader,
     PartSearchIndexer indexer,
+    IPartStockFilterProvider stockFilter,
     TimeProvider timeProvider) : IPartService, IPartLookup
 {
     private static readonly HashSet<string> ReservedReferences = new(StringComparer.OrdinalIgnoreCase)
@@ -68,8 +69,15 @@ internal sealed partial class PartService(
             return Result<PagedResult<PartListItem>>.Failure(allowed.Errors);
         }
 
+        var query = ToQuery(request);
+        if (request.StockFilter is { } filter && stockFilter.IsAvailable)
+        {
+            var ids = await stockFilter.GetPartIdsAsync(filter, cancellationToken);
+            query = query with { Ids = query.Ids is null ? ids.ToList() : query.Ids.Intersect(ids).ToList() };
+        }
+
         await using var uow = unitOfWorkFactory.Create();
-        var rows = await uow.Parts.SearchAsync(ToQuery(request), cancellationToken);
+        var rows = await uow.Parts.SearchAsync(query, cancellationToken);
         var items = await ToListItemsAsync(uow, rows, cancellationToken);
         var sorted = Sort(items, request.Sort, request.Descending).ToList();
         var pageSize = Math.Clamp(request.PageSize, 1, 10_000);
@@ -329,6 +337,20 @@ internal sealed partial class PartService(
         return rows.OrderBy(r => r.InternalReference, StringComparer.OrdinalIgnoreCase).Take(maxResults).Select(ToSummary).ToList();
     }
 
+    async Task<IReadOnlyDictionary<Guid, PartSummary>> IPartLookup.GetManyAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        var wanted = ids.ToHashSet();
+        if (wanted.Count == 0)
+        {
+            return new Dictionary<Guid, PartSummary>();
+        }
+
+        await using var uow = unitOfWorkFactory.Create();
+        var rows = await uow.Parts.SearchAsync(new PartQuery { Ids = wanted, IncludeArchived = true }, cancellationToken);
+        return rows.ToDictionary(r => r.Id, ToSummary);
+    }
+
     // ----- Outils -----
 
     /// <summary>Règle de forme de la référence interne (elle sert dans l'adresse de la fiche), ou null si elle est correcte.</summary>
@@ -365,6 +387,7 @@ internal sealed partial class PartService(
         HasDrawing = r.HasDrawing,
         IncludeArchived = r.IncludeArchived,
         Quality = r.Quality,
+        Ids = r.RestrictToPartIds,
     };
 
     private static IEnumerable<PartListItem> Sort(IEnumerable<PartListItem> items, PartSort sort, bool descending)

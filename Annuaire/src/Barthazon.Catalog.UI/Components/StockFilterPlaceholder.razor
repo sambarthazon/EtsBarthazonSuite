@@ -1,13 +1,20 @@
-@* Filtre « En rupture » : grisé tant que l'application Stock n'existe pas. *@
+@* Filtre de stock de la liste (« En rupture », « Sous le seuil ») : grisé tant que l'application Stock n'est pas active. *@
 <FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock" Inline="true">
     <ChildContent>
-        <MudSwitch T="bool" Value="Value" ValueChanged="ValueChanged" Color="Color.Warning" Label="@CatalogTexts.OutOfStockFilter" />
+        <MudSelect T="string" Value="@(PartFilterQuery.StockFilterValue(Value) ?? string.Empty)" ValueChanged="OnChangedAsync"
+                   Label="@CatalogTexts.FilterStock" Variant="Variant.Outlined" Margin="Margin.Dense">
+            <MudSelectItem T="string" Value="@string.Empty">@CatalogTexts.FilterStockAll</MudSelectItem>
+            <MudSelectItem T="string" Value="@("rupture")">@CatalogTexts.OutOfStockFilter</MudSelectItem>
+            <MudSelectItem T="string" Value="@("seuil")">@CatalogTexts.BelowThresholdFilter</MudSelectItem>
+        </MudSelect>
     </ChildContent>
     <Placeholder>@CatalogTexts.OutOfStockFilter</Placeholder>
 </FeatureGate>
 
 @code {
-    [Parameter] public bool Value { get; set; }
+    [Parameter] public PartStockFilter? Value { get; set; }
 
-    [Parameter] public EventCallback<bool> ValueChanged { get; set; }
+    [Parameter] public EventCallback<PartStockFilter?> ValueChanged { get; set; }
+
+    private Task OnChangedAsync(string? value) => ValueChanged.InvokeAsync(PartFilterQuery.ParseStockFilter(value));
 }

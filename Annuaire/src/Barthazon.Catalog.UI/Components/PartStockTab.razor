@@ -2,19 +2,24 @@
 
 <FeatureGate Feature="@FeatureNames.Stock" Application="@CatalogTexts.AppStock">
     <ChildContent>
-        @if (_stock is null)
-        {
-            <MudAlert Severity="Severity.Info">@CatalogTexts.NotAvailable</MudAlert>
-        }
-        else
-        {
-            <div class="bz-fields">
-                <FieldView Label="@CatalogTexts.StockQuantity" Value="@($"{CatalogLabels.Number(_stock.Quantity)} {_stock.Unit}")" />
-                <FieldView Label="@CatalogTexts.StockLocation" Value="@_stock.Location" />
-                <FieldView Label="@CatalogTexts.StockThreshold" Value="@CatalogLabels.Number(_stock.MinimumThreshold)" />
-                <FieldView Label="@CatalogTexts.StockValue" Value="@_stock.Value?.ToString("C", CultureInfo.CurrentCulture)" />
-            </div>
-        }
+        @* Emplacement rempli par l'application Stock ; à défaut, résumé du point d'extension IPartStockInfoProvider. *@
+        <UiSlot Name="@CatalogUiSlots.PartStockTab" Parameters="_slotParameters">
+            <Fallback>
+                @if (_stock is null)
+                {
+                    <MudAlert Severity="Severity.Info">@CatalogTexts.NotAvailable</MudAlert>
+                }
+                else
+                {
+                    <div class="bz-fields">
+                        <FieldView Label="@CatalogTexts.StockQuantity" Value="@($"{CatalogLabels.Number(_stock.Quantity)} {_stock.Unit}")" />
+                        <FieldView Label="@CatalogTexts.StockLocation" Value="@_stock.Location" />
+                        <FieldView Label="@CatalogTexts.StockThreshold" Value="@CatalogLabels.Number(_stock.MinimumThreshold)" />
+                        <FieldView Label="@CatalogTexts.StockValue" Value="@_stock.Value?.ToString("C", CultureInfo.CurrentCulture)" />
+                    </div>
+                }
+            </Fallback>
+        </UiSlot>
     </ChildContent>
     <Placeholder>
         <div class="bz-fields pa-4">
@@ -28,8 +33,13 @@
 
 @code {
     private PartStockInfo? _stock;
+    private Dictionary<string, object> _slotParameters = new();
 
     [Parameter] public Guid PartId { get; set; }
 
-    protected override async Task OnParametersSetAsync() => _stock = await StockProvider.GetAsync(PartId);
+    protected override async Task OnParametersSetAsync()
+    {
+        _slotParameters = new Dictionary<string, object> { ["PartId"] = PartId };
+        _stock = await StockProvider.GetAsync(PartId);
+    }
 }

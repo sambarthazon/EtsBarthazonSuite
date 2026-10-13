@@ -8,7 +8,7 @@ Voir d'abord le `CLAUDE.md` à la racine du dépôt (carte, règles entre applic
 
 | Projet | Rôle |
 |---|---|
-| `Barthazon.Catalog.Contracts` | Ce que les autres applications ont le droit d'utiliser : `IPartLookup`, énumérations, points d'extension (`IPartStockInfoProvider`…). **N'évolue que par ajout.** |
+| `Barthazon.Catalog.Contracts` | Ce que les autres applications ont le droit d'utiliser : `IPartLookup` (dont `GetManyAsync`), `IPartRoutingLookup` (gamme d'un indice), énumérations, points d'extension (`IPartStockInfoProvider`, `IPartStockFilterProvider`…) et noms des emplacements d'interface (`CatalogUiSlots`). **N'évolue que par ajout** (API figée par `PublicApiTests`). |
 | `Barthazon.Catalog.Core` | Entités (pièce, indices, gamme, documents), règles, services applicatifs |
 | `Barthazon.Catalog.Infrastructure` | `CatalogDbContext` (tables `cat_`, historique `__ef_migrations_catalog`), mappings, repositories, Excel |
 | `Barthazon.Catalog.Migrations.Sqlite` / `.Postgres` | Migrations de l'annuaire, par fournisseur |
@@ -31,3 +31,5 @@ En développement, la base, les fichiers, les sauvegardes et les journaux sont d
 - Services : `Result` / `Result<T>`, droits via `IAccessGuard`, validation des entrées.
 - Entités : identifiant `Guid`, champs d'audit automatiques, archivage (`IsArchived`) au lieu de suppression, jeton de concurrence `Version`. Tables préfixées `cat_`.
 - Textes dans `Resources/*.resx` (ex. `CatalogTexts`) ; couleurs uniquement via `var(--bz-…)` ou les couleurs MudBlazor.
+- Emplacements exposés (`CatalogUiSlots`) : `PartStockTab` (onglet Stock de la fiche, paramètre `PartId`) et `DashboardCards` (cartes du tableau de bord). Sans composant inséré, l'annuaire affiche son contenu par défaut (`UiSlot` + `Fallback`).
+- Filtre « Stock » de la liste (`?stock=rupture|seuil`, grisé sans `Features:Stock`) : résolu dans `PartService` par `IPartStockFilterProvider` ; ignoré tant qu'aucune application ne le fournit.

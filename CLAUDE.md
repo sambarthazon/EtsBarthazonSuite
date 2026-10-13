@@ -33,7 +33,7 @@ Fichiers communs à la racine : `Barthazon.sln` (tout), filtres `Socle.slnf`, `A
 - Un projet `*.Contracts` ne référence que `Shared.Kernel` et d'autres `*.Contracts`. **Les contrats n'évoluent que par ajout** (nouvelle interface plutôt que changement de signature).
 - Données : une seule base, mais **un contexte EF Core, des migrations et une table d'historique par application** (`__ef_migrations_socle`, `_catalog`, `_stock`) ; tables préfixées (`sys_`/`ref_` socle, `cat_` annuaire, `stk_` stock), **aucune clé étrangère entre applications**, une opération n'écrit que dans les tables de son application. Voir `Socle/CLAUDE.md`.
 - Interface : une application expose des **emplacements** (`UiSlot`) ; une autre y insère ses composants. L'annuaire ne mentionne jamais le stock dans son code.
-- Ces règles sont vérifiées par `Portail/tests/Barthazon.Architecture.Tests`.
+- Ces règles sont vérifiées par `Portail/tests/Barthazon.Architecture.Tests`, y compris l'API publique des contrats et du socle (`PublicApiTests`, références dans `ApprovedApi/*.approved.txt`). En cas d'écart, le test écrit un fichier `*.received.txt` : vérifier que le changement est **purement additif**, puis le renommer en `.approved.txt`.
 
 ## Matrice d'impact
 

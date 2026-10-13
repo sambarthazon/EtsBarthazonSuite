@@ -521,4 +521,7 @@
   <data name="RemoveLink" xml:space="preserve"><value>Supprimer le lien</value></data>
   <data name="RemoveLinkConfirm" xml:space="preserve"><value>Supprimer le lien « {0} » avec la pièce {1} ?</value></data>
   <data name="LinkThisPart" xml:space="preserve"><value>Cette pièce…</value></data>
+  <data name="FilterStock" xml:space="preserve"><value>Stock</value></data>
+  <data name="FilterStockAll" xml:space="preserve"><value>Tout</value></data>
+  <data name="BelowThresholdFilter" xml:space="preserve"><value>Sous le seuil</value></data>
 </root>

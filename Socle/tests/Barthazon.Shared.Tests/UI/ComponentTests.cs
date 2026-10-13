@@ -145,3 +145,40 @@ public sealed class FormStateTests
         state.HasConflict.Should().BeTrue();
     }
 }
+
+public sealed class UiSlotTests : BunitContext
+{
+    private sealed class FakeExtension : ComponentBase
+    {
+        [Parameter] public Guid PartId { get; set; }
+
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder) =>
+            builder.AddContent(0, $"extension {PartId}");
+    }
+
+    public UiSlotTests() => JSInterop.Mode = JSRuntimeMode.Loose;
+
+    [Fact]
+    public void Empty_slot_shows_its_fallback()
+    {
+        Services.AddSingleton(new Barthazon.Shared.UI.Services.UiExtensionRegistry([]));
+
+        var cut = Render<UiSlot>(p => p.Add(x => x.Name, "test.slot").Add(x => x.Fallback, (RenderFragment)(b => b.AddContent(0, "repli"))));
+
+        cut.Markup.Should().Contain("repli");
+    }
+
+    [Fact]
+    public void Filled_slot_renders_extensions_with_parameters_and_hides_fallback()
+    {
+        var id = Guid.NewGuid();
+        Services.AddSingleton(new Barthazon.Shared.UI.Services.UiExtensionRegistry([new Barthazon.Shared.UI.Services.UiExtension("test.slot", typeof(FakeExtension), "Test")]));
+
+        var cut = Render<UiSlot>(p => p
+            .Add(x => x.Name, "test.slot")
+            .Add(x => x.Parameters, new Dictionary<string, object> { ["PartId"] = id })
+            .Add(x => x.Fallback, (RenderFragment)(b => b.AddContent(0, "repli"))));
+
+        cut.Markup.Should().Contain($"extension {id}").And.NotContain("repli");
+    }
+}

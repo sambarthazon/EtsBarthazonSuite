@@ -1,6 +1,10 @@
 @inject UiExtensionRegistry Registry
 
 @* Emplacement d'extension : affiche les composants déclarés par les autres modules pour cet emplacement. *@
+@if (Registry.For(Name).Count == 0)
+{
+    @Fallback
+}
 @foreach (var extension in Registry.For(Name))
 {
     @if (ItemTemplate is not null)
@@ -17,6 +21,9 @@
     [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
 
     [Parameter] public IDictionary<string, object>? Parameters { get; set; }
+
+    /// <summary>Contenu affiché quand aucun module n'a fourni de composant pour cet emplacement.</summary>
+    [Parameter] public RenderFragment? Fallback { get; set; }
 
     /// <summary>Gabarit optionnel autour de chaque extension (ex. un onglet).</summary>
     [Parameter] public RenderFragment<(UiExtension Extension, RenderFragment Content)>? ItemTemplate { get; set; }

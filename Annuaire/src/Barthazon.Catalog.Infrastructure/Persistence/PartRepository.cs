@@ -19,6 +19,9 @@ internal sealed class PartRepository(CatalogDbContext context) : EfRepository<Pa
     public Task<Part?> GetAggregateAsync(Guid id, CancellationToken cancellationToken = default) =>
         Aggregate.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
+    public Task<Part?> GetAggregateByRevisionIdAsync(Guid revisionId, CancellationToken cancellationToken = default) =>
+        Aggregate.FirstOrDefaultAsync(p => p.Revisions.Any(r => r.Id == revisionId), cancellationToken);
+
     public Task<Part?> GetAggregateByReferenceAsync(string internalReference, CancellationToken cancellationToken = default) =>
         Aggregate.FirstOrDefaultAsync(p => p.InternalReference == internalReference, cancellationToken);
 

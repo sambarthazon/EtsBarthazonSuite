@@ -1,0 +1,373 @@
+namespace Barthazon.Shared.Kernel.Auditing
+{
+    public static class AuditActions
+    {
+        public const string Archived = "Archived";
+        public const string Created = "Created";
+        public const string Deleted = "Deleted";
+        public const string DocumentAdded = "DocumentAdded";
+        public const string DocumentRemoved = "DocumentRemoved";
+        public const string Imported = "Imported";
+        public const string LoggedIn = "LoggedIn";
+        public const string PutInForce = "PutInForce";
+        public const string Restored = "Restored";
+        public const string Updated = "Updated";
+    }
+    public sealed class AuditEntry
+    {
+        public AuditEntry() { }
+        public string Action { get; set; }
+        public System.DateTimeOffset At { get; set; }
+        public string? Details { get; set; }
+        public System.Guid EntityId { get; set; }
+        public string EntityType { get; set; }
+        public System.Guid Id { get; set; }
+        public System.Guid? ParentId { get; set; }
+        public string? ParentType { get; set; }
+        public string? UserName { get; set; }
+    }
+    public sealed class AuditQuery : System.IEquatable<Barthazon.Shared.Kernel.Auditing.AuditQuery>
+    {
+        public AuditQuery(string? EntityType = null, System.Guid? EntityOrParentId = default, string? UserName = null, System.DateTimeOffset? From = default, System.DateTimeOffset? To = default, int Skip = 0, int Take = 100) { }
+        public System.Guid? EntityOrParentId { get; init; }
+        public string? EntityType { get; init; }
+        public System.DateTimeOffset? From { get; init; }
+        public int Skip { get; init; }
+        public int Take { get; init; }
+        public System.DateTimeOffset? To { get; init; }
+        public string? UserName { get; init; }
+    }
+    public interface IAuditReader
+    {
+        System.Threading.Tasks.Task<Barthazon.Shared.Kernel.Persistence.PagedResult<Barthazon.Shared.Kernel.Auditing.AuditEntry>> QueryAsync(Barthazon.Shared.Kernel.Auditing.AuditQuery query, System.Threading.CancellationToken cancellationToken = default);
+    }
+}
+namespace Barthazon.Shared.Kernel.Domain
+{
+    public abstract class AuditableEntity : Barthazon.Shared.Kernel.Domain.Entity, Barthazon.Shared.Kernel.Domain.IArchivable, Barthazon.Shared.Kernel.Domain.IAuditable
+    {
+        protected AuditableEntity() { }
+        protected AuditableEntity(System.Guid id) { }
+        public System.DateTimeOffset CreatedAt { get; }
+        public string? CreatedBy { get; }
+        public bool IsArchived { get; }
+        public System.DateTimeOffset UpdatedAt { get; }
+        public string? UpdatedBy { get; }
+        public long Version { get; }
+        public virtual void Archive() { }
+        public virtual void Restore() { }
+        public void StampCreated(System.DateTimeOffset at, string? by) { }
+        public void StampUpdated(System.DateTimeOffset at, string? by) { }
+    }
+    public abstract class Entity
+    {
+        protected Entity() { }
+        protected Entity(System.Guid id) { }
+        public System.Guid Id { get; protected set; }
+    }
+    public interface IArchivable
+    {
+        bool IsArchived { get; }
+        void Archive();
+        void Restore();
+    }
+    public interface IAuditChild
+    {
+        System.Guid AuditParentId { get; }
+        string AuditParentType { get; }
+    }
+    public interface IAuditable
+    {
+        System.DateTimeOffset CreatedAt { get; }
+        string? CreatedBy { get; }
+        System.DateTimeOffset UpdatedAt { get; }
+        string? UpdatedBy { get; }
+        long Version { get; }
+        void StampCreated(System.DateTimeOffset at, string? by);
+        void StampUpdated(System.DateTimeOffset at, string? by);
+    }
+}
+namespace Barthazon.Shared.Kernel.Features
+{
+    public static class FeatureNames
+    {
+        public const string Deliveries = "Deliveries";
+        public const string Orders = "Orders";
+        public const string Stock = "Stock";
+        public const string TimeTracking = "TimeTracking";
+    }
+    public interface IFeatureFlags
+    {
+        bool IsEnabled(string featureName);
+    }
+}
+namespace Barthazon.Shared.Kernel.Files
+{
+    public static class FileNames
+    {
+        public static string Sanitize(string fileName, int maxLength = 80) { }
+    }
+    public sealed class FileStorageLimits : System.IEquatable<Barthazon.Shared.Kernel.Files.FileStorageLimits>
+    {
+        public FileStorageLimits(long MaxFileSizeBytes) { }
+        public long MaxFileSizeBytes { get; init; }
+        public int MaxFileSizeMb { get; }
+    }
+    public sealed class FileTooLargeException : System.Exception
+    {
+        public FileTooLargeException() { }
+        public FileTooLargeException(string message) { }
+        public FileTooLargeException(string message, System.Exception innerException) { }
+    }
+    public interface IFileStorage
+    {
+        System.Threading.Tasks.Task DeleteAsync(string storageKey, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<bool> ExistsAsync(string storageKey, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.IO.Stream> OpenReadAsync(string storageKey, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Barthazon.Shared.Kernel.Files.StoredFile> SaveAsync(string storageKey, System.IO.Stream content, long maxSizeBytes, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public sealed class StoredFile : System.IEquatable<Barthazon.Shared.Kernel.Files.StoredFile>
+    {
+        public StoredFile(string StorageKey, long SizeBytes, string Sha256) { }
+        public string Sha256 { get; init; }
+        public long SizeBytes { get; init; }
+        public string StorageKey { get; init; }
+    }
+}
+namespace Barthazon.Shared.Kernel.Modules
+{
+    public sealed class ComingSoonModule : Barthazon.Shared.Kernel.Modules.IModule
+    {
+        public ComingSoonModule(string key, string displayName, string description, string icon, int order) { }
+        public string Description { get; }
+        public string DisplayName { get; }
+        public string EntryRoute { get; }
+        public string Icon { get; }
+        public bool IsApplication { get; }
+        public string Key { get; }
+        public System.Collections.Generic.IReadOnlyList<Barthazon.Shared.Kernel.Modules.ModuleMenuItem> MenuItems { get; }
+        public int Order { get; }
+        public System.Collections.Generic.IReadOnlyList<string> RoutePrefixes { get; }
+        public Barthazon.Shared.Kernel.Modules.ModuleState State { get; }
+        public System.Reflection.Assembly? UiAssembly { get; }
+        public void ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection services, Microsoft.Extensions.Configuration.IConfiguration configuration) { }
+    }
+    public interface IModule
+    {
+        string Description { get; }
+        string DisplayName { get; }
+        string EntryRoute { get; }
+        string Icon { get; }
+        bool IsApplication { get; }
+        string Key { get; }
+        System.Collections.Generic.IReadOnlyList<Barthazon.Shared.Kernel.Modules.ModuleMenuItem> MenuItems { get; }
+        int Order { get; }
+        System.Collections.Generic.IReadOnlyList<string> RoutePrefixes { get; }
+        Barthazon.Shared.Kernel.Modules.ModuleState State { get; }
+        System.Reflection.Assembly? UiAssembly { get; }
+        void ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection services, Microsoft.Extensions.Configuration.IConfiguration configuration);
+    }
+    public interface IModuleCatalog
+    {
+        System.Collections.Generic.IReadOnlyList<Barthazon.Shared.Kernel.Modules.IModule> Modules { get; }
+        Barthazon.Shared.Kernel.Modules.IModule? FindByPath(string relativePath);
+    }
+    public sealed class ModuleCatalog : Barthazon.Shared.Kernel.Modules.IModuleCatalog
+    {
+        public ModuleCatalog(System.Collections.Generic.IEnumerable<Barthazon.Shared.Kernel.Modules.IModule> modules) { }
+        public System.Collections.Generic.IReadOnlyList<Barthazon.Shared.Kernel.Modules.IModule> Modules { get; }
+        public Barthazon.Shared.Kernel.Modules.IModule? FindByPath(string relativePath) { }
+    }
+    public sealed class ModuleMenuItem : System.IEquatable<Barthazon.Shared.Kernel.Modules.ModuleMenuItem>
+    {
+        public ModuleMenuItem(string Title, string Href, string Icon, bool MatchAll = false, Barthazon.Shared.Kernel.Security.UserRole? MinimumRole = default, bool ShowInBottomBar = true) { }
+        public string Href { get; init; }
+        public string Icon { get; init; }
+        public bool MatchAll { get; init; }
+        public Barthazon.Shared.Kernel.Security.UserRole? MinimumRole { get; init; }
+        public bool ShowInBottomBar { get; init; }
+        public string Title { get; init; }
+    }
+    public enum ModuleState
+    {
+        Available = 0,
+        ComingSoon = 1,
+    }
+}
+namespace Barthazon.Shared.Kernel.Persistence
+{
+    public interface IRepository<TEntity>
+        where TEntity : Barthazon.Shared.Kernel.Domain.Entity
+    {
+        void Add(TEntity entity);
+        System.Threading.Tasks.Task<TEntity?> GetByIdAsync(System.Guid id, System.Threading.CancellationToken cancellationToken = default);
+        void SetExpectedVersion(TEntity entity, long expectedVersion);
+    }
+    public interface IUnitOfWork : System.IAsyncDisposable
+    {
+        void AddAuditNote(string entityType, System.Guid entityId, string action, string? detail = null, string? parentType = null, System.Guid? parentId = default);
+        System.Threading.Tasks.Task<Barthazon.Shared.Kernel.Results.Result> SaveChangesAsync(System.Threading.CancellationToken cancellationToken = default);
+        void SetExpectedVersion(Barthazon.Shared.Kernel.Domain.IAuditable entity, long expectedVersion);
+    }
+    public interface IUnitOfWorkFactory<TUnitOfWork>
+        where TUnitOfWork : Barthazon.Shared.Kernel.Persistence.IUnitOfWork
+    {
+        TUnitOfWork Create();
+    }
+    public sealed class PageRequest : System.IEquatable<Barthazon.Shared.Kernel.Persistence.PageRequest>
+    {
+        public PageRequest(int PageIndex, int PageSize) { }
+        public int PageIndex { get; init; }
+        public int PageSize { get; init; }
+        public int Skip { get; }
+        public static Barthazon.Shared.Kernel.Persistence.PageRequest All { get; }
+    }
+    public sealed class PagedResult<T> : System.IEquatable<Barthazon.Shared.Kernel.Persistence.PagedResult<T>>
+    {
+        public PagedResult(System.Collections.Generic.IReadOnlyList<T> Items, int TotalCount) { }
+        public System.Collections.Generic.IReadOnlyList<T> Items { get; init; }
+        public int TotalCount { get; init; }
+        public static Barthazon.Shared.Kernel.Persistence.PagedResult<T> Empty { get; }
+    }
+}
+namespace Barthazon.Shared.Kernel.Printing
+{
+    public interface IQrCodeGenerator
+    {
+        byte[] GeneratePng(string content, int pixelsPerModule = 10);
+        string GenerateSvg(string content);
+    }
+}
+namespace Barthazon.Shared.Kernel.Results
+{
+    public sealed class Error : System.IEquatable<Barthazon.Shared.Kernel.Results.Error>
+    {
+        public Error(Barthazon.Shared.Kernel.Results.ErrorKind Kind, string Message, string? Field = null) { }
+        public string? Field { get; init; }
+        public Barthazon.Shared.Kernel.Results.ErrorKind Kind { get; init; }
+        public string Message { get; init; }
+        public static Barthazon.Shared.Kernel.Results.Error Conflict(string message) { }
+        public static Barthazon.Shared.Kernel.Results.Error Forbidden(string message) { }
+        public static Barthazon.Shared.Kernel.Results.Error NotFound(string message) { }
+        public static Barthazon.Shared.Kernel.Results.Error Unauthenticated(string message) { }
+        public static Barthazon.Shared.Kernel.Results.Error Validation(string message, string? field = null) { }
+    }
+    public enum ErrorKind
+    {
+        Validation = 0,
+        NotFound = 1,
+        Conflict = 2,
+        Forbidden = 3,
+        Unauthenticated = 4,
+        Unexpected = 5,
+    }
+    public static class Inputs
+    {
+        public static string? Clean(string? value) { }
+        public static string CleanRequired(string? value) { }
+    }
+    public class Result
+    {
+        protected Result(System.Collections.Generic.IReadOnlyList<Barthazon.Shared.Kernel.Results.Error> errors) { }
+        public System.Collections.Generic.IReadOnlyList<Barthazon.Shared.Kernel.Results.Error> Errors { get; }
+        public Barthazon.Shared.Kernel.Results.Error? FirstError { get; }
+        public bool IsFailure { get; }
+        public bool IsSuccess { get; }
+        public bool HasError(Barthazon.Shared.Kernel.Results.ErrorKind kind) { }
+        public static Barthazon.Shared.Kernel.Results.Result Failure(params Barthazon.Shared.Kernel.Results.Error[] errors) { }
+        public static Barthazon.Shared.Kernel.Results.Result Failure(System.Collections.Generic.IEnumerable<Barthazon.Shared.Kernel.Results.Error> errors) { }
+        public static Barthazon.Shared.Kernel.Results.Result Success() { }
+        public static Barthazon.Shared.Kernel.Results.Result<T> Success<T>(T value) { }
+    }
+    public sealed class Result<T> : Barthazon.Shared.Kernel.Results.Result
+    {
+        public T Value { get; }
+        public new static Barthazon.Shared.Kernel.Results.Result<T> Failure(params Barthazon.Shared.Kernel.Results.Error[] errors) { }
+        public new static Barthazon.Shared.Kernel.Results.Result<T> Failure(System.Collections.Generic.IEnumerable<Barthazon.Shared.Kernel.Results.Error> errors) { }
+        public static Barthazon.Shared.Kernel.Results.Result<T> Success(T value) { }
+        public static Barthazon.Shared.Kernel.Results.Result<T> op_Implicit(Barthazon.Shared.Kernel.Results.Error error) { }
+        public static Barthazon.Shared.Kernel.Results.Result<T> op_Implicit(T value) { }
+    }
+    public sealed class Validation
+    {
+        public Validation() { }
+        public System.Collections.Generic.IReadOnlyList<Barthazon.Shared.Kernel.Results.Error> Errors { get; }
+        public bool IsValid { get; }
+        public Barthazon.Shared.Kernel.Results.Validation Add(string? field, string message) { }
+        public Barthazon.Shared.Kernel.Results.Validation Email(string? value, string field, string message) { }
+        public Barthazon.Shared.Kernel.Results.Validation MaxLength(string? value, int max, string field, string message) { }
+        public Barthazon.Shared.Kernel.Results.Validation Positive(decimal? value, string field, string message) { }
+        public Barthazon.Shared.Kernel.Results.Validation Required(string? value, string field, string message) { }
+        public Barthazon.Shared.Kernel.Results.Validation Required<T>(T? value, string field, string message)
+            where T :  struct { }
+        public Barthazon.Shared.Kernel.Results.Result ToResult() { }
+        public Barthazon.Shared.Kernel.Results.Validation When(bool condition, string field, string message) { }
+    }
+}
+namespace Barthazon.Shared.Kernel.Security
+{
+    public sealed class AccessGuard : Barthazon.Shared.Kernel.Security.IAccessGuard
+    {
+        public AccessGuard(Barthazon.Shared.Kernel.Security.ICurrentUser currentUser, bool allowAnonymousRead) { }
+        public Barthazon.Shared.Kernel.Results.Result CanAdminister() { }
+        public Barthazon.Shared.Kernel.Results.Result CanEdit() { }
+        public Barthazon.Shared.Kernel.Results.Result CanRead() { }
+    }
+    public interface IAccessGuard
+    {
+        Barthazon.Shared.Kernel.Results.Result CanAdminister();
+        Barthazon.Shared.Kernel.Results.Result CanEdit();
+        Barthazon.Shared.Kernel.Results.Result CanRead();
+    }
+    public interface ICurrentUser
+    {
+        string? DisplayName { get; }
+        bool IsAuthenticated { get; }
+        Barthazon.Shared.Kernel.Security.UserRole? Role { get; }
+        System.Guid? UserId { get; }
+        string? UserName { get; }
+    }
+    public enum UserRole
+    {
+        Reader = 0,
+        Editor = 1,
+        Administrator = 2,
+    }
+}
+namespace Barthazon.Shared.Kernel.Settings
+{
+    public sealed class ApplicationSettings : System.IEquatable<Barthazon.Shared.Kernel.Settings.ApplicationSettings>
+    {
+        public ApplicationSettings(string ApplicationName, string PublicBaseUrl, string ReferencePattern) { }
+        public string ApplicationName { get; init; }
+        public string PublicBaseUrl { get; init; }
+        public string ReferencePattern { get; init; }
+    }
+    public interface IApplicationSettingsStore
+    {
+        System.Threading.Tasks.Task<Barthazon.Shared.Kernel.Settings.ApplicationSettings> GetAsync(System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Barthazon.Shared.Kernel.Results.Result> SaveAsync(Barthazon.Shared.Kernel.Settings.ApplicationSettings settings, System.Threading.CancellationToken cancellationToken = default);
+    }
+}
+namespace Barthazon.Shared.Kernel.Text
+{
+    public readonly struct HighlightSegment : System.IEquatable<Barthazon.Shared.Kernel.Text.HighlightSegment>
+    {
+        public HighlightSegment(string Text, bool IsMatch) { }
+        public bool IsMatch { get; init; }
+        public string Text { get; init; }
+    }
+    public static class SearchHighlighter
+    {
+        public static System.Collections.Generic.IReadOnlyList<Barthazon.Shared.Kernel.Text.HighlightSegment> Split(string? text, string? query) { }
+    }
+    public static class SearchNormalizer
+    {
+        public const int MaxSearchTextLength = 4000;
+        public static string BuildSearchText(System.Collections.Generic.IEnumerable<string?> values) { }
+        public static string Compact(string? text) { }
+        public static bool Matches(string searchText, string? query) { }
+        public static string Normalize(string? text) { }
+        public static System.Collections.Generic.IReadOnlyList<string> Terms(string? query) { }
+    }
+}

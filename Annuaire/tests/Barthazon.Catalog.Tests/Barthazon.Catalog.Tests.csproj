@@ -9,6 +9,7 @@
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <PackageReference Include="coverlet.collector" PrivateAssets="all" />
     <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="bunit" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
