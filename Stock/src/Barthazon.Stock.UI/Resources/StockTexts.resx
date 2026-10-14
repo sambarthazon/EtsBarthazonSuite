@@ -391,4 +391,19 @@
   <data name="InForce" xml:space="preserve"><value>en vigueur</value></data>
   <data name="ReceiptPartsReference" xml:space="preserve"><value>Référence (retour client, reprise du stock…)</value></data>
   <data name="SubmitPartReceipt" xml:space="preserve"><value>Enregistrer l'entrée</value></data>
+  <data name="PartNotTrackedTitle" xml:space="preserve"><value>Pièce non suivie en stock</value></data>
+  <data name="PartNotTrackedText" xml:space="preserve"><value>Suivez cette pièce pour gérer son stock (seuil, rangement, sources de brut) ; elle l'est aussi automatiquement à son premier lancement ou mouvement.</value></data>
+  <data name="OpenInStock" xml:space="preserve"><value>Ouvrir dans Stock</value></data>
+  <data name="Coverage" xml:space="preserve"><value>Couverture (finies + en cours)</value></data>
+  <data name="SupersededStockAlert" xml:space="preserve"><value>Des pièces finies sont à un indice qui n'est plus en vigueur.</value></data>
+  <data name="LaunchableValue" xml:space="preserve"><value>permet de lancer {0}</value></data>
+  <data name="PartsBelowThreshold" xml:space="preserve"><value>Pièces sous le seuil</value></data>
+  <data name="NoPartBelowThreshold" xml:space="preserve"><value>Aucune pièce sous le seuil.</value></data>
+  <data name="SeeAllCount" xml:space="preserve"><value>Voir les {0}</value></data>
+  <data name="WipSummary" xml:space="preserve"><value>{0} lancement(s) · {1} pièce(s) en cours</value></data>
+  <data name="NoCustomerItems" xml:space="preserve"><value>Aucun article fourni par ce client.</value></data>
+  <data name="CustomerItemsTitle" xml:space="preserve"><value>Articles fournis par le client</value></data>
+  <data name="SearchHitItem" xml:space="preserve"><value>Article en stock</value></data>
+  <data name="SearchHitBatch" xml:space="preserve"><value>Lancement</value></data>
+  <data name="SearchHitLocation" xml:space="preserve"><value>Emplacement de stockage</value></data>
 </root>

@@ -1,0 +1,137 @@
+@inject ITrackedPartService TrackedParts
+@inject IBatchService Batches
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+
+@* Onglet « Stock » de la fiche pièce de l'annuaire (emplacement CatalogUiSlots.PartStockTab, paramètre PartId). *@
+@if (_part is null)
+{
+    <MudSkeleton Height="120px" SkeletonType="SkeletonType.Rectangle" />
+}
+else if (!_part.IsTracked)
+{
+    <EmptyState Title="@StockTexts.PartNotTrackedTitle" Text="@StockTexts.PartNotTrackedText" Icon="@Icons.Material.Outlined.Inventory2">
+        @if (CanEdit)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddTask" OnClick="TrackAsync">@StockTexts.TrackThisPart</MudButton>
+        }
+    </EmptyState>
+}
+else
+{
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Inventory" Href="@StockHref">@StockTexts.OpenInStock</MudButton>
+        @if (CanEdit)
+        {
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.PlayArrow" Href="@($"stock/lancements/nouveau?piece={Uri.EscapeDataString(_part.Reference)}")">@StockTexts.Launch</MudButton>
+        }
+        @if (CurrentUser.IsAuthenticated && _part.Finished > 0)
+        {
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.LocalShipping" OnClick="ShipAsync">@StockTexts.ActionShipment</MudButton>
+        }
+    </div>
+
+    <div class="bz-fields mb-3">
+        <FieldView Label="@StockTexts.Finished">
+            <span class="@(_part.IsBelowThreshold ? "bz-tone-warning" : null)"><b>@_part.Finished</b></span>
+        </FieldView>
+        <FieldView Label="@StockTexts.WorkInProgress" Value="@_part.WorkInProgress.ToString(CultureInfo.CurrentCulture)" />
+        <FieldView Label="@StockTexts.PartThreshold" Value="@_part.MinimumThreshold?.ToString(CultureInfo.CurrentCulture)" />
+        <FieldView Label="@StockTexts.Coverage" Value="@((_part.Finished + _part.WorkInProgress).ToString(CultureInfo.CurrentCulture))" />
+    </div>
+
+    @if (_part.FinishedStock.Count > 0)
+    {
+        <h3 class="bz-dashboard-title">@StockTexts.FinishedParts</h3>
+        <MudSimpleTable Dense="true" Elevation="0" Class="mb-3">
+            <thead><tr><th>@StockTexts.Revision</th><th>@StockTexts.Location</th><th>@StockTexts.LotBatch</th><th style="text-align:right">@StockTexts.ColQuantity</th></tr></thead>
+            <tbody>
+                @foreach (var cell in _part.FinishedStock)
+                {
+                    var revision = _part.Revisions.FirstOrDefault(r => r.Id == cell.Key.RevisionId);
+                    <tr>
+                        <td>@(revision?.Index ?? "?") @if (revision?.Status != RevisionStatus.InForce) { <StatusChip Text="@StockTexts.Superseded" Tone="StatusTone.Warning" Class="ml-1" /> }</td>
+                        <td>@cell.LocationCode</td>
+                        <td>@cell.Lot</td>
+                        <td style="text-align:right"><b>@StockFormat.Quantity(cell.Quantity)</b></td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+        @if (_part.FinishedStock.Any(c => _part.Revisions.FirstOrDefault(r => r.Id == c.Key.RevisionId)?.Status != RevisionStatus.InForce))
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mb-3">@StockTexts.SupersededStockAlert</MudAlert>
+        }
+    }
+
+    @if (_pipeline is { Rows.Count: > 0 })
+    {
+        <h3 class="bz-dashboard-title">@StockTexts.WorkInProgress</h3>
+        <ul class="bz-count-list mb-3">
+            @foreach (var column in _pipeline.Columns.Where(c => _pipeline.Totals.GetValueOrDefault(c.OperationNumber) > 0))
+            {
+                <li class="bz-count-row">@string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingForOpLine, _pipeline.Totals[column.OperationNumber], column.OperationNumber, column.OperationType.Label())</li>
+            }
+        </ul>
+    }
+
+    @if (_part.Sources.Count > 0)
+    {
+        <h3 class="bz-dashboard-title">@StockTexts.BlankSources</h3>
+        <ul class="bz-count-list">
+            @foreach (var source in _part.Sources)
+            {
+                <li class="bz-count-row">
+                    <b>@source.SourceCode</b> @source.SourceLabel
+                    <span class="bz-muted">· @string.Format(CultureInfo.CurrentCulture, StockTexts.LaunchableValue, source.Launchable)</span>
+                </li>
+            }
+        </ul>
+    }
+}
+
+@code {
+    private TrackedPartDetails? _part;
+    private PartPipeline? _pipeline;
+
+    [Parameter] public Guid PartId { get; set; }
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    private string StockHref => $"stock/pieces/{Uri.EscapeDataString(_part!.Reference)}";
+
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await TrackedParts.GetAsync(PartId);
+        if (!result.IsSuccess)
+        {
+            return;
+        }
+
+        _part = result.Value;
+        if (_part.IsTracked)
+        {
+            var pipeline = await Batches.GetPipelineAsync(PartId);
+            _pipeline = pipeline.IsSuccess ? pipeline.Value : null;
+        }
+    }
+
+    private async Task TrackAsync()
+    {
+        if (Notifier.Handle(await TrackedParts.TrackAsync(PartId), StockTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task ShipAsync()
+    {
+        if (await MovementDialog.ShowAsync(Dialogs, StockAction.Shipment, partId: PartId))
+        {
+            await LoadAsync();
+        }
+    }
+}

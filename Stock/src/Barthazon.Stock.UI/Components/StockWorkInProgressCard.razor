@@ -1,0 +1,34 @@
+@inject IBatchService Batches
+
+@* Carte « En-cours » du tableau de bord de l'annuaire : lancements et pièces en cours. *@
+<section class="bz-card bz-dashboard-card" aria-labelledby="bz-stock-card-wip">
+    <h2 id="bz-stock-card-wip" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.PrecisionManufacturing" Size="Size.Small" /> @StockTexts.WorkInProgress</h2>
+    @if (_batches is null)
+    {
+        <MudSkeleton Height="60px" SkeletonType="SkeletonType.Rectangle" />
+    }
+    else
+    {
+        <MudText Typo="Typo.h5">@string.Format(CultureInfo.CurrentCulture, StockTexts.WipSummary, _batches.Count, _batches.Sum(b => b.InProgress))</MudText>
+        <ul class="bz-count-list mt-2">
+            @foreach (var batch in _batches.Take(5))
+            {
+                <li class="bz-count-row">
+                    <a href="@($"stock/lancements/{Uri.EscapeDataString(batch.Number)}")"><b>@batch.Number</b> @batch.PartReference</a>
+                    <span class="bz-muted ml-2">@(batch.CurrentOperationNumber is { } op ? string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingOp, op) : null)</span>
+                </li>
+            }
+        </ul>
+        <MudButton Variant="Variant.Text" Href="stock/lancements" EndIcon="@Icons.Material.Filled.ArrowForward">@StockTexts.BatchesTitle</MudButton>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<BatchListItem>? _batches;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Batches.SearchAsync(new BatchSearchRequest { Status = BatchStatus.InProgress });
+        _batches = result.IsSuccess ? result.Value : [];
+    }
+}

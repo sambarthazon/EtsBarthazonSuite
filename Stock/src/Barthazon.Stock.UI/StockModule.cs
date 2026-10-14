@@ -1,10 +1,12 @@
 using System.Reflection;
+using Barthazon.Catalog.Contracts;
 using Barthazon.Shared.Kernel.Modules;
 using Barthazon.Shared.Kernel.Security;
 using Barthazon.Shared.UI.Services;
 using Barthazon.Stock.Core;
 using Barthazon.Stock.UI.Components;
 using Barthazon.Stock.UI.Resources;
+using Barthazon.Stock.UI.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
@@ -51,6 +53,16 @@ public sealed class StockModule : IModule
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddStockCore();
+
+        services.AddScoped<IGlobalSearchProvider, StockGlobalSearchProvider>();
+
+        // Emplacements de l'annuaire : onglet Stock de la fiche pièce et cartes du tableau de bord.
+        services.AddUiExtension(new UiExtension(CatalogUiSlots.PartStockTab, typeof(PartStockPanel), StockTexts.ModuleName, 10));
+        services.AddUiExtension(new UiExtension(CatalogUiSlots.DashboardCards, typeof(StockAlertsCard), StockTexts.PartsBelowThreshold, 10));
+        services.AddUiExtension(new UiExtension(CatalogUiSlots.DashboardCards, typeof(StockWorkInProgressCard), StockTexts.WorkInProgress, 20));
+
+        // Section « Articles fournis par le client » de la fiche client.
+        services.AddUiExtension(new UiExtension(UiSlots.CustomerDetails, typeof(CustomerItemsSection), StockTexts.CustomerItemsTitle, 20));
 
         // Onglet « Emplacements » de la page Référentiels.
         services.AddUiExtension(new UiExtension(UiSlots.ReferentialTabs, typeof(LocationsPanel), StockTexts.TabLocations, 30, Icons.Material.Filled.Place));

@@ -1,0 +1,38 @@
+@inject ITrackedPartService TrackedParts
+
+@* Carte « Pièces sous le seuil » du tableau de bord de l'annuaire (avec la couverture par les en-cours). *@
+<section class="bz-card bz-dashboard-card" aria-labelledby="bz-stock-card-threshold">
+    <h2 id="bz-stock-card-threshold" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" /> @StockTexts.PartsBelowThreshold</h2>
+    @if (_items is null)
+    {
+        <MudSkeleton Height="60px" SkeletonType="SkeletonType.Rectangle" />
+    }
+    else if (_items.Count == 0)
+    {
+        <MudText Class="bz-muted">@StockTexts.NoPartBelowThreshold</MudText>
+    }
+    else
+    {
+        <ul class="bz-count-list">
+            @foreach (var item in _items.Take(8))
+            {
+                <li class="bz-count-row">
+                    <a href="@($"stock/pieces/{Uri.EscapeDataString(item.Reference)}")"><b>@item.Reference</b> @item.Designation</a>
+                    <span class="ml-2" style="white-space:nowrap">@item.Finished / @item.MinimumThreshold</span>
+                    <PartStateChips Item="item" />
+                </li>
+            }
+        </ul>
+        <MudButton Variant="Variant.Text" Href="stock/pieces?etat=seuil" EndIcon="@Icons.Material.Filled.ArrowForward">@string.Format(CultureInfo.CurrentCulture, StockTexts.SeeAllCount, _items.Count)</MudButton>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<TrackedPartListItem>? _items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await TrackedParts.SearchAsync(new TrackedPartSearchRequest { State = TrackedPartStateFilter.BelowThreshold });
+        _items = result.IsSuccess ? result.Value : [];
+    }
+}

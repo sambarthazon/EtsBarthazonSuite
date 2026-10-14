@@ -1,0 +1,31 @@
+@inject IItemService Items
+
+@* Section « Articles fournis par le client » de la fiche client (emplacement UiSlots.CustomerDetails, paramètre CustomerId). *@
+@if (_items is { Count: > 0 })
+{
+    <ul class="bz-count-list">
+        @foreach (var item in _items)
+        {
+            <li class="bz-count-row">
+                <a href="@($"stock/articles/{Uri.EscapeDataString(item.Code)}")"><b>@item.Code</b> @item.Designation</a>
+                <span class="ml-2"><ItemQuantity Item="item" /></span>
+            </li>
+        }
+    </ul>
+}
+else if (_items is not null)
+{
+    <MudText Class="bz-muted">@StockTexts.NoCustomerItems</MudText>
+}
+
+@code {
+    private IReadOnlyList<ItemListItem>? _items;
+
+    [Parameter] public Guid CustomerId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await Items.SearchAsync(new ItemSearchRequest { OwnerCustomerId = CustomerId });
+        _items = result.IsSuccess ? result.Value : [];
+    }
+}

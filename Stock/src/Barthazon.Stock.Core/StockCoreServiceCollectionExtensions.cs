@@ -1,7 +1,10 @@
 using Barthazon.Stock.Contracts;
 using Barthazon.Stock.Core.Services;
 using Microsoft.Extensions.Configuration;
+using Barthazon.Catalog.Contracts;
+using Barthazon.Referential.Contracts;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Barthazon.Stock.Core;
 
@@ -28,6 +31,11 @@ public static class StockCoreServiceCollectionExtensions
         services.AddScoped<IStockQuery>(sp => sp.GetRequiredService<StockContractsService>());
         services.AddScoped<IBatchLookup>(sp => sp.GetRequiredService<StockContractsService>());
         services.AddScoped<IStockShipments>(sp => sp.GetRequiredService<StockContractsService>());
+
+        // Points d'extension de l'annuaire et du référentiel (section 9.2) : remplacent les implémentations « non disponible ».
+        services.Replace(ServiceDescriptor.Scoped<IPartStockInfoProvider, PartStockInfoProvider>());
+        services.Replace(ServiceDescriptor.Scoped<IPartStockFilterProvider, PartStockFilterProvider>());
+        services.AddScoped<IReferentialUsageProvider, StockReferentialUsageProvider>();
         return services;
     }
 }
