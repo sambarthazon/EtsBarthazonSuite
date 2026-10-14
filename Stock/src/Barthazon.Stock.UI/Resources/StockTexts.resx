@@ -198,7 +198,7 @@
   <data name="ReverseTitle" xml:space="preserve"><value>Annuler ce mouvement ?</value></data>
   <data name="Reversed" xml:space="preserve"><value>Annulé</value></data>
   <data name="ReversedBy" xml:space="preserve"><value>Annulé par le mouvement {0}.</value></data>
-  <data name="SameItemAgain" xml:space="preserve"><value>Même article</value></data>
+  <data name="SameItemAgain" xml:space="preserve"><value>Même article ou pièce</value></data>
   <data name="Saved" xml:space="preserve"><value>Enregistré.</value></data>
   <data name="SearchCustomer" xml:space="preserve"><value>Rechercher un client…</value></data>
   <data name="SearchItem" xml:space="preserve"><value>Rechercher un article (code, désignation, dimensions)</value></data>
@@ -379,4 +379,16 @@
   <data name="WaitingOp" xml:space="preserve"><value>En attente de l'op {0}</value></data>
   <data name="WaitingOpType" xml:space="preserve"><value>en attente de l'op {0} — {1}</value></data>
   <data name="WithoutConsumption" xml:space="preserve"><value>Sans consommation</value></data>
+  <data name="ActionShipment" xml:space="preserve"><value>Sortie de pièces finies</value></data>
+  <data name="ActionPartReceipt" xml:space="preserve"><value>Entrée de pièces finies</value></data>
+  <data name="FinishedAvailable" xml:space="preserve"><value>{0} pièce(s) finie(s) en stock</value></data>
+  <data name="QuantityShipped" xml:space="preserve"><value>Quantité à sortir</value></data>
+  <data name="Shipped" xml:space="preserve"><value>Sortie</value></data>
+  <data name="SupersededShipmentWarning" xml:space="preserve"><value>Ces pièces sont à l'indice {0}, l'indice en vigueur est {1}.</value></data>
+  <data name="ConfirmSupersededShipment" xml:space="preserve"><value>Je confirme la sortie de pièces à cet indice</value></data>
+  <data name="DeliveryReference" xml:space="preserve"><value>N° de bon de livraison</value></data>
+  <data name="SubmitShipment" xml:space="preserve"><value>Enregistrer la sortie</value></data>
+  <data name="InForce" xml:space="preserve"><value>en vigueur</value></data>
+  <data name="ReceiptPartsReference" xml:space="preserve"><value>Référence (retour client, reprise du stock…)</value></data>
+  <data name="SubmitPartReceipt" xml:space="preserve"><value>Enregistrer l'entrée</value></data>
 </root>

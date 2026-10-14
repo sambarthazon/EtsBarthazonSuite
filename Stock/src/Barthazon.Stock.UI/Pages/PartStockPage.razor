@@ -86,7 +86,19 @@ else
         </MudItem>
         <MudItem xs="12" md="8">
             <section class="bz-card pa-4" aria-labelledby="bz-part-finished">
-                <h2 id="bz-part-finished" class="bz-dashboard-title">@StockTexts.FinishedParts</h2>
+                <div class="d-flex justify-space-between align-center flex-wrap gap-2 mb-2">
+                    <h2 id="bz-part-finished" class="bz-dashboard-title">@StockTexts.FinishedParts</h2>
+                    <div class="d-flex gap-2">
+                        @if (CurrentUser.IsAuthenticated && _part.Finished > 0)
+                        {
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.LocalShipping" OnClick="() => RecordAsync(StockAction.Shipment)">@StockTexts.ActionShipment</MudButton>
+                        }
+                        @if (CanEdit && !_part.IsUnknownPart)
+                        {
+                            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Input" OnClick="() => RecordAsync(StockAction.PartReceipt)">@StockTexts.ActionPartReceipt</MudButton>
+                        }
+                    </div>
+                </div>
                 @if (_part.FinishedStock.Count == 0)
                 {
                     <MudText Class="bz-muted">@StockTexts.NoFinishedParts</MudText>
@@ -219,6 +231,14 @@ else
         _madeFromThis = usages.IsSuccess ? usages.Value : [];
         var movements = await Movements.SearchAsync(new MovementSearchRequest { PartId = _part.PartId, PageSize = 20 });
         _movements = movements.IsSuccess ? movements.Value.Items : [];
+    }
+
+    private async Task RecordAsync(StockAction action)
+    {
+        if (await MovementDialog.ShowAsync(Dialogs, action, partId: _part!.PartId))
+        {
+            await LoadAsync();
+        }
     }
 
     private async Task TrackAsync()

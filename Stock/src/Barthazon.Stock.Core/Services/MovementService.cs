@@ -426,7 +426,7 @@ internal sealed class MovementService(
             : null;
     }
 
-    private async Task<Result<MovementItem>> ToItemAsync(Result<IReadOnlyList<StockTransaction>> recorded, CancellationToken cancellationToken)
+    internal async Task<Result<MovementItem>> ToItemAsync(Result<IReadOnlyList<StockTransaction>> recorded, CancellationToken cancellationToken)
     {
         if (recorded.IsFailure)
         {

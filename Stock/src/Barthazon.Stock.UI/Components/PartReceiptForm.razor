@@ -1,0 +1,83 @@
+@inject IFinishedPartService FinishedParts
+@inject IPartRoutingLookup Routings
+
+@* Entrée de pièces finies hors lancement : retour client, stock initial (éditeur). *@
+<FormErrors State="_form" />
+@if (!PartFixed)
+{
+    <PartPicker Value="_partId" ValueChanged="OnPartChangedAsync" Required="true" AutoFocus="@(_partId is null)" />
+}
+@if (_partId is not null)
+{
+    <MudSelect T="Guid?" @bind-Value="_revisionId" Label="@StockTexts.Revision" Variant="Variant.Outlined" Class="mt-3"
+               ToStringFunc="id => _revisions.FirstOrDefault(r => r.Id == id)?.Index ?? string.Empty"
+               Error="_form.HasError(nameof(PartReceiptInput.RevisionId))" ErrorText="@_form.ErrorFor(nameof(PartReceiptInput.RevisionId))">
+        @foreach (var revision in _revisions.Where(r => r.Status != RevisionStatus.Cancelled))
+        {
+            <MudSelectItem T="Guid?" Value="revision.Id">@revision.Index @(revision.Status == RevisionStatus.InForce ? $"({StockTexts.InForce})" : null)</MudSelectItem>
+        }
+    </MudSelect>
+    <QuantityField Value="_quantity" ValueChanged="v => _quantity = v" Unit="StockUnit.Piece" Label="@StockTexts.QuantityReceived" Class="mt-3"
+                   Error="_form.HasError(nameof(PartReceiptInput.Quantity))" ErrorText="@_form.ErrorFor(nameof(PartReceiptInput.Quantity))" />
+    <div class="mt-3">
+        <LocationSelect Value="_locationId" ValueChanged="v => _locationId = v" Label="@StockTexts.FinishedLocation" Clearable="true" HelperText="@StockTexts.FinishedLocationHelp" />
+    </div>
+    <MudTextField @bind-Value="_lot" Label="@StockTexts.Lot" Variant="Variant.Outlined" Class="mt-3" MaxLength="50" />
+    <MudTextField @bind-Value="_reference" Label="@StockTexts.ReceiptPartsReference" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
+    <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Class="mt-3" MaxLength="1000" />
+    <div class="d-flex justify-end gap-2 mt-4">
+        @if (OnCancel.HasDelegate) { <MudButton OnClick="OnCancel">@SharedTexts.Cancel</MudButton> }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" StartIcon="@Icons.Material.Filled.Input" OnClick="SubmitAsync" Disabled="_saving">@StockTexts.SubmitPartReceipt</MudButton>
+    </div>
+}
+
+@code {
+    private readonly FormState _form = new();
+    private IReadOnlyList<PartRevisionSummary> _revisions = [];
+    private Guid? _partId;
+    private Guid? _revisionId;
+    private decimal? _quantity;
+    private Guid? _locationId;
+    private string? _lot;
+    private string? _reference;
+    private string? _comment;
+    private bool _saving;
+
+    [Parameter] public Guid? PartId { get; set; }
+
+    [Parameter] public bool PartFixed { get; set; }
+
+    [Parameter] public EventCallback<MovementItem> OnSaved { get; set; }
+
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (PartId != _partId)
+        {
+            await OnPartChangedAsync(PartId);
+        }
+    }
+
+    private async Task OnPartChangedAsync(Guid? partId)
+    {
+        _partId = partId;
+        _revisions = partId is { } id ? await Routings.GetRevisionsAsync(id) : [];
+        _revisionId = _revisions.FirstOrDefault(r => r.Status == RevisionStatus.InForce)?.Id;
+    }
+
+    private async Task SubmitAsync()
+    {
+        _saving = true;
+        var result = await FinishedParts.ReceiveAsync(new PartReceiptInput
+        {
+            PartId = _partId!.Value, RevisionId = _revisionId, Quantity = (int)(_quantity ?? 0), LocationId = _locationId, Lot = _lot, Reference = _reference, Comment = _comment,
+        });
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            await OnSaved.InvokeAsync(result.Value);
+        }
+    }
+}

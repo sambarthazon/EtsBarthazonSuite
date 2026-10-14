@@ -37,4 +37,7 @@ Choix faits pendant la réalisation lorsque la spécification laissait une marge
 | 31 | Colonne « Fini » du pipeline | Par lancement : pièces finies encore en stock dont le lot est le numéro du lancement ; ligne de total : toutes les pièces finies de la pièce. | Section 10.3 (« stock à chaque étape »). |
 | 32 | Lot proposé en premier | Le solde mémorise la date de sa première entrée (`FirstMovementAt`) : les cases sont proposées de la plus ancienne à la plus récente. Pour une orientation, le lancement d'origine est proposé en premier. | Section 10.5. |
 | 33 | Styles du stock | Feuille `stock.css` (variables de la charte uniquement) servie par `Barthazon.Stock.UI` et liée par le portail. | Le portail est le seul projet qui assemble les applications. |
+| 34 | Répartition d'une sortie de pièces finies | Sans cases choisies, la sortie prend l'indice en vigueur d'abord, puis le lot entré le plus tôt ; l'écran pré-remplit cette répartition à partir de la quantité, modifiable case par case. Toute case à un indice remplacé demande la confirmation « Ces pièces sont à l'indice B, l'indice en vigueur est C ». | Sections 8.5 et 10.6. |
+| 35 | Entrée de pièces finies | Indice en vigueur par défaut, rangement habituel de la pièce suivie sinon magasin ; le lot est libre (n° de lancement d'origine, « retour client »…). | Section 8.3. |
+| 36 | Contrats du stock | `IStockQuery`, `IBatchLookup`, `IStockShipments` sont implémentés au-dessus des services du stock (mêmes règles et mêmes droits) et figés par le test d'approbation d'API. | Section 9.4. |
 

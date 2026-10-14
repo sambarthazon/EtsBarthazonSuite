@@ -6,4 +6,69 @@ namespace Barthazon.Stock.Contracts
         Completed = 1,
         Cancelled = 2,
     }
+    public sealed class BatchStepSummary : System.IEquatable<Barthazon.Stock.Contracts.BatchStepSummary>
+    {
+        public BatchStepSummary(System.Guid StepId, int Sequence, int OperationNumber, Barthazon.Catalog.Contracts.OperationType Type, System.Guid? MachineId, string? Description) { }
+        public string? Description { get; init; }
+        public System.Guid? MachineId { get; init; }
+        public int OperationNumber { get; init; }
+        public int Sequence { get; init; }
+        public System.Guid StepId { get; init; }
+        public Barthazon.Catalog.Contracts.OperationType Type { get; init; }
+    }
+    public sealed class BatchSummary : System.IEquatable<Barthazon.Stock.Contracts.BatchSummary>
+    {
+        public BatchSummary(System.Guid Id, string Number, System.Guid PartId, System.Guid RevisionId, Barthazon.Stock.Contracts.BatchStatus Status, int LaunchedQuantity, System.Collections.Generic.IReadOnlyList<Barthazon.Stock.Contracts.BatchStepSummary> Steps) { }
+        public System.Guid Id { get; init; }
+        public int LaunchedQuantity { get; init; }
+        public string Number { get; init; }
+        public System.Guid PartId { get; init; }
+        public System.Guid RevisionId { get; init; }
+        public Barthazon.Stock.Contracts.BatchStatus Status { get; init; }
+        public System.Collections.Generic.IReadOnlyList<Barthazon.Stock.Contracts.BatchStepSummary> Steps { get; init; }
+    }
+    public sealed class FinishedStockLine : System.IEquatable<Barthazon.Stock.Contracts.FinishedStockLine>
+    {
+        public FinishedStockLine(System.Guid PartId, System.Guid RevisionId, string RevisionIndex, bool RevisionIsInForce, string LocationCode, string? Lot, int Quantity) { }
+        public string LocationCode { get; init; }
+        public string? Lot { get; init; }
+        public System.Guid PartId { get; init; }
+        public int Quantity { get; init; }
+        public System.Guid RevisionId { get; init; }
+        public string RevisionIndex { get; init; }
+        public bool RevisionIsInForce { get; init; }
+    }
+    public interface IBatchLookup
+    {
+        System.Threading.Tasks.Task<Barthazon.Stock.Contracts.BatchSummary?> GetAsync(System.Guid batchId, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Stock.Contracts.BatchSummary>> ListOpenAsync(System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IStockQuery
+    {
+        System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Barthazon.Stock.Contracts.FinishedStockLine>> GetFinishedStockAsync(System.Guid partId, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Barthazon.Stock.Contracts.WorkInProgressSummary> GetWorkInProgressAsync(System.Guid partId, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IStockShipments
+    {
+        System.Threading.Tasks.Task<Barthazon.Shared.Kernel.Results.Result<System.Guid>> RecordShipmentAsync(Barthazon.Stock.Contracts.ShipmentRequest request, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public sealed class ShipmentRequest : System.IEquatable<Barthazon.Stock.Contracts.ShipmentRequest>
+    {
+        public ShipmentRequest(System.Guid PartId, System.Guid? RevisionId, int Quantity, string? LocationCode, string? Lot, string? Reference, System.DateTimeOffset? OccurredAt, bool ConfirmSupersededRevision) { }
+        public bool ConfirmSupersededRevision { get; init; }
+        public string? LocationCode { get; init; }
+        public string? Lot { get; init; }
+        public System.DateTimeOffset? OccurredAt { get; init; }
+        public System.Guid PartId { get; init; }
+        public int Quantity { get; init; }
+        public string? Reference { get; init; }
+        public System.Guid? RevisionId { get; init; }
+    }
+    public sealed class WorkInProgressSummary : System.IEquatable<Barthazon.Stock.Contracts.WorkInProgressSummary>
+    {
+        public WorkInProgressSummary(System.Guid PartId, int Quantity, int BatchCount) { }
+        public int BatchCount { get; init; }
+        public System.Guid PartId { get; init; }
+        public int Quantity { get; init; }
+    }
 }

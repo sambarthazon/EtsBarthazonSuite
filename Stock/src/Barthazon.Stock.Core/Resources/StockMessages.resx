@@ -80,4 +80,6 @@
   <data name="RoutingResynchronized" xml:space="preserve"><value>Gamme figée resynchronisée avec la gamme actuelle de l'indice.</value></data>
   <data name="DefaultStepDescription" xml:space="preserve"><value>Fabrication</value></data>
   <data name="ReversalBlockedByOperation" xml:space="preserve"><value>Ces pièces ont déjà passé l'op {0} : annulez d'abord la déclaration {1}.</value></data>
+  <data name="SupersededShipmentConfirm" xml:space="preserve"><value>Ces pièces sont à l'indice {0}, l'indice en vigueur est {1} : confirmez la sortie.</value></data>
+  <data name="InsufficientFinishedParts" xml:space="preserve"><value>Seulement {0} pièce(s) finie(s) disponible(s).</value></data>
 </root>

@@ -1,6 +1,7 @@
 @page "/stock/saisie"
 @inject IItemService Items
 @inject ILocationService Locations
+@inject IPartLookup PartLookup
 @inject ICurrentUser CurrentUser
 @inject Notifier Notifier
 @inject NavigationManager Navigation
@@ -38,7 +39,18 @@ else
                 <MudChip T="StockAction" Value="action" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Large">@MovementDialog.ActionTitle(action)</MudChip>
             }
         </MudChipSet>
-        <MovementForm @key="_formKey" Action="_action" ItemId="_itemId" LocationId="_locationId" OnSaved="OnSaved" />
+        @switch (_action)
+        {
+            case StockAction.Shipment:
+                <PartShipmentForm @key="_formKey" PartId="_partId" OnSaved="OnSaved" />
+                break;
+            case StockAction.PartReceipt:
+                <PartReceiptForm @key="_formKey" PartId="_partId" OnSaved="OnSaved" />
+                break;
+            default:
+                <MovementForm @key="_formKey" Action="_action" ItemId="_itemId" LocationId="_locationId" OnSaved="OnSaved" />
+                break;
+        }
     </section>
 }
 
@@ -46,6 +58,7 @@ else
     private StockAction _action = StockAction.Receipt;
     private Guid? _itemId;
     private Guid? _locationId;
+    private Guid? _partId;
     private MovementItem? _last;
     private int _formKey;
 
@@ -55,9 +68,11 @@ else
 
     [SupplyParameterFromQuery(Name = "emplacement")] public string? LocationCode { get; set; }
 
+    [SupplyParameterFromQuery(Name = "piece")] public string? PartReference { get; set; }
+
     private IEnumerable<StockAction> AvailableActions => CurrentUser.Role >= UserRole.Editor
         ? Enum.GetValues<StockAction>()
-        : Enum.GetValues<StockAction>().Where(a => a != StockAction.Adjustment);
+        : Enum.GetValues<StockAction>().Where(a => a is not StockAction.Adjustment and not StockAction.PartReceipt);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -66,12 +81,16 @@ else
             "sortie" => StockAction.Issue,
             "transfert" => StockAction.Transfer,
             "correction" when CurrentUser.Role >= UserRole.Editor => StockAction.Adjustment,
+            "livraison" => StockAction.Shipment,
+            "entree" when CurrentUser.Role >= UserRole.Editor => StockAction.PartReceipt,
+            _ when !string.IsNullOrWhiteSpace(PartReference) => StockAction.Shipment,
             _ => StockAction.Receipt,
         };
         _itemId = !string.IsNullOrWhiteSpace(ItemCode) && await Items.GetByCodeAsync(ItemCode) is { IsSuccess: true } item ? item.Value.Id : null;
         _locationId = !string.IsNullOrWhiteSpace(LocationCode) && await Locations.GetByCodeAsync(LocationCode) is { IsSuccess: true } location
             ? location.Value.Location.Id
             : null;
+        _partId = !string.IsNullOrWhiteSpace(PartReference) && await PartLookup.GetByReferenceAsync(PartReference) is { } part ? part.Id : null;
         _formKey++;
     }
 
@@ -91,12 +110,14 @@ else
     {
         _last = null;
         _itemId = null;
+        _partId = null;
         _formKey++;
     }
 
     private void SameItemAgain()
     {
         _itemId = _last?.Lines.FirstOrDefault(l => l.Key.IsItem)?.Key.ItemId ?? _itemId;
+        _partId = _last?.Lines.FirstOrDefault(l => !l.Key.IsItem)?.Key.PartId ?? _partId;
         _last = null;
         _formKey++;
     }

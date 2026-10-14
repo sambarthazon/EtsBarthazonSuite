@@ -7,4 +7,10 @@ public enum StockAction
     Issue,
     Transfer,
     Adjustment,
+
+    /// <summary>Sortie de pièces finies (livraison).</summary>
+    Shipment,
+
+    /// <summary>Entrée de pièces finies (retour client, stock initial).</summary>
+    PartReceipt,
 }

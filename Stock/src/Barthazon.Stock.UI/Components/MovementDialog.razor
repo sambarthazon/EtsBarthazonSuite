@@ -3,8 +3,19 @@
 @* Saisie d'un mouvement depuis une fiche (article, emplacement). Renvoie le mouvement enregistré. *@
 <MudDialog>
     <DialogContent>
-        <MovementForm Action="Action" ItemId="ItemId" ItemFixed="@(ItemId is not null)" LocationId="LocationId" Cell="Cell"
-                      OnSaved="OnSaved" OnCancel="() => Dialog!.Cancel()" />
+        @switch (Action)
+        {
+            case StockAction.Shipment:
+                <PartShipmentForm PartId="PartId" PartFixed="@(PartId is not null)" OnSaved="OnSaved" OnCancel="() => Dialog!.Cancel()" />
+                break;
+            case StockAction.PartReceipt:
+                <PartReceiptForm PartId="PartId" PartFixed="@(PartId is not null)" OnSaved="OnSaved" OnCancel="() => Dialog!.Cancel()" />
+                break;
+            default:
+                <MovementForm Action="Action" ItemId="ItemId" ItemFixed="@(ItemId is not null)" LocationId="LocationId" Cell="Cell"
+                              OnSaved="OnSaved" OnCancel="() => Dialog!.Cancel()" />
+                break;
+        }
     </DialogContent>
 </MudDialog>
 
@@ -19,6 +30,8 @@
 
     [Parameter] public StockKey? Cell { get; set; }
 
+    [Parameter] public Guid? PartId { get; set; }
+
     private void OnSaved(MovementItem movement)
     {
         Notifier.Success(string.Format(CultureInfo.CurrentCulture, StockTexts.MovementSaved, movement.Number));
@@ -26,7 +39,7 @@
     }
 
     /// <summary>Ouvre la saisie ; renvoie vrai si un mouvement a été enregistré.</summary>
-    public static async Task<bool> ShowAsync(IDialogService dialogs, StockAction action, Guid? itemId = null, Guid? locationId = null, StockKey? cell = null)
+    public static async Task<bool> ShowAsync(IDialogService dialogs, StockAction action, Guid? itemId = null, Guid? locationId = null, StockKey? cell = null, Guid? partId = null)
     {
         ArgumentNullException.ThrowIfNull(dialogs);
         var parameters = new DialogParameters<MovementDialog>
@@ -35,6 +48,7 @@
             { d => d.ItemId, itemId },
             { d => d.LocationId, locationId },
             { d => d.Cell, cell },
+            { d => d.PartId, partId },
         };
         var dialog = await dialogs.ShowAsync<MovementDialog>(ActionTitle(action), parameters,
             new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
@@ -46,6 +60,8 @@
         StockAction.Receipt => StockTexts.ActionReceipt,
         StockAction.Issue => StockTexts.ActionIssue,
         StockAction.Transfer => StockTexts.ActionTransfer,
+        StockAction.Shipment => StockTexts.ActionShipment,
+        StockAction.PartReceipt => StockTexts.ActionPartReceipt,
         _ => StockTexts.ActionAdjustment,
     };
 }

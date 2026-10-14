@@ -1,0 +1,146 @@
+@inject IFinishedPartService FinishedParts
+@inject TimeProvider Clock
+@inject StockOptions Options
+
+@* Sortie de pièces finies : indice en vigueur proposé d'abord, puis le lot le plus ancien ; confirmation pour un indice remplacé. *@
+<FormErrors State="_form" />
+@if (!PartFixed)
+{
+    <PartPicker Value="_partId" ValueChanged="OnPartChangedAsync" Required="true" AutoFocus="@(_partId is null)" />
+}
+@if (_stock is not null)
+{
+    <MudText Typo="Typo.body2" Class="bz-muted my-2">
+        @string.Format(CultureInfo.CurrentCulture, StockTexts.FinishedAvailable, _stock.Total)
+        @if (_stock.InForceIndex is not null) { <span> · @string.Format(CultureInfo.CurrentCulture, StockTexts.IndexInForce, _stock.InForceIndex)</span> }
+    </MudText>
+    @if (_stock.Cells.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">@StockTexts.NoFinishedParts</MudAlert>
+    }
+    else
+    {
+        <QuantityField Value="_total" ValueChanged="OnTotalChanged" Unit="StockUnit.Piece" Label="@StockTexts.QuantityShipped" AutoFocus="PartFixed"
+                       Error="_form.HasError(nameof(PartShipmentInput.Quantity))" ErrorText="@_form.ErrorFor(nameof(PartShipmentInput.Quantity))" />
+        <MudSimpleTable Dense="true" Elevation="0" Class="mt-2">
+            <thead><tr><th>@StockTexts.Revision</th><th>@StockTexts.Location</th><th>@StockTexts.LotBatch</th><th style="text-align:right">@StockTexts.Available</th><th style="width:120px">@StockTexts.Shipped</th></tr></thead>
+            <tbody>
+                @foreach (var cell in _stock.Cells)
+                {
+                    <tr>
+                        <td>@cell.RevisionIndex @if (!cell.RevisionIsInForce) { <StatusChip Text="@StockTexts.Superseded" Tone="StatusTone.Warning" Class="ml-1" /> }</td>
+                        <td>@cell.LocationCode</td>
+                        <td>@cell.Lot</td>
+                        <td style="text-align:right">@cell.Quantity</td>
+                        <td>
+                            <MudNumericField T="int?" Value="@_cells.GetValueOrDefault(cell.Key)" ValueChanged="v => _cells[cell.Key] = v" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                             HideSpinButtons="true" Min="0" Max="cell.Quantity" InputMode="InputMode.numeric" aria-label="@StockTexts.Shipped" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+        @if (SelectedSuperseded.Count > 0)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-2">
+                @string.Format(CultureInfo.CurrentCulture, StockTexts.SupersededShipmentWarning, string.Join(", ", SelectedSuperseded), _stock.InForceIndex ?? "—")
+                <MudCheckBox T="bool" @bind-Value="_confirm" Label="@StockTexts.ConfirmSupersededShipment" Color="Color.Warning" />
+            </MudAlert>
+        }
+        <MudTextField @bind-Value="_reference" Label="@StockTexts.DeliveryReference" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
+        <MudDatePicker Date="_date" DateChanged="d => _date = d" Label="@StockTexts.OccurredOn" Variant="Variant.Outlined" Editable="true" Clearable="true" Class="mt-3"
+                       MaxDate="Today" MinDate="Today.AddDays(-Options.BackdatingDays)" HelperText="@StockTexts.OccurredOnHelp" />
+        <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Class="mt-3" MaxLength="1000" />
+        <div class="d-flex justify-end gap-2 mt-4">
+            @if (OnCancel.HasDelegate) { <MudButton OnClick="OnCancel">@SharedTexts.Cancel</MudButton> }
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" StartIcon="@Icons.Material.Filled.LocalShipping" OnClick="SubmitAsync" Disabled="_saving">@StockTexts.SubmitShipment</MudButton>
+        </div>
+    }
+}
+
+@code {
+    private readonly FormState _form = new();
+    private readonly Dictionary<StockKey, int?> _cells = [];
+    private Guid? _partId;
+    private FinishedStock? _stock;
+    private decimal? _total;
+    private bool _confirm;
+    private string? _reference;
+    private string? _comment;
+    private DateTime? _date;
+    private bool _saving;
+
+    [Parameter] public Guid? PartId { get; set; }
+
+    [Parameter] public bool PartFixed { get; set; }
+
+    [Parameter] public EventCallback<MovementItem> OnSaved { get; set; }
+
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private DateTime Today => TimeZoneInfo.ConvertTime(Clock.GetUtcNow(), Clock.LocalTimeZone).Date;
+
+    private IReadOnlyList<string> SelectedSuperseded => _stock?.Cells.Where(c => !c.RevisionIsInForce && _cells.GetValueOrDefault(c.Key) is > 0).Select(c => c.RevisionIndex).Distinct().ToList() ?? [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (PartId != _partId)
+        {
+            await OnPartChangedAsync(PartId);
+        }
+    }
+
+    private async Task OnPartChangedAsync(Guid? partId)
+    {
+        _partId = partId;
+        _stock = null;
+        _cells.Clear();
+        if (partId is { } id && await FinishedParts.GetFinishedStockAsync(id) is { IsSuccess: true } stock)
+        {
+            _stock = stock.Value;
+        }
+    }
+
+    /// <summary>Répartit la quantité totale sur les cases dans l'ordre proposé (indice en vigueur, puis lot le plus ancien).</summary>
+    private void OnTotalChanged(decimal? total)
+    {
+        _total = total;
+        _cells.Clear();
+        var remaining = (int)(total ?? 0);
+        foreach (var cell in _stock?.Cells ?? [])
+        {
+            var take = Math.Min(remaining, cell.Quantity);
+            _cells[cell.Key] = take > 0 ? take : null;
+            remaining -= take;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_partId is null)
+        {
+            return;
+        }
+
+        _saving = true;
+        DateTimeOffset? occurredAt = null;
+        if (_date is { } date && date.Date < Today)
+        {
+            var local = date.Date.AddHours(12);
+            occurredAt = new DateTimeOffset(local, Clock.LocalTimeZone.GetUtcOffset(local));
+        }
+
+        var cells = _cells.Where(c => c.Value is > 0).Select(c => new ConsumptionInput { Cell = c.Key, Quantity = c.Value!.Value }).ToList();
+        var result = await FinishedParts.ShipAsync(new PartShipmentInput
+        {
+            PartId = _partId.Value, Cells = cells, Quantity = cells.Count == 0 ? (int)(_total ?? 0) : 0,
+            Reference = _reference, Comment = _comment, OccurredAt = occurredAt, ConfirmSupersededRevision = _confirm,
+        });
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            await OnSaved.InvokeAsync(result.Value);
+        }
+    }
+}

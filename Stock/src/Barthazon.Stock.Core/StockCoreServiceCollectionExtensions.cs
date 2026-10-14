@@ -1,3 +1,4 @@
+using Barthazon.Stock.Contracts;
 using Barthazon.Stock.Core.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,13 @@ public static class StockCoreServiceCollectionExtensions
         services.AddScoped<ITrackedPartService, TrackedPartService>();
         services.AddScoped<BatchService>();
         services.AddScoped<IBatchService>(sp => sp.GetRequiredService<BatchService>());
+        services.AddScoped<IFinishedPartService, FinishedPartService>();
+
+        // Contrats exposés aux futures applications (commandes, pointage).
+        services.AddScoped<StockContractsService>();
+        services.AddScoped<IStockQuery>(sp => sp.GetRequiredService<StockContractsService>());
+        services.AddScoped<IBatchLookup>(sp => sp.GetRequiredService<StockContractsService>());
+        services.AddScoped<IStockShipments>(sp => sp.GetRequiredService<StockContractsService>());
         return services;
     }
 }
