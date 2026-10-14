@@ -1,0 +1,107 @@
+@inject IDialogService Dialogs
+@inject ICurrentUser CurrentUser
+@inject IBatchService Batches
+
+@* Pipeline d'une pièce : une ligne par lancement en cours, une colonne par opération (pièces en attente), une colonne « Fini ».
+   Sur téléphone : liste des opérations avec les quantités en attente, groupée par lancement. *@
+@if (Pipeline.Rows.Count == 0)
+{
+    <MudText Class="bz-muted">@StockTexts.NoBatchInProgress</MudText>
+}
+else
+{
+    <div class="d-none d-md-block">
+        <div style="overflow-x:auto">
+            <table class="bz-pipeline" aria-label="@StockTexts.Pipeline">
+                <thead>
+                    <tr>
+                        <th scope="col">@StockTexts.Batch</th>
+                        @foreach (var column in Pipeline.Columns)
+                        {
+                            <th scope="col">@column.OperationNumber @column.OperationType.Label()</th>
+                        }
+                        <th scope="col">@StockTexts.FinishedColumn</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Pipeline.Rows)
+                    {
+                        <tr>
+                            <td><a href="@($"stock/lancements/{Uri.EscapeDataString(row.Number)}")"><b>@row.Number</b></a> <span class="bz-muted">@row.RevisionIndex</span></td>
+                            @foreach (var column in Pipeline.Columns)
+                            {
+                                @if (!row.Waiting.TryGetValue(column.OperationNumber, out var waiting))
+                                {
+                                    <td class="bz-na" title="@StockTexts.NotInRouting">—</td>
+                                }
+                                else if (waiting > 0 && CurrentUser.IsAuthenticated)
+                                {
+                                    <td class="bz-has-wip">
+                                        <button type="button" class="bz-pipeline-cell" @onclick="() => DeclareAsync(row, column.OperationNumber)"
+                                                aria-label="@string.Format(CultureInfo.CurrentCulture, StockTexts.DeclareOperation, column.OperationNumber)">@waiting</button>
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td class="@(waiting > 0 ? "bz-has-wip" : null)">@waiting</td>
+                                }
+                            }
+                            <td>@row.Finished</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>@StockTexts.Total</td>
+                        @foreach (var column in Pipeline.Columns)
+                        {
+                            <td>@Pipeline.Totals.GetValueOrDefault(column.OperationNumber)</td>
+                        }
+                        <td>@Pipeline.TotalFinished</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    <div class="d-md-none">
+        <div class="d-flex flex-column gap-2">
+            @foreach (var row in Pipeline.Rows)
+            {
+                <div class="bz-card pa-3">
+                    <a href="@($"stock/lancements/{Uri.EscapeDataString(row.Number)}")"><b>@row.Number</b></a> <span class="bz-muted">@row.RevisionIndex</span>
+                    @foreach (var column in Pipeline.Columns.Where(c => row.Waiting.GetValueOrDefault(c.OperationNumber) > 0))
+                    {
+                        <div>@string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingForOpLine, row.Waiting[column.OperationNumber], column.OperationNumber, column.OperationType.Label())</div>
+                    }
+                    @if (row.Finished > 0) { <div class="bz-muted">@string.Format(CultureInfo.CurrentCulture, StockTexts.FinishedFromBatch, row.Finished)</div> }
+                </div>
+            }
+            <MudText Typo="Typo.body2"><b>@string.Format(CultureInfo.CurrentCulture, StockTexts.PipelineTotal, Pipeline.Totals.Values.Sum(), Pipeline.TotalFinished)</b></MudText>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public PartPipeline Pipeline { get; set; } = default!;
+
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private async Task DeclareAsync(PipelineRow row, int operationNumber)
+    {
+        var batch = await Batches.GetAsync(row.BatchId);
+        var step = batch.IsSuccess ? batch.Value.Steps.FirstOrDefault(s => s.OperationNumber == operationNumber) : null;
+        if (step is null)
+        {
+            return;
+        }
+
+        var dialog = await Dialogs.ShowAsync<DeclareDialog>(
+            string.Format(CultureInfo.CurrentCulture, StockTexts.DeclareOperationTitle, step.OperationNumber, step.OperationType.Label()),
+            new DialogParameters<DeclareDialog> { { d => d.BatchId, row.BatchId }, { d => d.Step, step } },
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await OnChanged.InvokeAsync();
+        }
+    }
+}

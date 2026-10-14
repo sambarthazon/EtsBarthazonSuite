@@ -1,0 +1,22 @@
+@* Statut d'un lancement. *@
+<StatusChip Text="@Label" Tone="Tone" Class="@Class" />
+
+@code {
+    [Parameter, EditorRequired] public BatchStatus Status { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    private string Label => Status switch
+    {
+        BatchStatus.InProgress => StockTexts.BatchInProgress,
+        BatchStatus.Completed => StockTexts.BatchCompleted,
+        _ => StockTexts.BatchCancelled,
+    };
+
+    private StatusTone Tone => Status switch
+    {
+        BatchStatus.InProgress => StatusTone.Info,
+        BatchStatus.Completed => StatusTone.Success,
+        _ => StatusTone.Disabled,
+    };
+}

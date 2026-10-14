@@ -1,0 +1,60 @@
+@inject IBatchService Batches
+@inject Notifier Notifier
+
+@* Renvoi en reprise : des pièces en attente d'une opération repartent à une opération antérieure. *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudSelect T="int?" @bind-Value="_from" Label="@StockTexts.ReworkFrom" Variant="Variant.Outlined" ToStringFunc="StepLabel">
+            @foreach (var step in Batch.Steps.Where(s => s.Waiting > 0 && s.Sequence > 1))
+            {
+                <MudSelectItem T="int?" Value="step.Sequence">@StepLabel(step.Sequence) (@step.Waiting)</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="int?" @bind-Value="_to" Label="@StockTexts.ReworkTo" Variant="Variant.Outlined" Class="mt-3" ToStringFunc="StepLabel"
+                   Error="_form.HasError(nameof(ReworkInput.ToWaitingStep))" ErrorText="@_form.ErrorFor(nameof(ReworkInput.ToWaitingStep))">
+            @foreach (var step in Batch.Steps.Where(s => _from is null || s.Sequence < _from))
+            {
+                <MudSelectItem T="int?" Value="step.Sequence">@StepLabel(step.Sequence)</MudSelectItem>
+            }
+        </MudSelect>
+        <QuantityField Value="_quantity" ValueChanged="v => _quantity = v" Unit="StockUnit.Piece" Label="@StockTexts.ColQuantity" Class="mt-3"
+                       Error="_form.HasError(nameof(ReworkInput.Quantity))" ErrorText="@_form.ErrorFor(nameof(ReworkInput.Quantity))" />
+        <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Class="mt-3" MaxLength="1000" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@StockTexts.ActionRework</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private int? _from;
+    private int? _to;
+    private decimal? _quantity;
+    private string? _comment;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public BatchDetails Batch { get; set; } = default!;
+
+    private string StepLabel(int? sequence) =>
+        Batch.Steps.FirstOrDefault(s => s.Sequence == sequence) is { } step
+            ? string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingOpType, step.OperationNumber, step.OperationType.Label())
+            : string.Empty;
+
+    private async Task SaveAsync()
+    {
+        var result = await Batches.ReworkAsync(new ReworkInput
+        {
+            BatchId = Batch.Id, FromWaitingStep = _from ?? 0, ToWaitingStep = _to ?? 0, Quantity = (int)(_quantity ?? 0), Comment = _comment,
+        });
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(StockTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

@@ -1,0 +1,226 @@
+@page "/stock/lancements/{Number}"
+@inject IBatchService Batches
+@inject IMovementService Movements
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+
+@* Fiche d'un lancement, pensée d'abord pour le téléphone (ouverte par le QR code de la fiche suiveuse). *@
+@if (_notFound)
+{
+    <PageHeader Title="@StockTexts.BatchNotFound" BackHref="stock/lancements" BackText="@StockTexts.BatchesTitle" />
+    <EmptyState Title="@StockTexts.BatchNotFound" Icon="@Icons.Material.Outlined.SearchOff" />
+}
+else if (_batch is null)
+{
+    <MudSkeleton Height="48px" Width="40%" />
+    <MudSkeleton Height="200px" SkeletonType="SkeletonType.Rectangle" Class="mt-4" />
+}
+else
+{
+    <PageHeader Title="@_batch.Number" BackHref="stock/lancements" BackText="@StockTexts.BatchesTitle">
+        <SubContent>
+            <MudText Typo="Typo.subtitle1">
+                <a href="@($"stock/pieces/{Uri.EscapeDataString(_batch.PartReference)}")"><b>@_batch.PartReference</b></a> @_batch.PartDesignation
+                · @string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionValue, _batch.RevisionIndex)
+            </MudText>
+            <div class="d-flex flex-wrap gap-1 mt-1">
+                <BatchStatusChip Status="_batch.Status" />
+                @if (_batch.IsRecovery) { <StatusChip Text="@StockTexts.RecoveryBatch" Tone="StatusTone.Neutral" /> }
+                @if (_batch.DueDate is { } due) { <StatusChip Text="@string.Format(CultureInfo.CurrentCulture, StockTexts.DueOn, due.ToString("d", CultureInfo.CurrentCulture))" Tone="StatusTone.Neutral" /> }
+                @if (_batch.CustomerOrderReference is not null) { <StatusChip Text="@_batch.CustomerOrderReference" Tone="StatusTone.Neutral" /> }
+            </div>
+        </SubContent>
+        <Actions>
+            @if (CanEdit || CurrentUser.IsAuthenticated)
+            {
+                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@StockTexts.MoreActions">
+                    <ActivatorContent><MudButton Variant="Variant.Outlined" EndIcon="@Icons.Material.Filled.ArrowDropDown" OnClick="@context.ToggleAsync">@StockTexts.MoreActions</MudButton></ActivatorContent>
+                    <ChildContent>
+                        @if (IsOpen && CurrentUser.IsAuthenticated)
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.Replay" OnClick="ReworkAsync" Disabled="@(!_batch.Steps.Skip(1).Any(s => s.Waiting > 0))">@StockTexts.ActionRework</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Filled.SwapHoriz" OnClick="TransferAsync" Disabled="@(_batch.InProgress == 0)">@StockTexts.ActionTransferWip</MudMenuItem>
+                        }
+                        @if (CanEdit)
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="EditAsync">@StockTexts.Edit</MudMenuItem>
+                            @if (IsOpen)
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Filled.Sync" OnClick="ResyncAsync">@StockTexts.ResyncRouting</MudMenuItem>
+                                <MudMenuItem Icon="@Icons.Material.Filled.Lock" OnClick="CloseAsync">@StockTexts.CloseBatch</MudMenuItem>
+                                <MudMenuItem Icon="@Icons.Material.Filled.Cancel" OnClick="CancelAsync">@StockTexts.CancelBatch</MudMenuItem>
+                            }
+                        }
+                    </ChildContent>
+                </MudMenu>
+            }
+        </Actions>
+    </PageHeader>
+
+    @if (Created)
+    {
+        <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Class="mb-3">@string.Format(CultureInfo.CurrentCulture, StockTexts.BatchLaunched, _batch.Number)</MudAlert>
+    }
+    @if (!_batch.RevisionIsInForce && _batch.Status != BatchStatus.Cancelled)
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-3">@string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionNotInForceBanner, _batch.RevisionIndex)</MudAlert>
+    }
+
+    <div class="bz-batch-counters mb-3">
+        <div class="bz-card pa-3"><MudText Typo="Typo.h5">@_batch.LaunchedQuantity</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.Launched</MudText></div>
+        <div class="bz-card pa-3"><MudText Typo="Typo.h5" Class="bz-tone-success">@_batch.Finished</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.Finished</MudText></div>
+        <div class="bz-card pa-3"><MudText Typo="Typo.h5" Class="bz-tone-info">@_batch.InProgress</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.WorkInProgress</MudText></div>
+        <div class="bz-card pa-3"><MudText Typo="Typo.h5" Class="@(_batch.Scrapped > 0 ? "bz-tone-error" : null)">@_batch.Scrapped</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.Scrapped</MudText></div>
+    </div>
+
+    @if (_batch.Consumed.Count > 0)
+    {
+        <MudText Typo="Typo.body2" Class="bz-muted mb-3">
+            @StockTexts.SourceConsumed :
+            @foreach (var line in _batch.Consumed)
+            {
+                <span class="mr-2"><b>@line.SubjectCode</b> @StockLabels.Quantity(-line.Delta, line.Unit)@(line.Lot is null ? null : $" · {line.Lot}")@(line.StageLabel is null ? null : $" · {line.StageLabel}")</span>
+            }
+        </MudText>
+    }
+
+    <h2 class="bz-dashboard-title">@StockTexts.Operations</h2>
+    <div class="d-flex flex-column gap-3 mb-4">
+        @foreach (var step in _batch.Steps)
+        {
+            var next = _batch.Steps.FirstOrDefault(s => s.Sequence == step.Sequence + 1);
+            <section class="bz-card pa-3 bz-step-card @(step.Waiting > 0 ? "bz-step-active" : null)" aria-label="@string.Format(CultureInfo.CurrentCulture, StockTexts.OperationTitle, step.OperationNumber, step.OperationType.Label())">
+                <div class="d-flex justify-space-between align-start gap-2 flex-wrap">
+                    <div style="min-width:0">
+                        <MudText Typo="Typo.h6"><b>@step.OperationNumber</b> — @step.OperationType.Label()</MudText>
+                        <MudText Typo="Typo.body2" Class="bz-muted">
+                            @(step.MachineName ?? step.Subcontractor ?? StockTexts.NoMachine)
+                            @if (step.Description is not null) { <span> · @Short(step.Description)</span> }
+                        </MudText>
+                    </div>
+                    <div class="d-flex gap-4 text-center">
+                        <div><MudText Typo="Typo.h6" Class="@(step.Waiting > 0 ? "bz-tone-info" : "bz-muted")">@step.Waiting</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.Waiting</MudText></div>
+                        <div><MudText Typo="Typo.h6">@step.Done</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.Done</MudText></div>
+                        <div><MudText Typo="Typo.h6" Class="@(step.Scrapped > 0 ? "bz-tone-error" : "bz-muted")">@step.Scrapped</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.Scrapped</MudText></div>
+                    </div>
+                </div>
+                @if (step.Skipped > 0)
+                {
+                    <MudText Typo="Typo.caption" Class="bz-muted">@string.Format(CultureInfo.CurrentCulture, StockTexts.SkippedCount, step.Skipped)</MudText>
+                }
+                @if (step.WaitingCells.Count > 1 || step.WaitingCells.Any(c => c.LocationCode != DefaultWorkshopCode))
+                {
+                    <MudText Typo="Typo.caption" Class="bz-muted d-block">@string.Join(" · ", step.WaitingCells.Select(c => $"{c.LocationCode} : {StockFormat.Quantity(c.Quantity)}"))</MudText>
+                }
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    @if (step.Waiting > 0 && CurrentUser.IsAuthenticated && IsOpen)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" StartIcon="@Icons.Material.Filled.Check" OnClick="() => DeclareAsync(step)" Class="bz-declare-button">
+                            @string.Format(CultureInfo.CurrentCulture, StockTexts.DeclareOperation, step.OperationNumber)
+                        </MudButton>
+                    }
+                    @if (CanEdit && IsOpen && step.Variants.Count > 0 && next is { Waiting: > 0 })
+                    {
+                        @foreach (var variant in step.Variants)
+                        {
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.CallSplit"
+                                       Href="@($"stock/lancements/nouveau?piece={Uri.EscapeDataString(variant.Reference)}&depuis={Uri.EscapeDataString(_batch.Number)}")">
+                                @string.Format(CultureInfo.CurrentCulture, StockTexts.OrientTo, variant.Reference)
+                            </MudButton>
+                        }
+                    }
+                </div>
+            </section>
+        }
+    </div>
+
+    <section aria-labelledby="bz-batch-movements">
+        <h2 id="bz-batch-movements" class="bz-dashboard-title">@StockTexts.MovementsTitle</h2>
+        <MovementTable Items="_movements" Loading="@(_movements is null)" OnChanged="LoadAsync" />
+    </section>
+}
+
+@code {
+    private BatchDetails? _batch;
+    private IReadOnlyList<MovementItem>? _movements;
+    private bool _notFound;
+
+    [Parameter] public string Number { get; set; } = string.Empty;
+
+    [SupplyParameterFromQuery(Name = "nouveau")] public string? New { get; set; }
+
+    [Inject] private StockOptions Options { get; set; } = default!;
+
+    private bool Created => New == "1";
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    private bool IsOpen => _batch?.Status == BatchStatus.InProgress;
+
+    private string DefaultWorkshopCode => Options.DefaultWorkInProgressLocationCode.ToUpperInvariant();
+
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await Batches.GetByNumberAsync(Number);
+        _notFound = result.HasError(ErrorKind.NotFound);
+        if (result.IsFailure)
+        {
+            if (!_notFound)
+            {
+                Notifier.Handle(result);
+            }
+
+            return;
+        }
+
+        _batch = result.Value;
+        var movements = await Movements.SearchAsync(new MovementSearchRequest { BatchId = _batch.Id, PageSize = 100 });
+        _movements = movements.IsSuccess ? movements.Value.Items : [];
+    }
+
+    private static string? Short(string? text) => text is { Length: > 200 } ? text[..200] + "…" : text;
+
+    private async Task ShowAsync<TDialog>(string title, DialogParameters<TDialog> parameters)
+        where TDialog : IComponent
+    {
+        var dialog = await Dialogs.ShowAsync<TDialog>(title, parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await LoadAsync();
+        }
+    }
+
+    private Task DeclareAsync(BatchStepView step) => ShowAsync(
+        string.Format(CultureInfo.CurrentCulture, StockTexts.DeclareOperationTitle, step.OperationNumber, step.OperationType.Label()),
+        new DialogParameters<DeclareDialog> { { d => d.BatchId, _batch!.Id }, { d => d.Step, step } });
+
+    private Task ReworkAsync() => ShowAsync(StockTexts.ActionRework, new DialogParameters<ReworkDialog> { { d => d.Batch, _batch! } });
+
+    private Task TransferAsync() => ShowAsync(StockTexts.ActionTransferWip,
+        new DialogParameters<WipTransferDialog> { { d => d.Cells, _batch!.Steps.SelectMany(s => s.WaitingCells).ToList() } });
+
+    private Task EditAsync() => ShowAsync(StockTexts.Edit, new DialogParameters<BatchEditDialog> { { d => d.Batch, _batch! } });
+
+    private Task CloseAsync() => ShowAsync(StockTexts.CloseBatch, new DialogParameters<CloseBatchDialog> { { d => d.Batch, _batch! } });
+
+    private async Task ResyncAsync()
+    {
+        if (await Dialogs.ConfirmAsync(StockTexts.ResyncRouting, StockTexts.ResyncRoutingText, StockTexts.ResyncRouting)
+            && Notifier.Handle(await Batches.ResyncRoutingAsync(_batch!.Id), StockTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task CancelAsync()
+    {
+        if (await Dialogs.ConfirmAsync(StockTexts.CancelBatch, StockTexts.CancelBatchText, StockTexts.CancelBatch, danger: true)
+            && Notifier.Handle(await Batches.CancelAsync(_batch!.Id), StockTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+}

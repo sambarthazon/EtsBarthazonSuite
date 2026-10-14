@@ -1,0 +1,91 @@
+@inject IBatchService Batches
+@inject TimeProvider Clock
+@inject StockOptions Options
+@inject Notifier Notifier
+
+@* Déclaration d'une opération : quantité bonne (tout ce qui attend), rebut et motif, non réalisée, date, rangement des pièces finies. *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudText Typo="Typo.body2" Class="bz-muted mb-2">@string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingCount, Step.Waiting)</MudText>
+        <QuantityField Value="_good" ValueChanged="v => _good = v" Unit="StockUnit.Piece" Label="@StockTexts.GoodQuantity" AutoFocus="true" Required="false"
+                       Error="_form.HasError(nameof(DeclareInput.GoodQuantity))" ErrorText="@_form.ErrorFor(nameof(DeclareInput.GoodQuantity))" />
+        <QuantityField Value="_scrap" ValueChanged="v => _scrap = v" Unit="StockUnit.Piece" Label="@StockTexts.ScrapQuantity" Class="mt-3" Required="false" />
+        @if (_scrap is > 0)
+        {
+            <MudSelect T="StockReason?" @bind-Value="_reason" Label="@StockTexts.ScrapReason" Variant="Variant.Outlined" Class="mt-3" Required="true" RequiredError="@SharedTexts.RequiredField"
+                       ToStringFunc="r => r?.Label() ?? string.Empty" Error="_form.HasError(nameof(DeclareInput.ScrapReason))" ErrorText="@_form.ErrorFor(nameof(DeclareInput.ScrapReason))">
+                @foreach (var reason in ScrapReasons)
+                {
+                    <MudSelectItem T="StockReason?" Value="reason">@reason.Label()</MudSelectItem>
+                }
+            </MudSelect>
+        }
+        <MudSwitch T="bool" @bind-Value="_skipped" Color="Color.Primary" Label="@StockTexts.OperationSkipped" Class="mt-3" />
+        @if (Step.IsLast)
+        {
+            <div class="mt-3">
+                <LocationSelect Value="_destination" ValueChanged="v => _destination = v" Label="@StockTexts.FinishedLocation" Clearable="true" HelperText="@StockTexts.FinishedLocationHelp"
+                                Error="_form.HasError(nameof(DeclareInput.DestinationLocationId))" ErrorText="@_form.ErrorFor(nameof(DeclareInput.DestinationLocationId))" />
+            </div>
+        }
+        <MudDatePicker Date="_date" DateChanged="d => _date = d" Label="@StockTexts.OccurredOn" Variant="Variant.Outlined" Editable="true" Clearable="true" Class="mt-3"
+                       MaxDate="Today" MinDate="Today.AddDays(-Options.BackdatingDays)" HelperText="@StockTexts.OccurredOnHelp"
+                       Error="_form.HasError(OccurredAtField)" ErrorText="@_form.ErrorFor(OccurredAtField)" />
+        <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Class="mt-3" MaxLength="1000" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="SaveAsync" Disabled="_saving">@StockTexts.Declare</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private const string OccurredAtField = "OccurredAt";
+    private static readonly StockReason[] ScrapReasons =
+        [StockReason.Dimension, StockReason.Aspect, StockReason.Material, StockReason.Setup, StockReason.Handling, StockReason.Other];
+
+    private readonly FormState _form = new();
+    private decimal? _good;
+    private decimal? _scrap;
+    private StockReason? _reason;
+    private bool _skipped;
+    private Guid? _destination;
+    private DateTime? _date;
+    private string? _comment;
+    private bool _saving;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public Guid BatchId { get; set; }
+
+    [Parameter, EditorRequired] public BatchStepView Step { get; set; } = default!;
+
+    private DateTime Today => TimeZoneInfo.ConvertTime(Clock.GetUtcNow(), Clock.LocalTimeZone).Date;
+
+    protected override void OnInitialized() => _good = Step.Waiting;
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        DateTimeOffset? occurredAt = null;
+        if (_date is { } date && date.Date < Today)
+        {
+            var local = date.Date.AddHours(12);
+            occurredAt = new DateTimeOffset(local, Clock.LocalTimeZone.GetUtcOffset(local));
+        }
+
+        var result = await Batches.DeclareAsync(new DeclareInput
+        {
+            BatchId = BatchId, StepSequence = Step.Sequence, GoodQuantity = (int)(_good ?? 0), ScrapQuantity = (int)(_scrap ?? 0), ScrapReason = _reason,
+            Skipped = _skipped, DestinationLocationId = _destination, Comment = _comment, OccurredAt = occurredAt,
+        });
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            Notifier.Success(string.Format(CultureInfo.CurrentCulture, StockTexts.OperationDeclared, Step.OperationNumber));
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

@@ -1,0 +1,43 @@
+@inject IBatchService Batches
+@inject Notifier Notifier
+
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudDatePicker Date="_due" DateChanged="d => _due = d" Label="@StockTexts.DueDate" Variant="Variant.Outlined" Editable="true" Clearable="true" />
+        <MudTextField @bind-Value="_input.CustomerOrderReference" Label="@StockTexts.CustomerOrderReference" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
+        <MudTextField @bind-Value="_input.Notes" Label="@StockTexts.Notes" Variant="Variant.Outlined" Lines="3" Class="mt-3" MaxLength="4000" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private BatchEditInput _input = new();
+    private DateTime? _due;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public BatchDetails Batch { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        _input = new BatchEditInput { CustomerOrderReference = Batch.CustomerOrderReference, Notes = Batch.Notes, Version = Batch.Version };
+        _due = Batch.DueDate?.ToDateTime(TimeOnly.MinValue);
+    }
+
+    private async Task SaveAsync()
+    {
+        _input.DueDate = _due is { } due ? DateOnly.FromDateTime(due) : null;
+        var result = await Batches.UpdateAsync(Batch.Id, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(StockTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

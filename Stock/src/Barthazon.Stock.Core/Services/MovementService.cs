@@ -177,6 +177,22 @@ internal sealed class MovementService(
                 return Error.Validation(StockMessages.TextTooLong, nameof(comment));
             }
 
+            Action? cancelBatch = null;
+            // Annuler le mouvement de lancement annule le lancement, s'il n'a encore rien déclaré.
+            if (original.Type == StockTransactionType.Launch && original.BatchId is { } batchId)
+            {
+                var others = (await uow.Transactions.ListForBatchAsync(batchId, cancellationToken))
+                    .Any(t => t.Id != original.Id && t.BatchId == batchId && !t.IsReversed && t.Type != StockTransactionType.Reversal);
+                if (others)
+                {
+                    return Error.Validation(StockMessages.BatchHasDeclarations);
+                }
+
+                var batch = await uow.Batches.GetByIdAsync(batchId, cancellationToken);
+                var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), timeProvider.LocalTimeZone).DateTime);
+                cancelBatch = () => batch?.Cancel(today);
+            }
+
             // Annulation refusée si une case deviendrait négative : on désigne le mouvement à annuler d'abord.
             var keys = original.Lines.Where(l => l.Delta > 0).Select(l => l.Key).Distinct().ToList();
             var balances = (await uow.Balances.GetForUpdateAsync(keys, cancellationToken)).ToDictionary(b => b.Key);
@@ -186,9 +202,19 @@ internal sealed class MovementService(
                 if (available < group.Sum(l => l.Delta) && !(group.Key.IsItem && options.AllowNegativeItemStock))
                 {
                     var blocker = await uow.Transactions.FindLatestConsumerAsync(group.Key, original.Sequence, cancellationToken);
-                    return Error.Validation(blocker is null
-                        ? StockMessages.ReversalWouldBeNegative
-                        : string.Format(CultureInfo.CurrentCulture, StockMessages.ReversalBlockedBy, blocker.Number));
+                    if (blocker is null)
+                    {
+                        return Error.Validation(StockMessages.ReversalWouldBeNegative);
+                    }
+
+                    // Pièces en cours : « ces pièces ont déjà passé l'op 30 : annulez d'abord la déclaration M-000145 ».
+                    if (group.Key.IsWorkInProgress && blocker.StepSequence is { } step
+                        && (await uow.Batches.GetManyAsync([group.Key.BatchId], cancellationToken)).SingleOrDefault()?.Step(step) is { } passed)
+                    {
+                        return Error.Validation(string.Format(CultureInfo.CurrentCulture, StockMessages.ReversalBlockedByOperation, passed.OperationNumber, blocker.Number));
+                    }
+
+                    return Error.Validation(string.Format(CultureInfo.CurrentCulture, StockMessages.ReversalBlockedBy, blocker.Number));
                 }
             }
 
@@ -205,6 +231,12 @@ internal sealed class MovementService(
             }
 
             entry.BeforeSave.Add(() => original.MarkReversedBy(reversal.Id));
+            if (cancelBatch is not null)
+            {
+                entry.BeforeSave.Add(cancelBatch);
+            }
+
+
             return entry;
         }, cancellationToken);
         return await ToItemAsync(recorded, cancellationToken);
@@ -345,7 +377,7 @@ internal sealed class MovementService(
     }
 
     /// <summary>Date du fait : maintenant par défaut, jamais dans le futur ni plus ancienne que <c>Stock:BackdatingDays</c>.</summary>
-    private DateTimeOffset CheckDate(DateTimeOffset? requested, Validation validation)
+    internal DateTimeOffset CheckDate(DateTimeOffset? requested, Validation validation)
     {
         var now = timeProvider.GetUtcNow();
         if (requested is not { } at)
@@ -362,7 +394,7 @@ internal sealed class MovementService(
         return at > now ? now : at.ToUniversalTime();
     }
 
-    private StockTransaction NewTransaction(StockTransactionType type, DateTimeOffset occurredAt) =>
+    internal StockTransaction NewTransaction(StockTransactionType type, DateTimeOffset occurredAt) =>
         new(type, occurredAt, timeProvider.GetUtcNow(), access.User.UserId, access.User.DisplayName ?? access.User.UserName);
 
     /// <summary>Raison pour laquelle le mouvement ne peut pas être annulé par l'utilisateur courant (null s'il le peut).</summary>
@@ -424,7 +456,7 @@ internal sealed class MovementService(
             t.Id, t.Number, t.Type, t.OccurredAt, t.RecordedAt, t.RecordedByName, t.BatchId, t.Reference, t.Reason, t.Comment,
             t.ReversesTransactionId, NumberOf(t.ReversesTransactionId), t.ReversedByTransactionId, NumberOf(t.ReversedByTransactionId),
             t.Lines.Select(l => new MovementLineView(l.Key, names.SubjectCode(l.Key), names.SubjectLabel(l.Key), names.Unit(l.Key),
-                names.LocationCode(l.LocationId), null, l.Delta)).ToList())).ToList();
+                names.LocationCode(l.LocationId), names.StageLabel(l.Key), l.Delta)).ToList())).ToList();
     }
 
     private static DateTimeOffset StartOfDay(DateOnly date, TimeZoneInfo zone)

@@ -1,6 +1,7 @@
 @page "/stock/pieces/{Reference}"
 @inject ITrackedPartService TrackedParts
 @inject IMovementService Movements
+@inject IBatchService Batches
 @inject ICurrentUser CurrentUser
 @inject IDialogService Dialogs
 @inject Notifier Notifier
@@ -40,6 +41,11 @@ else
             {
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddTask" OnClick="TrackAsync">@StockTexts.TrackThisPart</MudButton>
             }
+            @if (CanEdit && !_part.IsUnknownPart)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow"
+                           Href="@($"stock/lancements/nouveau?piece={Uri.EscapeDataString(_part.Reference)}")">@StockTexts.Launch</MudButton>
+            }
             @if (CanEdit && _part.IsTracked)
             {
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="EditSettingsAsync">@StockTexts.Settings</MudButton>
@@ -48,6 +54,15 @@ else
     </PageHeader>
 
     <MudGrid Spacing="3">
+        <MudItem xs="12">
+            <section class="bz-card pa-4" aria-labelledby="bz-part-pipeline">
+                <h2 id="bz-part-pipeline" class="bz-dashboard-title">@StockTexts.Pipeline</h2>
+                @if (_pipeline is not null)
+                {
+                    <PipelineView Pipeline="_pipeline" OnChanged="LoadAsync" />
+                }
+            </section>
+        </MudItem>
         <MudItem xs="12" md="4">
             <section class="bz-card pa-4" aria-labelledby="bz-part-summary">
                 <h2 id="bz-part-summary" class="bz-dashboard-title">@StockTexts.StockByLocation</h2>
@@ -121,6 +136,31 @@ else
                 }
             </section>
         </MudItem>
+        <MudItem xs="12">
+            <section class="bz-card pa-4" aria-labelledby="bz-part-batches">
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <h2 id="bz-part-batches" class="bz-dashboard-title">@StockTexts.BatchesTitle</h2>
+                    <MudButton Variant="Variant.Text" Href="@($"stock/lancements?statut=tous&piece={_part.PartId}")" EndIcon="@Icons.Material.Filled.ArrowForward">@StockTexts.AllBatches</MudButton>
+                </div>
+                @if (_batches is { Count: > 0 })
+                {
+                    <div class="d-flex flex-column gap-1">
+                        @foreach (var batch in _batches.Take(10))
+                        {
+                            <a href="@($"stock/lancements/{Uri.EscapeDataString(batch.Number)}")" class="d-flex flex-wrap align-center gap-2" style="color:inherit">
+                                <b>@batch.Number</b> <span class="bz-muted">@batch.RevisionIndex · @batch.LaunchedOn.ToString("d", CultureInfo.CurrentCulture)</span>
+                                <BatchStatusChip Status="batch.Status" />
+                                <span class="bz-muted">@string.Format(CultureInfo.CurrentCulture, StockTexts.ProgressText, batch.Finished, batch.LaunchedQuantity, batch.InProgress, batch.Scrapped)</span>
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <MudText Class="bz-muted">@StockTexts.NoBatches</MudText>
+                }
+            </section>
+        </MudItem>
         @if (_madeFromThis is { Count: > 0 })
         {
             <MudItem xs="12">
@@ -146,6 +186,8 @@ else
     private TrackedPartDetails? _part;
     private IReadOnlyList<SourceUsage>? _madeFromThis;
     private IReadOnlyList<MovementItem>? _movements;
+    private PartPipeline? _pipeline;
+    private IReadOnlyList<BatchListItem>? _batches;
     private bool _notFound;
 
     [Parameter] public string Reference { get; set; } = string.Empty;
@@ -169,6 +211,10 @@ else
         }
 
         _part = result.Value;
+        var pipeline = await Batches.GetPipelineAsync(_part.PartId);
+        _pipeline = pipeline.IsSuccess ? pipeline.Value : null;
+        var batches = await Batches.SearchAsync(new BatchSearchRequest { PartId = _part.PartId });
+        _batches = batches.IsSuccess ? batches.Value : [];
         var usages = await TrackedParts.ListPartsMadeFromPartAsync(_part.PartId);
         _madeFromThis = usages.IsSuccess ? usages.Value : [];
         var movements = await Movements.SearchAsync(new MovementSearchRequest { PartId = _part.PartId, PageSize = 20 });

@@ -58,4 +58,26 @@
   <data name="SourceOperationUnknown" xml:space="preserve"><value>Cette opération n'existe pas dans la gamme en vigueur de la pièce source.</value></data>
   <data name="SourceDuplicate" xml:space="preserve"><value>Cette source est déjà déclarée pour cette pièce.</value></data>
   <data name="QuantityPerPartPrecision" xml:space="preserve"><value>Six décimales au plus.</value></data>
+  <data name="WaitingForOperation" xml:space="preserve"><value>{0} · attend l'op {1}</value></data>
+  <data name="BatchNotFound" xml:space="preserve"><value>Lancement introuvable.</value></data>
+  <data name="BatchNotInProgress" xml:space="preserve"><value>Ce lancement n'est pas en cours.</value></data>
+  <data name="BatchCannotBeCancelled" xml:space="preserve"><value>Ce lancement ne peut pas être annulé.</value></data>
+  <data name="BatchHasDeclarations" xml:space="preserve"><value>Des opérations ont déjà été déclarées sur ce lancement : annulez-les d'abord, ou clôturez le lancement.</value></data>
+  <data name="RevisionRequired" xml:space="preserve"><value>Choisissez l'indice à lancer : la pièce n'a pas d'indice en vigueur.</value></data>
+  <data name="CancelledRevisionLaunch" xml:space="preserve"><value>Un indice annulé ne peut pas être lancé.</value></data>
+  <data name="RevisionNotInForceConfirm" xml:space="preserve"><value>L'indice {0} n'est pas en vigueur : confirmez le lancement de cet indice.</value></data>
+  <data name="LaunchWithoutConsumption" xml:space="preserve"><value>Lancement sans consommation (matière non suivie).</value></data>
+  <data name="LaunchSourceRequired" xml:space="preserve"><value>Choisissez la source à consommer, ou lancez « sans consommation ».</value></data>
+  <data name="ConsumptionRequired" xml:space="preserve"><value>Indiquez la quantité consommée et la case de stock d'où elle est prise.</value></data>
+  <data name="ConsumptionNotFromSource" xml:space="preserve"><value>La case choisie ne correspond pas à la source du lancement.</value></data>
+  <data name="StepNotFound" xml:space="preserve"><value>Étape introuvable.</value></data>
+  <data name="ScrapReasonRequired" xml:space="preserve"><value>Le motif du rebut est obligatoire.</value></data>
+  <data name="ReworkStepInvalid" xml:space="preserve"><value>Choisissez une étape antérieure à celle que les pièces attendent.</value></data>
+  <data name="OnlyWaitingForOperation" xml:space="preserve"><value>Seulement {0} pièce(s) attendent l'op {1}.</value></data>
+  <data name="ClosedBatchScrap" xml:space="preserve"><value>Clôture du lancement</value></data>
+  <data name="RoutingUnchanged" xml:space="preserve"><value>La gamme figée est identique à la gamme actuelle de l'indice.</value></data>
+  <data name="ResyncForbidden" xml:space="preserve"><value>Resynchronisation impossible : des pièces ont déjà passé l'opération {0}, qui changerait.</value></data>
+  <data name="RoutingResynchronized" xml:space="preserve"><value>Gamme figée resynchronisée avec la gamme actuelle de l'indice.</value></data>
+  <data name="DefaultStepDescription" xml:space="preserve"><value>Fabrication</value></data>
+  <data name="ReversalBlockedByOperation" xml:space="preserve"><value>Ces pièces ont déjà passé l'op {0} : annulez d'abord la déclaration {1}.</value></data>
 </root>

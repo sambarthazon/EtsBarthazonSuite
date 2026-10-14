@@ -1,0 +1,42 @@
+@inject IBatchService Batches
+@inject Notifier Notifier
+
+@* Clôture d'un lancement : les pièces encore en cours sont déclarées en rebut (motif obligatoire). *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudText Class="mb-3">@string.Format(CultureInfo.CurrentCulture, StockTexts.CloseBatchText, Batch.InProgress)</MudText>
+        <MudSelect T="StockReason" @bind-Value="_reason" Label="@StockTexts.ScrapReason" Variant="Variant.Outlined" ToStringFunc="r => r.Label()">
+            @foreach (var reason in new[] { StockReason.Dimension, StockReason.Aspect, StockReason.Material, StockReason.Setup, StockReason.Handling, StockReason.Other })
+            {
+                <MudSelectItem T="StockReason" Value="reason">@reason.Label()</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Class="mt-3" MaxLength="1000" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="SaveAsync">@StockTexts.CloseBatch</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private StockReason _reason = StockReason.Other;
+    private string? _comment;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public BatchDetails Batch { get; set; } = default!;
+
+    private async Task SaveAsync()
+    {
+        var result = await Batches.CloseAsync(new CloseBatchInput { BatchId = Batch.Id, Reason = _reason, Comment = _comment });
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(StockTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

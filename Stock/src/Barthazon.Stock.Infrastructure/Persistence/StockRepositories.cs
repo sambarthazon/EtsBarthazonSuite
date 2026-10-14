@@ -151,6 +151,19 @@ internal sealed class StockTransactionRepository(StockDbContext context) : IStoc
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<StockTransaction>> ListForBatchAsync(Guid batchId, CancellationToken cancellationToken = default) =>
+        await Set.AsNoTracking().Include(t => t.Lines)
+            .Where(t => t.BatchId == batchId || t.Lines.Any(l => l.BatchId == batchId))
+            .OrderBy(t => t.Sequence).AsSplitQuery().ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, DateTimeOffset>> LastMovementByBatchAsync(IReadOnlyCollection<Guid> batchIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(batchIds);
+        var rows = await Set.AsNoTracking().Where(t => t.BatchId != null && batchIds.Contains(t.BatchId.Value))
+            .Select(t => new { BatchId = t.BatchId!.Value, t.OccurredAt }).ToListAsync(cancellationToken);
+        return rows.GroupBy(r => r.BatchId).ToDictionary(g => g.Key, g => g.Max(r => r.OccurredAt));
+    }
+
     public async Task<IReadOnlyList<StockTransactionLine>> ListAllLinesAsync(CancellationToken cancellationToken = default) =>
         await context.Set<StockTransactionLine>().AsNoTracking().ToListAsync(cancellationToken);
 }
@@ -265,6 +278,49 @@ internal sealed class TrackedPartRepository(StockDbContext context) : EfReposito
     }
 }
 
+internal sealed class ProductionBatchRepository(StockDbContext context) : EfRepository<ProductionBatch>(context), IProductionBatchRepository
+{
+    public Task<ProductionBatch?> GetWithStepsAsync(Guid id, CancellationToken cancellationToken = default) =>
+        Set.Include(b => b.Steps).FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+
+    public async Task<ProductionBatch?> GetByNumberAsync(string number, CancellationToken cancellationToken = default)
+    {
+        var normalized = number.Trim().ToUpperInvariant();
+        return await Set.AsNoTracking().Include(b => b.Steps).FirstOrDefaultAsync(b => b.Number.ToUpper() == normalized, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ProductionBatch>> ListAsync(BatchFilter filter, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        var query = Set.AsNoTracking().Include(b => b.Steps).AsQueryable();
+        if (filter.PartId is { } partId)
+        {
+            query = query.Where(b => b.PartId == partId);
+        }
+
+        if (filter.PartIds is { } partIds)
+        {
+            query = query.Where(b => partIds.Contains(b.PartId));
+        }
+
+        if (filter.Statuses is { Count: > 0 } statuses)
+        {
+            query = query.Where(b => statuses.Contains(b.Status));
+        }
+
+        return await query.AsSplitQuery().ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ProductionBatch>> GetManyAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var list = ids.Distinct().ToList();
+        return list.Count == 0 ? [] : await Set.AsNoTracking().Include(b => b.Steps).Where(b => list.Contains(b.Id)).AsSplitQuery().ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> GetLastYearSequenceAsync(int year, CancellationToken cancellationToken = default) =>
+        await Set.Where(b => b.Year == year).MaxAsync(b => (int?)b.YearSequence, cancellationToken) ?? 0;
+}
+
 internal sealed class StockUnitOfWork : EfUnitOfWork, IStockUnitOfWork
 {
     public StockUnitOfWork(StockDbContext context, string? userName)
@@ -275,6 +331,7 @@ internal sealed class StockUnitOfWork : EfUnitOfWork, IStockUnitOfWork
         Transactions = new StockTransactionRepository(context);
         Balances = new StockBalanceRepository(context);
         TrackedParts = new TrackedPartRepository(context);
+        Batches = new ProductionBatchRepository(context);
     }
 
     public IStockLocationRepository Locations { get; }
@@ -286,6 +343,8 @@ internal sealed class StockUnitOfWork : EfUnitOfWork, IStockUnitOfWork
     public IStockBalanceRepository Balances { get; }
 
     public ITrackedPartRepository TrackedParts { get; }
+
+    public IProductionBatchRepository Batches { get; }
 }
 
 /// <summary>Fabrique d'unités de travail du stock (une par opération applicative).</summary>

@@ -296,4 +296,87 @@
   <data name="UnknownPartHelp" xml:space="preserve"><value>Introuvable dans l'annuaire : la dernière référence connue est affichée.</value></data>
   <data name="WithWorkInProgressOnly" xml:space="preserve"><value>Avec des en-cours</value></data>
   <data name="WorkInProgress" xml:space="preserve"><value>En cours</value></data>
+  <data name="ActionRework" xml:space="preserve"><value>Renvoyer en reprise</value></data>
+  <data name="ActionTransferWip" xml:space="preserve"><value>Transférer des pièces en cours</value></data>
+  <data name="AllBatches" xml:space="preserve"><value>Tous les lancements</value></data>
+  <data name="Batch" xml:space="preserve"><value>Lancement</value></data>
+  <data name="BatchCancelled" xml:space="preserve"><value>Annulé</value></data>
+  <data name="BatchCompleted" xml:space="preserve"><value>Terminé</value></data>
+  <data name="BatchInProgress" xml:space="preserve"><value>En cours</value></data>
+  <data name="BatchLaunched" xml:space="preserve"><value>Lancement {0} créé.</value></data>
+  <data name="BatchNotFound" xml:space="preserve"><value>Lancement introuvable</value></data>
+  <data name="BatchesCount" xml:space="preserve"><value>{0} lancement(s)</value></data>
+  <data name="BatchesTitle" xml:space="preserve"><value>Lancements</value></data>
+  <data name="CancelBatch" xml:space="preserve"><value>Annuler le lancement</value></data>
+  <data name="CancelBatchText" xml:space="preserve"><value>Le mouvement de lancement sera annulé : la matière consommée revient en stock. Possible seulement si aucune opération n'a été déclarée.</value></data>
+  <data name="CloseBatch" xml:space="preserve"><value>Clôturer le lancement</value></data>
+  <data name="CloseBatchText" xml:space="preserve"><value>Les {0} pièce(s) encore en cours seront déclarées en rebut.</value></data>
+  <data name="ConfirmRevision" xml:space="preserve"><value>Je confirme le lancement de cet indice</value></data>
+  <data name="ConfirmWithoutConsumption" xml:space="preserve"><value>Je confirme : lancer sans consommer de matière (matière non suivie en stock)</value></data>
+  <data name="ConfirmWithoutConsumptionRequired" xml:space="preserve"><value>Choisissez une source, ou confirmez le lancement sans consommation.</value></data>
+  <data name="Consumed" xml:space="preserve"><value>Consommé</value></data>
+  <data name="Consumption" xml:space="preserve"><value>Source et consommation</value></data>
+  <data name="CurrentOperation" xml:space="preserve"><value>Opération en cours</value></data>
+  <data name="CustomerOrderReference" xml:space="preserve"><value>Référence de commande client</value></data>
+  <data name="Declare" xml:space="preserve"><value>Déclarer</value></data>
+  <data name="DeclareOperation" xml:space="preserve"><value>Déclarer l'op {0}</value></data>
+  <data name="DeclareOperationTitle" xml:space="preserve"><value>Op {0} — {1}</value></data>
+  <data name="Done" xml:space="preserve"><value>Faites</value></data>
+  <data name="DueDate" xml:space="preserve"><value>Échéance</value></data>
+  <data name="DueOn" xml:space="preserve"><value>Échéance {0}</value></data>
+  <data name="FinishedColumn" xml:space="preserve"><value>Fini</value></data>
+  <data name="FinishedFromBatch" xml:space="preserve"><value>{0} finie(s) en stock</value></data>
+  <data name="FinishedLocationHelp" xml:space="preserve"><value>Vide : rangement habituel de la pièce, sinon le magasin.</value></data>
+  <data name="FrozenRouting" xml:space="preserve"><value>Gamme qui sera figée</value></data>
+  <data name="FrozenRoutingHelp" xml:space="preserve"><value>Le lancement garde cette gamme, même si celle de l'annuaire change ensuite.</value></data>
+  <data name="GoodQuantity" xml:space="preserve"><value>Quantité bonne</value></data>
+  <data name="IndexNotInForce" xml:space="preserve"><value>Indice {0} (pas en vigueur)</value></data>
+  <data name="Launch" xml:space="preserve"><value>Lancer</value></data>
+  <data name="LaunchNumber" xml:space="preserve"><value>Lancer {0}</value></data>
+  <data name="Launched" xml:space="preserve"><value>Lancées</value></data>
+  <data name="LaunchedQuantity" xml:space="preserve"><value>Quantité à lancer</value></data>
+  <data name="NewBatch" xml:space="preserve"><value>Nouveau lancement</value></data>
+  <data name="NoBatchInProgress" xml:space="preserve"><value>Aucun lancement en cours.</value></data>
+  <data name="NoBatches" xml:space="preserve"><value>Aucun lancement.</value></data>
+  <data name="NoMachine" xml:space="preserve"><value>Sans machine</value></data>
+  <data name="NoSourceForLaunch" xml:space="preserve"><value>Aucune source de brut déclarée pour cette pièce.</value></data>
+  <data name="NotInRouting" xml:space="preserve"><value>Opération absente de la gamme de ce lancement</value></data>
+  <data name="OperationDeclared" xml:space="preserve"><value>Op {0} déclarée.</value></data>
+  <data name="OperationSkipped" xml:space="preserve"><value>Opération non réalisée (les pièces passent à l'étape suivante)</value></data>
+  <data name="OperationTitle" xml:space="preserve"><value>Opération {0} — {1}</value></data>
+  <data name="Operations" xml:space="preserve"><value>Opérations</value></data>
+  <data name="OrientTo" xml:space="preserve"><value>Orienter vers {0}</value></data>
+  <data name="Pipeline" xml:space="preserve"><value>Pièces à chaque étape</value></data>
+  <data name="PipelineTotal" xml:space="preserve"><value>Total : {0} en cours, {1} finie(s)</value></data>
+  <data name="Progress" xml:space="preserve"><value>Avancement</value></data>
+  <data name="ProgressText" xml:space="preserve"><value>{0} finie(s) / {1} · {2} en cours · {3} rebut(s)</value></data>
+  <data name="ProposedConsumption" xml:space="preserve"><value>proposé : {0}</value></data>
+  <data name="QuantityAndDue" xml:space="preserve"><value>Quantité et échéance</value></data>
+  <data name="RecoveryBatch" xml:space="preserve"><value>Lancement de reprise</value></data>
+  <data name="RecoveryBatchHelp" xml:space="preserve"><value>Pour reprendre des pièces déjà en cours : aucune consommation, les pièces sont placées en attente de l'opération choisie.</value></data>
+  <data name="RecoveryWaitingOperation" xml:space="preserve"><value>Pièces en attente de</value></data>
+  <data name="ResyncRouting" xml:space="preserve"><value>Resynchroniser la gamme</value></data>
+  <data name="ResyncRoutingText" xml:space="preserve"><value>La gamme figée sera remplacée par la gamme actuelle de l'indice. Impossible si des pièces ont déjà passé une opération qui change.</value></data>
+  <data name="RevisionNotInForceBanner" xml:space="preserve"><value>L'indice {0} de ce lancement n'est plus en vigueur : vérifiez avant usinage.</value></data>
+  <data name="RevisionNotInForceWarning" xml:space="preserve"><value>L'indice {0} n'est pas en vigueur (reprise d'un ancien indice à la demande du client ?).</value></data>
+  <data name="RevisionValue" xml:space="preserve"><value>indice {0}</value></data>
+  <data name="ReworkFrom" xml:space="preserve"><value>Pièces actuellement</value></data>
+  <data name="ReworkTo" xml:space="preserve"><value>Renvoyer</value></data>
+  <data name="ScrapQuantity" xml:space="preserve"><value>Rebut</value></data>
+  <data name="ScrapReason" xml:space="preserve"><value>Motif du rebut</value></data>
+  <data name="Scrapped" xml:space="preserve"><value>Rebuts</value></data>
+  <data name="SearchBatch" xml:space="preserve"><value>Rechercher un lancement (numéro, pièce, commande)</value></data>
+  <data name="SkippedCount" xml:space="preserve"><value>dont {0} non réalisée(s)</value></data>
+  <data name="SourceConsumed" xml:space="preserve"><value>Source consommée</value></data>
+  <data name="SourceEmpty" xml:space="preserve"><value>Cette source n'a pas de stock disponible.</value></data>
+  <data name="Stale" xml:space="preserve"><value>À l'arrêt</value></data>
+  <data name="Status" xml:space="preserve"><value>Statut</value></data>
+  <data name="Total" xml:space="preserve"><value>Total</value></data>
+  <data name="TotalConsumed" xml:space="preserve"><value>Total consommé : {0}</value></data>
+  <data name="Waiting" xml:space="preserve"><value>En attente</value></data>
+  <data name="WaitingCount" xml:space="preserve"><value>{0} pièce(s) attendent cette opération.</value></data>
+  <data name="WaitingForOpLine" xml:space="preserve"><value>{0} en attente de l'op {1} — {2}</value></data>
+  <data name="WaitingOp" xml:space="preserve"><value>En attente de l'op {0}</value></data>
+  <data name="WaitingOpType" xml:space="preserve"><value>en attente de l'op {0} — {1}</value></data>
+  <data name="WithoutConsumption" xml:space="preserve"><value>Sans consommation</value></data>
 </root>

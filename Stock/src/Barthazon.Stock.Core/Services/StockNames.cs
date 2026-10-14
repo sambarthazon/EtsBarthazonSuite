@@ -15,6 +15,7 @@ internal sealed class StockNames
     private readonly Dictionary<Guid, PartSummary> _parts;
     private readonly Dictionary<Guid, StockLocation> _locations;
     private readonly Dictionary<Guid, (string Reference, string Designation)> _knownParts;
+    private Dictionary<Guid, ProductionBatch> _batches = [];
 
     private StockNames(
         Dictionary<Guid, StockItem> items,
@@ -40,7 +41,9 @@ internal sealed class StockNames
         var known = unknown.Count == 0
             ? []
             : (await uow.TrackedParts.GetManyAsync(unknown, cancellationToken)).ToDictionary(t => t.PartId, t => (t.LastKnownReference, t.LastKnownDesignation));
-        return new StockNames(items, summaries, locations, known);
+        var batchIds = list.Where(k => k.IsWorkInProgress).Select(k => k.BatchId).Distinct().ToList();
+        var batches = batchIds.Count == 0 ? [] : (await uow.Batches.GetManyAsync(batchIds, cancellationToken)).ToDictionary(b => b.Id);
+        return new StockNames(items, summaries, locations, known) { _batches = batches };
     }
 
     public StockItem? Item(Guid id) => _items.GetValueOrDefault(id);
@@ -64,6 +67,27 @@ internal sealed class StockNames
         ? _items.TryGetValue(key.ItemId, out var item) ? item.Designation : StockMessages.UnknownItem
         : _parts.TryGetValue(key.PartId, out var part) ? part.Designation
         : _knownParts.TryGetValue(key.PartId, out var known) ? $"{StockMessages.UnknownPart} ({known.Designation})" : StockMessages.UnknownPart;
+
+    public ProductionBatch? Batch(Guid id) => _batches.GetValueOrDefault(id);
+
+    /// <summary>Pour une case d'en-cours : « L2026-014 · attend l'op 30 » ; null sinon.</summary>
+    public string? StageLabel(StockKey key)
+    {
+        if (!key.IsWorkInProgress)
+        {
+            return null;
+        }
+
+        if (!_batches.TryGetValue(key.BatchId, out var batch))
+        {
+            return "?";
+        }
+
+        var next = batch.Step(key.Stage + 1);
+        return next is null
+            ? batch.Number
+            : string.Format(System.Globalization.CultureInfo.CurrentCulture, StockMessages.WaitingForOperation, batch.Number, next.OperationNumber);
+    }
 
     public StockUnit Unit(StockKey key) => key.IsItem && _items.TryGetValue(key.ItemId, out var item) ? item.Unit : StockUnit.Piece;
 

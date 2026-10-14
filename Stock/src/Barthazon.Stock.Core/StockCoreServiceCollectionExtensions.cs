@@ -18,6 +18,8 @@ public static class StockCoreServiceCollectionExtensions
         services.AddScoped<IMovementService>(sp => sp.GetRequiredService<MovementService>());
         services.AddScoped<IBalanceVerificationService, BalanceVerificationService>();
         services.AddScoped<ITrackedPartService, TrackedPartService>();
+        services.AddScoped<BatchService>();
+        services.AddScoped<IBatchService>(sp => sp.GetRequiredService<BatchService>());
         return services;
     }
 }

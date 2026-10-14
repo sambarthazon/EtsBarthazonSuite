@@ -26,7 +26,7 @@ internal sealed class LedgerEntry
 /// Enregistre des mouvements : numérotation, mise à jour des soldes dans la même transaction, contrôle des quantités
 /// négatives, tout ou rien. En cas de conflit (deux saisies simultanées sur la même case), relit et revalide une fois.
 /// </summary>
-internal sealed class StockLedger(IUnitOfWorkFactory<IStockUnitOfWork> unitOfWorkFactory, StockOptions options)
+internal sealed class StockLedger(IUnitOfWorkFactory<IStockUnitOfWork> unitOfWorkFactory, StockOptions options, TimeProvider timeProvider)
 {
     /// <summary>
     /// Exécute <paramref name="prepare"/> dans une unité de travail neuve (lecture, contrôles, préparation des
@@ -107,6 +107,7 @@ internal sealed class StockLedger(IUnitOfWorkFactory<IStockUnitOfWork> unitOfWor
             {
                 balance = new StockBalance(key);
                 uow.Balances.Add(balance);
+                balances[key] = balance;
             }
 
             balance.Apply(delta, at);
@@ -121,6 +122,8 @@ internal sealed class StockLedger(IUnitOfWorkFactory<IStockUnitOfWork> unitOfWor
             return Result.Failure(errors.Distinct());
         }
 
+        await UpdateBatchStatusesAsync(uow, balances.Values, cancellationToken);
+
         var sequence = await uow.Transactions.GetLastSequenceAsync(cancellationToken);
         foreach (var transaction in entry.Transactions)
         {
@@ -129,5 +132,33 @@ internal sealed class StockLedger(IUnitOfWorkFactory<IStockUnitOfWork> unitOfWor
         }
 
         return Result.Success();
+    }
+
+    /// <summary>
+    /// Statut automatique des lancements touchés : terminé quand plus aucune pièce n'y est en cours, de nouveau en
+    /// cours si une annulation en remet (section 8.5). Calculé dans la même transaction que les mouvements.
+    /// </summary>
+    private async Task UpdateBatchStatusesAsync(IStockUnitOfWork uow, IEnumerable<StockBalance> changed, CancellationToken cancellationToken)
+    {
+        var changedList = changed.Where(b => b.Bucket == StockBucket.WorkInProgress).ToList();
+        foreach (var batchId in changedList.Select(b => b.BatchId).Distinct())
+        {
+            var batch = await uow.Batches.GetByIdAsync(batchId, cancellationToken);
+            if (batch is null)
+            {
+                continue; // Lancement créé dans cette même saisie : il démarre « en cours ».
+            }
+
+            // Soldes en base (valeurs suivies, donc à jour des variations de cette saisie) + soldes créés par la saisie.
+            var stored = await uow.Balances.ListAsync(new BalanceFilter { Bucket = StockBucket.WorkInProgress, BatchId = batchId }, cancellationToken);
+            var current = changedList.Where(b => b.BatchId == batchId).ToDictionary(b => b.Id, b => b.Quantity);
+            foreach (var balance in stored.Where(b => !current.ContainsKey(b.Id)))
+            {
+                current[balance.Id] = balance.Quantity;
+            }
+
+            var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), timeProvider.LocalTimeZone).DateTime);
+            batch.UpdateStatus(current.Values.Where(q => q > 0).Sum(), today);
+        }
     }
 }

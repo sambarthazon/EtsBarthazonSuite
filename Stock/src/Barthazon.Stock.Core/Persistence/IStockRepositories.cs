@@ -48,6 +48,32 @@ public interface ITrackedPartRepository : IRepository<TrackedPart>
     Task<IReadOnlyList<(Guid PartId, BlankSource Source)>> ListSourcesAsync(CancellationToken cancellationToken = default);
 }
 
+/// <summary>Critères de recherche des lancements.</summary>
+public sealed record BatchFilter
+{
+    public Guid? PartId { get; init; }
+
+    public IReadOnlyCollection<Guid>? PartIds { get; init; }
+
+    public IReadOnlyCollection<Stock.Contracts.BatchStatus>? Statuses { get; init; }
+}
+
+public interface IProductionBatchRepository : IRepository<ProductionBatch>
+{
+    /// <summary>Lancement et sa gamme figée (avec suivi des modifications).</summary>
+    Task<ProductionBatch?> GetWithStepsAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<ProductionBatch?> GetByNumberAsync(string number, CancellationToken cancellationToken = default);
+
+    /// <summary>Lancements et gammes figées (sans suivi).</summary>
+    Task<IReadOnlyList<ProductionBatch>> ListAsync(BatchFilter filter, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ProductionBatch>> GetManyAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>Plus grand rang de l'année (numérotation annuelle).</summary>
+    Task<int> GetLastYearSequenceAsync(int year, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Critères de recherche dans le journal des mouvements.</summary>
 public sealed record MovementFilter
 {
@@ -93,6 +119,12 @@ public interface IStockTransactionRepository
     /// (pour expliquer pourquoi une annulation est impossible).
     /// </summary>
     Task<StockTransaction?> FindLatestConsumerAsync(StockKey key, long afterSequence, CancellationToken cancellationToken = default);
+
+    /// <summary>Mouvements d'un lancement (avec leurs lignes, sans suivi), dans l'ordre de saisie.</summary>
+    Task<IReadOnlyList<StockTransaction>> ListForBatchAsync(Guid batchId, CancellationToken cancellationToken = default);
+
+    /// <summary>Date du dernier mouvement de chaque lancement.</summary>
+    Task<IReadOnlyDictionary<Guid, DateTimeOffset>> LastMovementByBatchAsync(IReadOnlyCollection<Guid> batchIds, CancellationToken cancellationToken = default);
 
     /// <summary>Toutes les lignes (clé et variation), pour recalculer les soldes.</summary>
     Task<IReadOnlyList<StockTransactionLine>> ListAllLinesAsync(CancellationToken cancellationToken = default);
@@ -145,4 +177,6 @@ public interface IStockUnitOfWork : IUnitOfWork
     IStockBalanceRepository Balances { get; }
 
     ITrackedPartRepository TrackedParts { get; }
+
+    IProductionBatchRepository Batches { get; }
 }

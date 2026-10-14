@@ -1,0 +1,13 @@
+@* Avancement d'un lancement : pièces finies / lancées (rebuts et en-cours en texte). *@
+<div title="@Tooltip">
+    <MudProgressLinear Color="Color.Success" Value="@Percent" Rounded="true" Size="Size.Medium" aria-label="@Tooltip" />
+    <span class="bz-muted" style="font-size:.8rem">@string.Format(CultureInfo.CurrentCulture, StockTexts.ProgressText, Item.Finished, Item.LaunchedQuantity, Item.InProgress, Item.Scrapped)</span>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public BatchListItem Item { get; set; } = default!;
+
+    private double Percent => Item.LaunchedQuantity <= 0 ? 0 : Math.Min(100, 100.0 * Item.Finished / Item.LaunchedQuantity);
+
+    private string Tooltip => string.Format(CultureInfo.CurrentCulture, StockTexts.ProgressText, Item.Finished, Item.LaunchedQuantity, Item.InProgress, Item.Scrapped);
+}

@@ -1,0 +1,25 @@
+/* Styles propres au stock : uniquement les variables de la charte (--bz-…). */
+.bz-batch-counters {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    text-align: center;
+}
+@media (max-width: 599px) {
+    .bz-batch-counters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.bz-step-card { border-left: 4px solid var(--bz-lines); }
+.bz-step-card.bz-step-active { border-left-color: var(--bz-info); }
+.bz-declare-button { min-height: 48px; }
+.bz-steps-preview { margin: 0; padding-left: 1.2rem; }
+.bz-steps-preview li { margin: 4px 0; }
+
+/* Pipeline : quantités en attente de chaque opération. */
+.bz-pipeline { width: 100%; border-collapse: collapse; }
+.bz-pipeline th, .bz-pipeline td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--bz-lines); white-space: nowrap; }
+.bz-pipeline th:first-child, .bz-pipeline td:first-child { text-align: left; }
+.bz-pipeline td.bz-na { background: var(--bz-surface-alt); color: var(--bz-disabled); }
+.bz-pipeline td.bz-has-wip { font-weight: 700; color: var(--bz-info); }
+.bz-pipeline td button.bz-pipeline-cell { all: unset; cursor: pointer; padding: 2px 6px; border-radius: var(--bz-radius-sm); }
+.bz-pipeline td button.bz-pipeline-cell:hover, .bz-pipeline td button.bz-pipeline-cell:focus-visible { outline: 2px solid var(--bz-info); }
+.bz-pipeline tfoot td { font-weight: 700; border-bottom: none; }

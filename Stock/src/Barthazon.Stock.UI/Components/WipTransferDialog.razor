@@ -1,0 +1,54 @@
+@inject IMovementService Movements
+@inject Notifier Notifier
+
+@* Transfert de pièces en cours (ex. envoi chez le sous-traitant avant une opération sous-traitée). *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <CellSelect Cells="Cells" Value="_cell" ValueChanged="v => _cell = v" Label="@StockTexts.FromCell" />
+        <LocationSelect Value="_to" ValueChanged="v => _to = v" Label="@StockTexts.ToLocation" Required="true" Exclude="@(_cell is { } c ? [c.LocationId] : [])"
+                        Error="_form.HasError(nameof(TransferInput.ToLocationId))" ErrorText="@_form.ErrorFor(nameof(TransferInput.ToLocationId))" />
+        <QuantityField Value="_quantity" ValueChanged="v => _quantity = v" Unit="StockUnit.Piece" Label="@StockTexts.QuantityMoved" Class="mt-3"
+                       Error="_form.HasError(nameof(TransferInput.Quantity))" ErrorText="@_form.ErrorFor(nameof(TransferInput.Quantity))" />
+        <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Class="mt-3" MaxLength="1000" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@StockTexts.SubmitTransfer</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private StockKey? _cell;
+    private Guid? _to;
+    private decimal? _quantity;
+    private string? _comment;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    /// <summary>Cases d'en-cours du lancement (le libellé de l'objet indique l'opération attendue).</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<StockCellView> Cells { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        _cell = Cells.FirstOrDefault()?.Key;
+        _quantity = Cells.FirstOrDefault()?.Quantity;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_cell is not { } cell)
+        {
+            return;
+        }
+
+        var result = await Movements.TransferAsync(new TransferInput { From = cell, ToLocationId = _to ?? Guid.Empty, Quantity = _quantity ?? 0, Comment = _comment });
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(string.Format(CultureInfo.CurrentCulture, StockTexts.MovementSaved, result.Value.Number));
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

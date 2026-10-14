@@ -72,6 +72,54 @@ namespace Barthazon.Stock.Migrations.Postgres.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.BatchStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("CycleTimeMin")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("MachineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("OperationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("OperationNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OperationType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("SetupTimeMin")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Subcontractor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("MachineId");
+
+                    b.ToTable("stk_batch_steps", (string)null);
+                });
+
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.BlankSource", b =>
                 {
                     b.Property<Guid>("Id")
@@ -121,6 +169,102 @@ namespace Barthazon.Stock.Migrations.Postgres.Migrations
                     b.ToTable("stk_blank_sources", (string)null);
                 });
 
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.ProductionBatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ClosedOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CustomerOrderReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRecovery")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly>("LaunchedOn")
+                        .HasColumnType("date");
+
+                    b.Property<int>("LaunchedQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid>("PartId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PartReference")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RevisionIndex")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("YearSequence")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Number")
+                        .IsUnique();
+
+                    b.HasIndex("PartId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Year", "YearSequence")
+                        .IsUnique();
+
+                    b.ToTable("stk_batches", (string)null);
+                });
+
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.StockBalance", b =>
                 {
                     b.Property<Guid>("Id")
@@ -133,6 +277,9 @@ namespace Barthazon.Stock.Migrations.Postgres.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("FirstMovementAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("ItemId")
                         .HasColumnType("uuid");
@@ -517,6 +664,15 @@ namespace Barthazon.Stock.Migrations.Postgres.Migrations
                     b.ToTable("stk_tracked_parts", (string)null);
                 });
 
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.BatchStep", b =>
+                {
+                    b.HasOne("Barthazon.Stock.Core.Domain.ProductionBatch", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.BlankSource", b =>
                 {
                     b.HasOne("Barthazon.Stock.Core.Domain.TrackedPart", null)
@@ -533,6 +689,11 @@ namespace Barthazon.Stock.Migrations.Postgres.Migrations
                         .HasForeignKey("TransactionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.ProductionBatch", b =>
+                {
+                    b.Navigation("Steps");
                 });
 
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.StockTransaction", b =>

@@ -174,6 +174,9 @@ public sealed class StockBalance
 
     public DateTimeOffset LastMovementAt { get; private set; }
 
+    /// <summary>Première entrée dans cette case depuis qu'elle n'est plus vide (le lot « le plus ancien » est proposé en premier).</summary>
+    public DateTimeOffset FirstMovementAt { get; private set; }
+
     /// <summary>Jeton de concurrence : deux déclarations simultanées sur la même case sont sérialisées.</summary>
     public long Version { get; private set; }
 
@@ -181,6 +184,11 @@ public sealed class StockBalance
 
     public void Apply(decimal delta, DateTimeOffset at)
     {
+        if (Version == 0 || FirstMovementAt == default || at < FirstMovementAt)
+        {
+            FirstMovementAt = at;
+        }
+
         Quantity += delta;
         if (at > LastMovementAt)
         {

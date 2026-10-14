@@ -1,0 +1,310 @@
+@page "/stock/lancements/nouveau"
+@inject IBatchService Batches
+@inject IPartLookup PartLookup
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+
+@* Nouveau lancement en une page : pièce, indice, quantité, source et consommation, aperçu de la gamme figée. *@
+<PageHeader Title="@StockTexts.NewBatch" BackHref="stock/lancements" BackText="@StockTexts.BatchesTitle" />
+
+@if (CurrentUser.Role < UserRole.Editor)
+{
+    <EmptyState Title="@StockTexts.EditorOnly" Icon="@Icons.Material.Outlined.Lock" />
+}
+else
+{
+    <FormErrors State="_form" />
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="6">
+            <section class="bz-card pa-4">
+                <h2 class="bz-dashboard-title">1. @StockTexts.Part</h2>
+                <PartPicker Value="_partId" ValueChanged="OnPartChangedAsync" Required="true" AutoFocus="@(_partId is null)" />
+                @if (_preview is not null)
+                {
+                    <MudSelect T="Guid?" Value="_revisionId" ValueChanged="OnRevisionChangedAsync" Label="@StockTexts.Revision" Variant="Variant.Outlined" Class="mt-3"
+                               ToStringFunc="RevisionLabel" Error="_form.HasError(nameof(LaunchInput.RevisionId))" ErrorText="@_form.ErrorFor(nameof(LaunchInput.RevisionId))">
+                        @foreach (var revision in _preview.Revisions.Where(r => r.Status != RevisionStatus.Cancelled))
+                        {
+                            <MudSelectItem T="Guid?" Value="revision.Id">@RevisionLabel(revision.Id)</MudSelectItem>
+                        }
+                    </MudSelect>
+                    @if (_preview.Revision is { Status: not RevisionStatus.InForce } notInForce)
+                    {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-2">
+                            @string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionNotInForceWarning, notInForce.Index)
+                            <MudCheckBox T="bool" @bind-Value="_confirmRevision" Label="@StockTexts.ConfirmRevision" Color="Color.Warning" />
+                        </MudAlert>
+                    }
+                }
+            </section>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <section class="bz-card pa-4">
+                <h2 class="bz-dashboard-title">2. @StockTexts.QuantityAndDue</h2>
+                <QuantityField Value="_quantity" ValueChanged="OnQuantityChangedAsync" Unit="StockUnit.Piece" Label="@StockTexts.LaunchedQuantity" Minimum="1"
+                               Error="_form.HasError(nameof(LaunchInput.Quantity))" ErrorText="@_form.ErrorFor(nameof(LaunchInput.Quantity))" />
+                <MudDatePicker Date="_dueDate" DateChanged="d => _dueDate = d" Label="@StockTexts.DueDate" Variant="Variant.Outlined" Editable="true" Clearable="true" Class="mt-3" />
+                <MudTextField @bind-Value="_orderReference" Label="@StockTexts.CustomerOrderReference" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
+                <MudTextField @bind-Value="_notes" Label="@StockTexts.Notes" Variant="Variant.Outlined" Lines="2" Class="mt-3" MaxLength="4000" />
+            </section>
+        </MudItem>
+        @if (_preview is not null)
+        {
+            <MudItem xs="12" md="6">
+                <section class="bz-card pa-4">
+                    <h2 class="bz-dashboard-title">3. @StockTexts.Consumption</h2>
+                    <MudSwitch T="bool" Value="_isRecovery" ValueChanged="v => _isRecovery = v" Color="Color.Primary" Label="@StockTexts.RecoveryBatch" />
+                    @if (_isRecovery)
+                    {
+                        <MudText Typo="Typo.body2" Class="bz-muted mb-2">@StockTexts.RecoveryBatchHelp</MudText>
+                        <MudSelect T="int?" @bind-Value="_recoveryOperation" Label="@StockTexts.RecoveryWaitingOperation" Variant="Variant.Outlined"
+                                   ToStringFunc="n => n is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingOp, n)">
+                            @foreach (var step in _preview.Steps)
+                            {
+                                <MudSelectItem T="int?" Value="step.OperationNumber">@string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingOp, step.OperationNumber) — @step.OperationType.Label()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                    else
+                    {
+                        @if (_preview.Sources.Count == 0)
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="my-2">
+                                @StockTexts.NoSourceForLaunch
+                                <MudLink Href="@($"stock/pieces/{Uri.EscapeDataString(_preview.Reference)}")">@StockTexts.BlankSources</MudLink>
+                            </MudAlert>
+                        }
+                        <MudRadioGroup T="Guid?" Value="_sourceId" ValueChanged="OnSourceChanged">
+                            @foreach (var option in _preview.Sources)
+                            {
+                                <MudRadio T="Guid?" Value="option.Source.Id">
+                                    <b>@option.Source.SourceCode</b> @option.Source.SourceLabel
+                                    @if (option.Source.SourceAfterOperation is { } op) { <span class="bz-muted"> · @string.Format(CultureInfo.CurrentCulture, StockTexts.AfterOperationShort, op)</span> }
+                                    <span class="bz-muted"> · @string.Format(CultureInfo.CurrentCulture, StockTexts.ProposedConsumption, StockLabels.Quantity(option.ProposedQuantity, option.Source.Unit))</span>
+                                </MudRadio>
+                            }
+                            <MudRadio T="Guid?" Value="null">@StockTexts.WithoutConsumption</MudRadio>
+                        </MudRadioGroup>
+                        @if (SelectedSource is { } selected)
+                        {
+                            @if (selected.Cells.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mt-2">@StockTexts.SourceEmpty</MudAlert>
+                            }
+                            else
+                            {
+                                <MudSimpleTable Dense="true" Elevation="0" Class="mt-2">
+                                    <thead><tr><th>@StockTexts.Location</th><th>@StockTexts.Lot</th><th style="text-align:right">@StockTexts.Available</th><th style="width:150px">@StockTexts.Consumed</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var cell in selected.Cells)
+                                        {
+                                            <tr>
+                                                <td>@cell.LocationCode</td>
+                                                <td>@(cell.BatchNumber ?? cell.Lot)</td>
+                                                <td style="text-align:right;white-space:nowrap">@StockLabels.Quantity(cell.Quantity, cell.Unit)</td>
+                                                <td>
+                                                    <MudNumericField T="decimal?" Value="@_consumptions.GetValueOrDefault(cell.Key)" ValueChanged="v => _consumptions[cell.Key] = v"
+                                                                     Variant="Variant.Outlined" Margin="Margin.Dense" HideSpinButtons="true" Min="0" Max="cell.Quantity"
+                                                                     InputMode="@(InputMode.@decimal)" aria-label="@StockTexts.Consumed" Culture="CultureInfo.CurrentCulture" Format="0.###" />
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                                <MudText Typo="Typo.body2" Class="mt-1">@string.Format(CultureInfo.CurrentCulture, StockTexts.TotalConsumed, StockLabels.Quantity(_consumptions.Values.Sum(v => v ?? 0), selected.Source.Unit))</MudText>
+                            }
+                        }
+                        else
+                        {
+                            <MudCheckBox T="bool" @bind-Value="_confirmWithoutConsumption" Label="@StockTexts.ConfirmWithoutConsumption" Color="Color.Warning" Class="mt-2" />
+                        }
+                        @if (_form.ErrorFor(nameof(LaunchInput.Consumptions)) is { } consumptionError)
+                        {
+                            <MudText Color="Color.Error" Typo="Typo.body2">@consumptionError</MudText>
+                        }
+                        @if (_form.ErrorFor(nameof(LaunchInput.SourceId)) is { } sourceError)
+                        {
+                            <MudText Color="Color.Error" Typo="Typo.body2">@sourceError</MudText>
+                        }
+                    }
+                </section>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <section class="bz-card pa-4">
+                    <h2 class="bz-dashboard-title">4. @StockTexts.FrozenRouting</h2>
+                    <MudText Typo="Typo.body2" Class="bz-muted mb-2">@StockTexts.FrozenRoutingHelp</MudText>
+                    <ol class="bz-steps-preview">
+                        @foreach (var step in _preview.Steps)
+                        {
+                            <li><b>@step.OperationNumber</b> @step.OperationType.Label() <span class="bz-muted">@Short(step.Description)</span></li>
+                        }
+                    </ol>
+                </section>
+            </MudItem>
+        }
+    </MudGrid>
+    <div class="d-flex justify-end gap-2 mt-4">
+        <MudButton Href="stock/lancements">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="LaunchAsync" Disabled="@(_saving || _preview is null)">
+            @(_preview is null ? StockTexts.Launch : string.Format(CultureInfo.CurrentCulture, StockTexts.LaunchNumber, _preview.NextNumber))
+        </MudButton>
+    </div>
+}
+
+@code {
+    private readonly FormState _form = new();
+    private readonly Dictionary<StockKey, decimal?> _consumptions = [];
+    private Guid? _partId;
+    private Guid? _revisionId;
+    private LaunchPreview? _preview;
+    private decimal? _quantity;
+    private DateTime? _dueDate;
+    private string? _orderReference;
+    private string? _notes;
+    private bool _confirmRevision;
+    private Guid? _sourceId;
+    private bool _confirmWithoutConsumption;
+    private bool _isRecovery;
+    private int? _recoveryOperation;
+    private bool _saving;
+
+    [SupplyParameterFromQuery(Name = "piece")] public string? PartReference { get; set; }
+
+    /// <summary>Orientation d'un en-cours : numéro du lancement d'origine, proposé en premier.</summary>
+    [SupplyParameterFromQuery(Name = "depuis")] public string? FromBatch { get; set; }
+
+    private LaunchSourceOption? SelectedSource => _preview?.Sources.FirstOrDefault(s => s.Source.Id == _sourceId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(PartReference) && await PartLookup.GetByReferenceAsync(PartReference) is { } part)
+        {
+            _partId = part.Id;
+            await LoadPreviewAsync(resetSource: true);
+        }
+    }
+
+    private async Task OnPartChangedAsync(Guid? partId)
+    {
+        _partId = partId;
+        _revisionId = null;
+        _preview = null;
+        if (partId is not null)
+        {
+            await LoadPreviewAsync(resetSource: true);
+        }
+    }
+
+    private async Task OnRevisionChangedAsync(Guid? revisionId)
+    {
+        _revisionId = revisionId;
+        _confirmRevision = false;
+        await LoadPreviewAsync(resetSource: true);
+    }
+
+    private async Task OnQuantityChangedAsync(decimal? quantity)
+    {
+        _quantity = quantity;
+        await LoadPreviewAsync(resetSource: false);
+    }
+
+    private void OnSourceChanged(Guid? sourceId)
+    {
+        _sourceId = sourceId;
+        ProposeConsumption();
+    }
+
+    private async Task LoadPreviewAsync(bool resetSource)
+    {
+        if (_partId is not { } partId)
+        {
+            return;
+        }
+
+        var result = await Batches.PreviewLaunchAsync(partId, _revisionId, (int)(_quantity ?? 0));
+        if (!Notifier.Handle(result))
+        {
+            return;
+        }
+
+        _preview = result.Value;
+        _revisionId = _preview.Revision?.Id;
+        if (resetSource || SelectedSource is null)
+        {
+            // Orientation : la source « pièce d'origine à l'étape » est proposée en premier.
+            _sourceId = (FromBatch is not null ? _preview.Sources.FirstOrDefault(s => s.Cells.Any(c => c.BatchNumber == FromBatch)) : null)?.Source.Id
+                ?? _preview.Sources.FirstOrDefault()?.Source.Id;
+        }
+
+        ProposeConsumption();
+    }
+
+    /// <summary>Répartit la quantité proposée sur les cases, lot le plus ancien d'abord (lancement d'origine d'abord pour une orientation).</summary>
+    private void ProposeConsumption()
+    {
+        _consumptions.Clear();
+        if (SelectedSource is not { } source)
+        {
+            return;
+        }
+
+        var remaining = source.ProposedQuantity;
+        foreach (var cell in source.Cells.OrderBy(c => c.BatchNumber == FromBatch && FromBatch is not null ? 0 : 1))
+        {
+            var take = Math.Min(remaining, cell.Quantity);
+            _consumptions[cell.Key] = take > 0 ? take : null;
+            remaining -= take;
+        }
+    }
+
+    private string RevisionLabel(Guid? id)
+    {
+        var revision = _preview?.Revisions.FirstOrDefault(r => r.Id == id);
+        return revision is null ? string.Empty : revision.Status == RevisionStatus.InForce
+            ? string.Format(CultureInfo.CurrentCulture, StockTexts.IndexInForce, revision.Index)
+            : string.Format(CultureInfo.CurrentCulture, StockTexts.IndexNotInForce, revision.Index);
+    }
+
+    private static string? Short(string? text) => text is { Length: > 200 } ? text[..200] + "…" : text;
+
+    private async Task LaunchAsync()
+    {
+        if (_preview is null)
+        {
+            return;
+        }
+
+        _saving = true;
+        var input = new LaunchInput
+        {
+            PartId = _preview.PartId,
+            RevisionId = _revisionId,
+            Quantity = (int)(_quantity ?? 0),
+            DueDate = _dueDate is { } due ? DateOnly.FromDateTime(due) : null,
+            CustomerOrderReference = _orderReference,
+            Notes = _notes,
+            ConfirmRevisionNotInForce = _confirmRevision,
+            IsRecovery = _isRecovery,
+            RecoveryWaitingOperation = _recoveryOperation,
+            WithoutConsumption = !_isRecovery && _sourceId is null,
+            SourceId = _sourceId,
+            Consumptions = _consumptions.Where(c => c.Value is > 0).Select(c => new ConsumptionInput { Cell = c.Key, Quantity = c.Value!.Value }).ToList(),
+        };
+        if (input.WithoutConsumption && !_confirmWithoutConsumption)
+        {
+            _form.Apply(Result.Failure(Error.Validation(StockTexts.ConfirmWithoutConsumptionRequired)));
+            _saving = false;
+            return;
+        }
+
+        var result = await Batches.LaunchAsync(input);
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            Notifier.Success(string.Format(CultureInfo.CurrentCulture, StockTexts.BatchLaunched, result.Value.Number));
+            Navigation.NavigateTo($"stock/lancements/{Uri.EscapeDataString(result.Value.Number)}?nouveau=1");
+        }
+    }
+}

@@ -1,3 +1,110 @@
 @page "/stock/lancements"
+@inject IBatchService Batches
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+@inject Notifier Notifier
 
-<UpcomingPage Title="@StockTexts.MenuBatches" Icon="@Icons.Material.Filled.PrecisionManufacturing" />
+<PageHeader Title="@StockTexts.BatchesTitle" Subtitle="@(_items is null ? null : string.Format(CultureInfo.CurrentCulture, StockTexts.BatchesCount, _items.Count))">
+    <Actions>
+        @if (CurrentUser.Role >= UserRole.Editor)
+        {
+            <MudButton Href="stock/lancements/nouveau" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">@StockTexts.NewBatch</MudButton>
+        }
+    </Actions>
+</PageHeader>
+
+<div class="d-flex flex-wrap align-center gap-3 mb-3">
+    <MudTextField T="string" Value="Q" ValueChanged="v => Navigate(q: v ?? string.Empty)" Placeholder="@StockTexts.SearchBatch"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Immediate="true" DebounceInterval="300" Clearable="true" Style="max-width:420px;min-width:220px" Class="flex-grow-1" aria-label="@StockTexts.SearchBatch" />
+    <MudSelect T="string" Value="StatusValue" ValueChanged="v => Navigate(statut: v)" Label="@StockTexts.Status" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:220px">
+        <MudSelectItem T="string" Value="@("encours")">@StockTexts.BatchInProgress</MudSelectItem>
+        <MudSelectItem T="string" Value="@("termine")">@StockTexts.BatchCompleted</MudSelectItem>
+        <MudSelectItem T="string" Value="@("annule")">@StockTexts.BatchCancelled</MudSelectItem>
+        <MudSelectItem T="string" Value="@("tous")">@StockTexts.All</MudSelectItem>
+    </MudSelect>
+</div>
+
+<AdaptiveList T="BatchListItem" Items="_items" Loading="_loading" ItemHref="@(b => $"stock/lancements/{Uri.EscapeDataString(b.Number)}")" AriaLabel="@StockTexts.BatchesTitle">
+    <HeaderContent>
+        <MudTh>@StockTexts.ColNumber</MudTh>
+        <MudTh>@StockTexts.Part</MudTh>
+        <MudTh>@StockTexts.Revision</MudTh>
+        <MudTh Style="text-align:right">@StockTexts.ColQuantity</MudTh>
+        <MudTh>@StockTexts.Progress</MudTh>
+        <MudTh>@StockTexts.CurrentOperation</MudTh>
+        <MudTh>@StockTexts.DueDate</MudTh>
+        <MudTh>@StockTexts.Status</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="b">
+        <MudTd><b>@b.Number</b></MudTd>
+        <MudTd>@b.PartReference <span class="bz-muted">@b.PartDesignation</span></MudTd>
+        <MudTd>@b.RevisionIndex @if (!b.RevisionIsInForce) { <StatusChip Text="@StockTexts.Superseded" Tone="StatusTone.Warning" Class="ml-1" /> }</MudTd>
+        <MudTd Style="text-align:right">@b.LaunchedQuantity</MudTd>
+        <MudTd Style="min-width:140px"><BatchProgress Item="b" /></MudTd>
+        <MudTd>@(b.CurrentOperationNumber is { } op ? string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingOp, op) : null)</MudTd>
+        <MudTd>@b.DueDate?.ToString("d", CultureInfo.CurrentCulture)</MudTd>
+        <MudTd>
+            <BatchStatusChip Status="b.Status" />
+            @if (b.IsStale) { <StatusChip Text="@StockTexts.Stale" Tone="StatusTone.Warning" Class="ml-1" /> }
+        </MudTd>
+    </RowTemplate>
+    <CardTemplate Context="b">
+        <div class="d-flex justify-space-between gap-2">
+            <MudText Typo="Typo.subtitle1"><b>@b.Number</b> · @b.PartReference @b.RevisionIndex</MudText>
+            <BatchStatusChip Status="b.Status" />
+        </div>
+        <BatchProgress Item="b" />
+        <MudText Typo="Typo.caption" Class="bz-muted">
+            @(b.CurrentOperationNumber is { } op ? string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingOp, op) : null)
+            @(b.DueDate is { } due ? " · " + string.Format(CultureInfo.CurrentCulture, StockTexts.DueOn, due.ToString("d", CultureInfo.CurrentCulture)) : null)
+        </MudText>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@StockTexts.NoBatches" Icon="@Icons.Material.Outlined.PrecisionManufacturing" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<BatchListItem>? _items;
+    private bool _loading = true;
+
+    [SupplyParameterFromQuery(Name = "q")] public string? Q { get; set; }
+
+    [SupplyParameterFromQuery(Name = "statut")] public string? Statut { get; set; }
+
+    [SupplyParameterFromQuery(Name = "piece")] public Guid? Piece { get; set; }
+
+    private string StatusValue => Statut ?? "encours";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        var result = await Batches.SearchAsync(new BatchSearchRequest
+        {
+            Query = Q,
+            PartId = Piece,
+            Status = StatusValue switch
+            {
+                "termine" => BatchStatus.Completed,
+                "annule" => BatchStatus.Cancelled,
+                "tous" => null,
+                _ => BatchStatus.InProgress,
+            },
+        });
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private void Navigate(string? q = null, string? statut = null)
+    {
+        static string? Pick(string? value, string? current) => value is null ? current : value.Length == 0 ? null : value;
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["q"] = Pick(q, Q),
+            ["statut"] = Pick(statut, Statut),
+        }));
+    }
+}

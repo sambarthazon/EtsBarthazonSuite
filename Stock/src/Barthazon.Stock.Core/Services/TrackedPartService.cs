@@ -515,9 +515,16 @@ internal sealed class SourceAvailability(IStockUnitOfWork uow)
         }
 
         var partBalances = await uow.Balances.ListAsync(new BalanceFilter { SubjectKind = StockSubjectKind.Part, PartId = source.SourcePartId }, cancellationToken);
-        return source.SourceAfterOperation is null
-            ? partBalances.Where(b => b.Bucket == StockBucket.Stock).Sum(b => b.Quantity)
-            : 0m; // Pièces en cours « après l'opération n° » : lues dans les étapes figées des lancements (jalon S3).
+        if (source.SourceAfterOperation is not { } operation)
+        {
+            return partBalances.Where(b => b.Bucket == StockBucket.Stock).Sum(b => b.Quantity);
+        }
+
+        // Pièces en cours « après l'opération n° » : étape lue dans la gamme figée de chaque lancement en cours de la source.
+        var wip = partBalances.Where(b => b.Bucket == StockBucket.WorkInProgress).ToList();
+        var batches = (await uow.Batches.GetManyAsync(wip.Select(b => b.BatchId), cancellationToken)).ToDictionary(b => b.Id);
+        return wip.Where(b => batches.TryGetValue(b.BatchId, out var batch) && batch.Status == Stock.Contracts.BatchStatus.InProgress
+            && batch.StageAfterOperation(operation) == b.Stage).Sum(b => b.Quantity);
     }
 
     public static int Launchable(decimal available, decimal quantityPerPart) =>
