@@ -17,7 +17,7 @@
 
 <div class="d-flex flex-wrap align-center gap-3 mb-3">
     <MudTextField T="string" Value="Q" ValueChanged="v => Navigate(q: v ?? string.Empty)" Placeholder="@StockTexts.SearchPart"
-                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentAriaLabel="@SharedTexts.Search" Variant="Variant.Outlined" Margin="Margin.Dense"
                   Immediate="true" DebounceInterval="300" Clearable="true" Style="max-width:420px;min-width:220px" Class="flex-grow-1" aria-label="@StockTexts.SearchPart" />
     <MudSelect T="string" Value="@(Client ?? string.Empty)" ValueChanged="v => Navigate(client: v)" Label="@StockTexts.Customer" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:240px">
         <MudSelectItem T="string" Value="@string.Empty">@StockTexts.All</MudSelectItem>

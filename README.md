@@ -6,7 +6,7 @@ Dépôt regroupant les logiciels internes des Ets BARTHAZON (mécanique généra
 |---|---|---|
 | [`Socle/`](Socle/) | Commun à toutes les applications : thème, composants, données, référentiel (clients, matières, machines, utilisateurs) | Stable |
 | [`Annuaire/`](Annuaire/) | Annuaire de pièces | Version 1 |
-| [`Stock/`](Stock/) | Gestion des stocks (matières, bruts, en-cours, pièces finies) | En cours |
+| [`Stock/`](Stock/) | Gestion des stocks : matières et bruts, lancements suivis opération par opération, pièces finies par indice, inventaires ([démarrer](Portail/docs/stock-demarrage.md)) | Version 1 |
 | [`Portail/`](Portail/) | Assemblage, installation et exploitation ([installation](Portail/docs/installation.md)) | Version 1 |
 
 Applications prévues ensuite comme modules du même portail : Commandes & livraisons, Pointage.

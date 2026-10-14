@@ -67,5 +67,8 @@ public sealed class StockModule : IModule
 
         // Onglet « Emplacements » de la page Référentiels.
         services.AddUiExtension(new UiExtension(UiSlots.ReferentialTabs, typeof(LocationsPanel), StockTexts.TabLocations, 30, Icons.Material.Filled.Place));
+
+        // Section « Stock » de l'administration : version, réglages, vérification des soldes.
+        services.AddUiExtension(new UiExtension(UiSlots.AdminSections, typeof(StockAdminSection), StockTexts.ModuleName, 20));
     }
 }

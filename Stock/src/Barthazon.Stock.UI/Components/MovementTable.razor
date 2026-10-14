@@ -1,30 +1,65 @@
 @inject IDialogService Dialogs
 
 @* Liste de mouvements (journal, fiche article, emplacement) : un clic ouvre le détail et l'annulation. *@
-<AdaptiveList T="MovementItem" Items="Items" Loading="Loading" Dense="true" OnItemClick="OpenAsync" AriaLabel="@StockTexts.MovementsTitle">
-    <HeaderContent>
-        <MudTh>@StockTexts.ColNumber</MudTh>
-        <MudTh>@StockTexts.ColDate</MudTh>
-        <MudTh>@StockTexts.ColType</MudTh>
-        <MudTh>@StockTexts.ColLines</MudTh>
-        <MudTh>@StockTexts.ColReference</MudTh>
-        <MudTh>@StockTexts.ColUser</MudTh>
-    </HeaderContent>
-    <RowTemplate Context="m">
-        <MudTd><span class="@(m.IsReversed ? "bz-struck" : null)">@m.Number</span></MudTd>
-        <MudTd>@m.OccurredAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</MudTd>
-        <MudTd><MovementTypeChip Movement="m" /></MudTd>
-        <MudTd>
-            @foreach (var line in m.Lines.Take(3))
+@if (Compact)
+{
+    @* Colonne étroite (tableau de bord) : toujours la présentation en cartes. *@
+    @if (Items is { Count: > 0 } items)
+    {
+        <div class="bz-card">
+            @foreach (var m in items)
             {
-                <div class="@(m.IsReversed ? "bz-struck" : null)"><b>@StockLabels.Delta(line.Delta, line.Unit)</b> @line.SubjectCode · @line.LocationCode@(line.Lot is null ? null : $" · {line.Lot}")</div>
+                <div class="bz-movement-card" role="button" tabindex="0" @onclick="() => OpenAsync(m)" @onkeydown="e => OnKeyAsync(e, m)">@Card(m)</div>
             }
-            @if (m.Lines.Count > 3) { <div class="bz-muted">…</div> }
-        </MudTd>
-        <MudTd>@m.Reference</MudTd>
-        <MudTd>@m.RecordedByName</MudTd>
-    </RowTemplate>
-    <CardTemplate Context="m">
+        </div>
+    }
+    else if (Items is not null)
+    {
+        <EmptyState Title="@StockTexts.NoMovements" Icon="@Icons.Material.Outlined.SwapHoriz" />
+    }
+}
+else
+{
+    <AdaptiveList T="MovementItem" Items="Items" Loading="Loading" Dense="true" OnItemClick="OpenAsync" AriaLabel="@StockTexts.MovementsTitle">
+        <HeaderContent>
+            <MudTh>@StockTexts.ColNumber</MudTh>
+            <MudTh>@StockTexts.ColDate</MudTh>
+            <MudTh>@StockTexts.ColType</MudTh>
+            <MudTh>@StockTexts.ColLines</MudTh>
+            <MudTh>@StockTexts.ColReference</MudTh>
+            <MudTh>@StockTexts.ColUser</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="m">
+            <MudTd Style="white-space:nowrap"><span class="@(m.IsReversed ? "bz-struck" : null)">@m.Number</span></MudTd>
+            <MudTd Style="white-space:nowrap">@m.OccurredAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</MudTd>
+            <MudTd><MovementTypeChip Movement="m" /></MudTd>
+            <MudTd>
+                @foreach (var line in m.Lines.Take(3))
+                {
+                    <div class="@(m.IsReversed ? "bz-struck" : null)" style="white-space:nowrap"><b>@StockLabels.Delta(line.Delta, line.Unit)</b> @line.SubjectCode · @line.LocationCode@(line.Lot is null ? null : $" · {line.Lot}")</div>
+                }
+                @if (m.Lines.Count > 3) { <div class="bz-muted">…</div> }
+            </MudTd>
+            <MudTd>@m.Reference</MudTd>
+            <MudTd>@m.RecordedByName</MudTd>
+        </RowTemplate>
+        <CardTemplate Context="m">
+            @Card(m)
+        </CardTemplate>
+        <EmptyContent><EmptyState Title="@StockTexts.NoMovements" Icon="@Icons.Material.Outlined.SwapHoriz" /></EmptyContent>
+    </AdaptiveList>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<MovementItem>? Items { get; set; }
+
+    [Parameter] public bool Loading { get; set; }
+
+    /// <summary>Présentation en cartes quelle que soit la largeur (tableau de bord, colonne étroite).</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    private static RenderFragment Card(MovementItem m) => __builder =>
+    {
         <div class="d-flex justify-space-between align-center gap-2">
             <MudText Typo="Typo.subtitle2" Class="@(m.IsReversed ? "bz-struck" : null)"><b>@m.Number</b> · @m.OccurredAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</MudText>
             <MovementTypeChip Movement="m" />
@@ -34,14 +69,15 @@
             <MudText Typo="Typo.body2"><b>@StockLabels.Delta(line.Delta, line.Unit)</b> @line.SubjectCode · @line.LocationCode@(line.Lot is null ? null : $" · {line.Lot}")</MudText>
         }
         <MudText Typo="Typo.caption" Class="bz-muted">@m.RecordedByName @(m.Reference is null ? null : $"· {m.Reference}")</MudText>
-    </CardTemplate>
-    <EmptyContent><EmptyState Title="@StockTexts.NoMovements" Icon="@Icons.Material.Outlined.SwapHoriz" /></EmptyContent>
-</AdaptiveList>
+    };
 
-@code {
-    [Parameter] public IReadOnlyList<MovementItem>? Items { get; set; }
-
-    [Parameter] public bool Loading { get; set; }
+    private async Task OnKeyAsync(KeyboardEventArgs e, MovementItem movement)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            await OpenAsync(movement);
+        }
+    }
 
     /// <summary>Appelé après une annulation (pour recharger la page).</summary>
     [Parameter] public EventCallback OnChanged { get; set; }

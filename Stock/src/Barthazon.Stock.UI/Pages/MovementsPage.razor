@@ -15,10 +15,10 @@
 <MudPaper Class="pa-3 mb-3 bz-card" Elevation="0">
     <MudGrid Spacing="2">
         <MudItem xs="6" sm="4" md="2">
-            <MudDatePicker Date="@ToDate(Du)" DateChanged="d => Navigate(du: FromDate(d))" Label="@StockTexts.FromDate" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" Clearable="true" />
+            <MudDatePicker AdornmentAriaLabel="@StockTexts.ChooseDate" Date="@ToDate(Du)" DateChanged="d => Navigate(du: FromDate(d))" Label="@StockTexts.FromDate" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" Clearable="true" />
         </MudItem>
         <MudItem xs="6" sm="4" md="2">
-            <MudDatePicker Date="@ToDate(Au)" DateChanged="d => Navigate(au: FromDate(d))" Label="@StockTexts.ToDate" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" Clearable="true" />
+            <MudDatePicker AdornmentAriaLabel="@StockTexts.ChooseDate" Date="@ToDate(Au)" DateChanged="d => Navigate(au: FromDate(d))" Label="@StockTexts.ToDate" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" Clearable="true" />
         </MudItem>
         <MudItem xs="12" sm="4" md="2">
             <MudSelect T="string" Value="@(Type ?? string.Empty)" ValueChanged="v => Navigate(type: v)" Label="@StockTexts.ColType" Variant="Variant.Outlined" Margin="Margin.Dense">

@@ -29,7 +29,7 @@
                                 Error="_form.HasError(nameof(DeclareInput.DestinationLocationId))" ErrorText="@_form.ErrorFor(nameof(DeclareInput.DestinationLocationId))" />
             </div>
         }
-        <MudDatePicker Date="_date" DateChanged="d => _date = d" Label="@StockTexts.OccurredOn" Variant="Variant.Outlined" Editable="true" Clearable="true" Class="mt-3"
+        <MudDatePicker AdornmentAriaLabel="@StockTexts.ChooseDate" Date="_date" DateChanged="d => _date = d" Label="@StockTexts.OccurredOn" Variant="Variant.Outlined" Editable="true" Clearable="true" Class="mt-3"
                        MaxDate="Today" MinDate="Today.AddDays(-Options.BackdatingDays)" HelperText="@StockTexts.OccurredOnHelp"
                        Error="_form.HasError(OccurredAtField)" ErrorText="@_form.ErrorFor(OccurredAtField)" />
         <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Class="mt-3" MaxLength="1000" />

@@ -3,7 +3,7 @@
 @inject IDialogService Dialogs
 
 <PickerField OnQuickCreate="QuickCreateAsync" CanQuickCreate="CanCreate" QuickCreateLabel="@StockTexts.NewCustomerQuick">
-    <MudAutocomplete T="CustomerSummary" Value="_selected" ValueChanged="OnChangedAsync" SearchFunc="SearchAsync"
+    <MudAutocomplete T="CustomerSummary" AdornmentAriaLabel="@StockTexts.OpenList" Value="_selected" ValueChanged="OnChangedAsync" SearchFunc="SearchAsync"
                      ToStringFunc="@(c => c?.Display ?? string.Empty)" Label="@(Label ?? StockTexts.Customer)" Placeholder="@StockTexts.SearchCustomer"
                      Variant="Variant.Outlined" Clearable="true" ResetValueOnEmptyText="true" DebounceInterval="200" MaxItems="30" OpenOnFocus="true"
                      Error="Error" ErrorText="@ErrorText" Margin="Margin" HelperText="@HelperText" />

@@ -21,7 +21,7 @@
 @* Grande barre de recherche : pièce, article, lancement, emplacement (recherche globale). *@
 <section class="bz-dashboard-search mb-4" role="search" aria-label="@StockTexts.DashboardSearch">
     <MudTextField T="string" Value="_query" ValueChanged="SearchAsync" Label="@StockTexts.DashboardSearch" Placeholder="@StockTexts.DashboardSearchPlaceholder" Variant="Variant.Outlined"
-                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="bz-dashboard-search-field" autocomplete="off"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentAriaLabel="@SharedTexts.Search" Class="bz-dashboard-search-field" autocomplete="off"
                   Immediate="true" DebounceInterval="250" Clearable="true" />
     @if (!string.IsNullOrWhiteSpace(_query) && _hits is not null)
     {
@@ -78,7 +78,7 @@ else
                     <ul class="bz-count-list mt-2">
                         @foreach (var part in _data.PartsBelowThreshold.Take(5))
                         {
-                            <li class="bz-count-row"><a href="@($"stock/pieces/{Uri.EscapeDataString(part.Reference)}")"><b>@part.Reference</b></a> <span style="white-space:nowrap">@part.Finished / @part.MinimumThreshold</span> <PartStateChips Item="part" /></li>
+                            <li class="bz-count-row"><a href="@($"stock/pieces/{Uri.EscapeDataString(part.Reference)}")" style="white-space:nowrap"><b>@part.Reference</b></a> <span style="white-space:nowrap">@part.Finished / @part.MinimumThreshold</span> <span class="d-flex flex-wrap justify-end gap-1" style="min-width:0"><PartStateChips Item="part" /></span></li>
                         }
                     </ul>
                 }
@@ -133,7 +133,7 @@ else
                     <h2 id="bz-stock-last" class="bz-dashboard-title">@StockTexts.LastMovements</h2>
                     <MudButton Variant="Variant.Text" Href="stock/mouvements" EndIcon="@Icons.Material.Filled.ArrowForward">@StockTexts.AllMovements</MudButton>
                 </div>
-                <MovementTable Items="_movements" Loading="@(_movements is null)" OnChanged="LoadAsync" />
+                <MovementTable Items="_movements" Loading="@(_movements is null)" OnChanged="LoadAsync" Compact="true" />
             </section>
         </MudItem>
     </MudGrid>

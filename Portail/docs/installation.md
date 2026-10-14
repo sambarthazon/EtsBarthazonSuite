@@ -62,6 +62,7 @@ Options utiles :
    - *Utilisateurs* : créer les comptes des éditeurs (bureau des méthodes) et, si besoin, des lecteurs ;
    - *Paramètres* : nom de l'entreprise, modèle de référence interne (`P-{0:0000}`…) ;
    - *Sauvegardes* : vérifier le dossier et lancer une première sauvegarde (« Sauvegarder maintenant »).
+   - *Stock* : vérifier les réglages ; pour le paramétrage du stock (emplacements, articles, stock initial, étiquettes), suivre [Démarrer avec le stock](stock-demarrage.md).
 4. Sur les téléphones et tablettes : ouvrir l'adresse, puis « Ajouter à l'écran d'accueil » pour en faire une icône.
 
 Par défaut, la **consultation ne demande pas de connexion** sur le réseau interne (`Security:AllowAnonymousRead`). Créer, modifier et administrer demandent toujours un compte.
@@ -82,7 +83,12 @@ Les réglages par défaut sont dans `appsettings.json` (remplacé à chaque mise
 | `Security:AllowAnonymousRead` | Consultation sans connexion | `true` |
 | `Security:SessionDays` | Durée de la session | `30` |
 | `Security:KeysDirectory` | Clés des cookies de connexion (par défaut : `keys` à côté de la base) | |
-| `Features:Stock`, `Deliveries`, `Orders`, `TimeTracking` | Fonctions à venir (laisser `false` tant que les modules n'existent pas) | `false` |
+| `Features:Stock` | Application Stock (tuile grisée si `false` ; ses données sont conservées et sauvegardées dans tous les cas) | `true` |
+| `Features:Deliveries`, `Orders`, `TimeTracking` | Fonctions à venir (laisser `false` tant que les modules n'existent pas) | `false` |
+| `Stock:ItemReferencePattern`, `Stock:BatchNumberPattern` | Codes d'articles proposés et numéros de lancement (`{0}` = date du lancement, `{1}` = rang dans l'année) | `A-{0:0000}`, `L{0:yyyy}-{1:000}` |
+| `Stock:DefaultStorageLocationCode`, `Stock:DefaultWorkInProgressLocationCode` | Emplacements par défaut : magasin et pièces en cours | `MAG`, `ATELIER` |
+| `Stock:AllowNegativeItemStock` | Autoriser un stock d'article négatif (les pièces ne le sont jamais) | `false` |
+| `Stock:BackdatingDays`, `Stock:SelfUndoMinutes`, `Stock:StaleBatchDays` | Antidatage maximal d'un mouvement (jours), délai pour annuler son propre mouvement (minutes), lancement « à l'arrêt » sans mouvement depuis (jours) | `31`, `15`, `14` |
 | `Catalog:ReferencePattern` | Modèle de référence interne proposé | `P-{0:0000}` |
 | `Seed:DemoData` | Charger les données de démonstration (installation de présentation uniquement) | `false` |
 | `Kestrel:Endpoints:Http:Url` | Adresse d'écoute | `http://0.0.0.0:5080` |
@@ -112,3 +118,4 @@ Le service et la règle de pare-feu sont retirés ; **les données et sauvegarde
 - [Sauvegarde et restauration](sauvegarde-restauration.md)
 - [Migration vers un Raspberry Pi](migration-raspberry-pi.md)
 - [Changement de thème](changement-de-theme.md)
+- [Démarrer avec le stock](stock-demarrage.md)

@@ -4,13 +4,15 @@ using Barthazon.Catalog.Core.Services;
 using Barthazon.Referential.Contracts;
 using Barthazon.Referential.Core.Services;
 using Barthazon.Shared.Kernel.Security;
+using Barthazon.Stock.Core.Demo;
 
 namespace Barthazon.Portal.Hosting.Demo;
 
 /// <summary>
 /// Données de démonstration fictives (Seed:DemoData) : 4 clients, des machines, une quinzaine de pièces
 /// avec indices, gamme, plans PDF, photos et documents papier. Chargées une seule fois, si l'annuaire est vide.
-/// Elles passent par les services applicatifs (mêmes règles que la saisie).
+/// Elles passent par les services applicatifs (mêmes règles que la saisie). Le stock ajoute ensuite les siennes
+/// (<see cref="StockDemoData"/>), si l'application est active et que son stock est vide.
 /// </summary>
 internal sealed partial class DemoDataSeeder(IServiceScopeFactory scopeFactory, ILogger<DemoDataSeeder> logger)
 {
@@ -28,11 +30,20 @@ internal sealed partial class DemoDataSeeder(IServiceScopeFactory scopeFactory, 
             "demo")));
 
         var parts = services.GetRequiredService<IPartService>();
-        if ((await parts.SearchAsync(new PartSearchRequest { IncludeArchived = true, PageSize = 1 }, cancellationToken)).Value.TotalCount > 0)
+        if ((await parts.SearchAsync(new PartSearchRequest { IncludeArchived = true, PageSize = 1 }, cancellationToken)).Value.TotalCount == 0)
         {
-            return;
+            await SeedCatalogAsync(services, parts, cancellationToken);
         }
 
+        // Stock (seulement si l'application est active) : après l'annuaire, dont il retrouve les pièces par leur référence.
+        if (services.GetService<StockDemoData>() is { } stock)
+        {
+            await stock.SeedAsync(cancellationToken);
+        }
+    }
+
+    private async Task SeedCatalogAsync(IServiceProvider services, IPartService parts, CancellationToken cancellationToken)
+    {
         LogSeeding(logger);
         var customers = services.GetRequiredService<ICustomerService>();
         var machines = services.GetRequiredService<IMachineService>();

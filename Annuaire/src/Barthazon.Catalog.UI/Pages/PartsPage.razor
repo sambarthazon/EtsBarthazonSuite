@@ -24,7 +24,7 @@
 
 <div class="d-flex flex-wrap align-center gap-3 mb-3">
     <MudTextField T="string" Value="Q" ValueChanged="v => NavigateAsync(q: v ?? string.Empty, page: 1)" Placeholder="@CatalogTexts.SearchParts"
-                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentAriaLabel="@SharedTexts.Search" Variant="Variant.Outlined" Margin="Margin.Dense"
                   Immediate="true" DebounceInterval="300" Clearable="true" Style="max-width:560px;min-width:240px" Class="flex-grow-1"
                   aria-label="@CatalogTexts.SearchParts" InputId="bz-parts-search" />
     <MudButton Variant="@(ActiveFilterCount > 0 ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterList"

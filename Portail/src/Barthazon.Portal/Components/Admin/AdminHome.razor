@@ -14,6 +14,14 @@
     @Tile("admin/donnees", Icons.Material.Filled.ImportExport, PortalTexts.AdminData, PortalTexts.AdminDataText)
 </div>
 
+@* Sections fournies par les applications (ex. « Stock » : réglages, vérification des soldes). *@
+<UiSlot Name="@UiSlots.AdminSections">
+    <ItemTemplate Context="slot">
+        <MudText Typo="Typo.h5" HtmlTag="h2" Class="mb-3">@slot.Extension.Title</MudText>
+        <div class="mb-6">@slot.Content</div>
+    </ItemTemplate>
+</UiSlot>
+
 <MudText Typo="Typo.h5" HtmlTag="h2" Class="mb-3">@PortalTexts.AdminStatus</MudText>
 <SystemStatusPanel />
 

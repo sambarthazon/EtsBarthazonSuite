@@ -1,7 +1,7 @@
 @inject IItemService Items
 
 @* Recherche d'un article (code, désignation, dimensions), tolérante aux accents et aux séparateurs. *@
-<MudAutocomplete T="ItemListItem" Value="_selected" ValueChanged="OnChangedAsync" SearchFunc="SearchAsync"
+<MudAutocomplete T="ItemListItem" AdornmentAriaLabel="@StockTexts.OpenList" Value="_selected" ValueChanged="OnChangedAsync" SearchFunc="SearchAsync"
                  ToStringFunc="@(i => i is null ? string.Empty : $"{i.Code} — {i.Designation}")" Label="@(Label ?? StockTexts.Item)"
                  Placeholder="@StockTexts.SearchItem" Variant="Variant.Outlined" Required="Required" RequiredError="@SharedTexts.RequiredField"
                  Clearable="true" ResetValueOnEmptyText="true" DebounceInterval="200" MaxItems="30" OpenOnFocus="true"

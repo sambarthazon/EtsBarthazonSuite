@@ -44,7 +44,7 @@ else
                 <h2 class="bz-dashboard-title">2. @StockTexts.QuantityAndDue</h2>
                 <QuantityField Value="_quantity" ValueChanged="OnQuantityChangedAsync" Unit="StockUnit.Piece" Label="@StockTexts.LaunchedQuantity" Minimum="1"
                                Error="_form.HasError(nameof(LaunchInput.Quantity))" ErrorText="@_form.ErrorFor(nameof(LaunchInput.Quantity))" />
-                <MudDatePicker Date="_dueDate" DateChanged="d => _dueDate = d" Label="@StockTexts.DueDate" Variant="Variant.Outlined" Editable="true" Clearable="true" Class="mt-3" />
+                <MudDatePicker AdornmentAriaLabel="@StockTexts.ChooseDate" Date="_dueDate" DateChanged="d => _dueDate = d" Label="@StockTexts.DueDate" Variant="Variant.Outlined" Editable="true" Clearable="true" Class="mt-3" />
                 <MudTextField @bind-Value="_orderReference" Label="@StockTexts.CustomerOrderReference" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
                 <MudTextField @bind-Value="_notes" Label="@StockTexts.Notes" Variant="Variant.Outlined" Lines="2" Class="mt-3" MaxLength="4000" />
             </section>

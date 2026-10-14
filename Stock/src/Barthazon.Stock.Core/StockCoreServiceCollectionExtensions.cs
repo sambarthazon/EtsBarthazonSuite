@@ -29,6 +29,7 @@ public static class StockCoreServiceCollectionExtensions
         services.AddScoped<IInventoryService, InventoryService>();
         services.AddScoped<IStockImportService, StockImportService>();
         services.AddScoped<IStockExportService, StockExportService>();
+        services.AddScoped<Demo.StockDemoData>();
 
         // Contrats exposés aux futures applications (commandes, pointage).
         services.AddScoped<StockContractsService>();

@@ -36,3 +36,8 @@
 .bz-inventory-table td { vertical-align: middle; }
 .bz-inventory-card { padding: 10px 0; border-bottom: 1px solid var(--bz-lines); }
 .bz-inventory-card:last-child { border-bottom: none; }
+
+/* Mouvements en cartes (tableau de bord) */
+.bz-movement-card { padding: 10px 14px; border-bottom: 1px solid var(--bz-lines); cursor: pointer; min-height: var(--bz-touch); }
+.bz-movement-card:last-child { border-bottom: none; }
+.bz-movement-card:hover, .bz-movement-card:focus-visible { background: var(--bz-surface-alt); }

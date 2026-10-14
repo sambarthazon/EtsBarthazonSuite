@@ -1,0 +1,59 @@
+@using System.Reflection
+@inject StockOptions Options
+@inject ILocationService Locations
+
+@* Section « Stock » de l'administration : version, réglages (section Stock d'appsettings.json), outils. *@
+<MudPaper Class="pa-4 bz-card" Elevation="0">
+    <div class="bz-fields">
+        <FieldView Label="@StockTexts.AdminVersion" Value="@Version" />
+        <FieldView Label="@StockTexts.AdminItemPattern" Value="@($"{Options.ItemReferencePattern} → {Example(Options.ItemReferencePattern, 1)}")" />
+        <FieldView Label="@StockTexts.AdminBatchPattern" Value="@($"{Options.BatchNumberPattern} → {BatchExample}")" />
+        <FieldView Label="@StockTexts.AdminStorageLocation" Value="@LocationLabel(Options.DefaultStorageLocationCode)" />
+        <FieldView Label="@StockTexts.AdminWipLocation" Value="@LocationLabel(Options.DefaultWorkInProgressLocationCode)" />
+        <FieldView Label="@StockTexts.AdminNegativeItems" Value="@(Options.AllowNegativeItemStock ? SharedTexts.Yes : SharedTexts.No)" />
+        <FieldView Label="@StockTexts.AdminBackdating" Value="@string.Format(CultureInfo.CurrentCulture, StockTexts.AdminDays, Options.BackdatingDays)" />
+        <FieldView Label="@StockTexts.AdminSelfUndo" Value="@string.Format(CultureInfo.CurrentCulture, StockTexts.AdminMinutes, Options.SelfUndoMinutes)" />
+        <FieldView Label="@StockTexts.AdminStale" Value="@string.Format(CultureInfo.CurrentCulture, StockTexts.AdminDays, Options.StaleBatchDays)" />
+    </div>
+    <MudText Typo="Typo.body2" Class="bz-muted mt-2">@StockTexts.AdminSettingsHelp</MudText>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <MudButton Href="stock/soldes" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Rule">@StockTexts.VerifyBalances</MudButton>
+        <MudButton Href="referentiels" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Place">@StockTexts.TabLocations</MudButton>
+        <MudButton Href="stock/import" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.UploadFile">@StockTexts.ImportInitialStock</MudButton>
+    </div>
+</MudPaper>
+
+@code {
+    private IReadOnlyList<LocationItem> _locations = [];
+
+    private static string Version =>
+        typeof(StockModule).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion?.Split('+')[0] ?? "?";
+
+    private string BatchExample => Example(Options.BatchNumberPattern, DateTime.Today, 14);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Locations.ListAsync(includeArchived: true);
+        if (result.IsSuccess)
+        {
+            _locations = result.Value;
+        }
+    }
+
+    private string LocationLabel(string code) =>
+        _locations.FirstOrDefault(l => string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase)) is { } location
+            ? $"{location.Code} — {location.Name}"
+            : string.Format(CultureInfo.CurrentCulture, StockTexts.AdminLocationMissing, code);
+
+    private static string Example(string pattern, params object[] values)
+    {
+        try
+        {
+            return string.Format(CultureInfo.InvariantCulture, pattern, values);
+        }
+        catch (FormatException)
+        {
+            return "?";
+        }
+    }
+}

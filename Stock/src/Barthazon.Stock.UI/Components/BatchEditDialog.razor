@@ -4,7 +4,7 @@
 <MudDialog>
     <DialogContent>
         <FormErrors State="_form" />
-        <MudDatePicker Date="_due" DateChanged="d => _due = d" Label="@StockTexts.DueDate" Variant="Variant.Outlined" Editable="true" Clearable="true" />
+        <MudDatePicker AdornmentAriaLabel="@StockTexts.ChooseDate" Date="_due" DateChanged="d => _due = d" Label="@StockTexts.DueDate" Variant="Variant.Outlined" Editable="true" Clearable="true" />
         <MudTextField @bind-Value="_input.CustomerOrderReference" Label="@StockTexts.CustomerOrderReference" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
         <MudTextField @bind-Value="_input.Notes" Label="@StockTexts.Notes" Variant="Variant.Outlined" Lines="3" Class="mt-3" MaxLength="4000" />
     </DialogContent>

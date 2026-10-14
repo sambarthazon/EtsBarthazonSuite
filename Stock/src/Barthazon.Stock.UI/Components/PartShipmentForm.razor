@@ -48,7 +48,7 @@
             </MudAlert>
         }
         <MudTextField @bind-Value="_reference" Label="@StockTexts.DeliveryReference" Variant="Variant.Outlined" Class="mt-3" MaxLength="100" />
-        <MudDatePicker Date="_date" DateChanged="d => _date = d" Label="@StockTexts.OccurredOn" Variant="Variant.Outlined" Editable="true" Clearable="true" Class="mt-3"
+        <MudDatePicker AdornmentAriaLabel="@StockTexts.ChooseDate" Date="_date" DateChanged="d => _date = d" Label="@StockTexts.OccurredOn" Variant="Variant.Outlined" Editable="true" Clearable="true" Class="mt-3"
                        MaxDate="Today" MinDate="Today.AddDays(-Options.BackdatingDays)" HelperText="@StockTexts.OccurredOnHelp" />
         <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Class="mt-3" MaxLength="1000" />
         <div class="d-flex justify-end gap-2 mt-4">

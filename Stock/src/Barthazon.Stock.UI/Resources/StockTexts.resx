@@ -548,4 +548,20 @@
   <data name="Show" xml:space="preserve"><value>Afficher</value></data>
   <data name="Subject" xml:space="preserve"><value>Objet</value></data>
   <data name="ValidateInventory" xml:space="preserve"><value>Valider l'inventaire</value></data>
+  <data name="AdminVersion" xml:space="preserve"><value>Version de l'application Stock</value></data>
+  <data name="AdminItemPattern" xml:space="preserve"><value>Codes des articles</value></data>
+  <data name="AdminBatchPattern" xml:space="preserve"><value>Numéros des lancements</value></data>
+  <data name="AdminStorageLocation" xml:space="preserve"><value>Magasin par défaut</value></data>
+  <data name="AdminWipLocation" xml:space="preserve"><value>Emplacement des en-cours</value></data>
+  <data name="AdminNegativeItems" xml:space="preserve"><value>Stock d'article négatif autorisé</value></data>
+  <data name="AdminBackdating" xml:space="preserve"><value>Antidatage maximal</value></data>
+  <data name="AdminSelfUndo" xml:space="preserve"><value>Annulation de son propre mouvement</value></data>
+  <data name="AdminStale" xml:space="preserve"><value>Lancement « à l'arrêt » après</value></data>
+  <data name="AdminDays" xml:space="preserve"><value>{0} jour(s)</value></data>
+  <data name="AdminMinutes" xml:space="preserve"><value>{0} minute(s)</value></data>
+  <data name="AdminLocationMissing" xml:space="preserve"><value>{0} (introuvable : créez cet emplacement)</value></data>
+  <data name="AdminSettingsHelp" xml:space="preserve"><value>Ces réglages se modifient dans la section « Stock » du fichier appsettings.json, puis en redémarrant le portail.</value></data>
+  <data name="VerifyBalances" xml:space="preserve"><value>Vérifier les soldes</value></data>
+  <data name="ChooseDate" xml:space="preserve"><value>Choisir une date</value></data>
+  <data name="OpenList" xml:space="preserve"><value>Ouvrir la liste</value></data>
 </root>

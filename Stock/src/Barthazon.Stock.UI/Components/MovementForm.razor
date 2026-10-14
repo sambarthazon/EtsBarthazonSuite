@@ -107,7 +107,7 @@
 
     <MudExpansionPanels Elevation="0" Class="mt-3">
         <MudExpansionPanel Text="@StockTexts.MoreOptions" Expanded="@(_date is not null || _comment is not null)">
-            <MudDatePicker Date="_date" DateChanged="v => _date = v" Label="@StockTexts.OccurredOn" Variant="Variant.Outlined" Editable="true"
+            <MudDatePicker AdornmentAriaLabel="@StockTexts.ChooseDate" Date="_date" DateChanged="v => _date = v" Label="@StockTexts.OccurredOn" Variant="Variant.Outlined" Editable="true"
                            MaxDate="Today" MinDate="Today.AddDays(-Options.BackdatingDays)" HelperText="@StockTexts.OccurredOnHelp" Clearable="true"
                            Error="_form.HasError(OccurredAtField)" ErrorText="@_form.ErrorFor(OccurredAtField)" />
             <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" Lines="2" Class="mt-3" MaxLength="1000" />

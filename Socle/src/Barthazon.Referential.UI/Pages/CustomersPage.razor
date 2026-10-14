@@ -14,7 +14,7 @@
 
 <div class="d-flex flex-wrap align-center gap-4 mb-3">
     <MudTextField T="string" Value="_query" ValueChanged="OnQueryChangedAsync" Placeholder="@ReferentialTexts.SearchCustomers"
-                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentAriaLabel="@SharedTexts.Search" Variant="Variant.Outlined"
                   Margin="Margin.Dense" Immediate="true" DebounceInterval="250" Clearable="true" Style="max-width:420px" aria-label="@ReferentialTexts.SearchCustomers" />
     <MudSwitch T="bool" Value="_includeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@ReferentialTexts.ShowArchived" />
 </div>

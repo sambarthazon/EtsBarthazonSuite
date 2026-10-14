@@ -37,7 +37,7 @@ else if (_batch is not null)
                             @if (error is not null) { <div class="bz-tone-error" style="white-space:normal;font-weight:600">@error</div> }</td>
                         <td>@step.Waiting</td>
                         <td style="min-width:150px">
-                            <MudDatePicker Date="line.Date" DateChanged="d => line.Date = d" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" Clearable="true"
+                            <MudDatePicker AdornmentAriaLabel="@StockTexts.ChooseDate" Date="line.Date" DateChanged="d => line.Date = d" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" Clearable="true"
                                            MaxDate="Today" MinDate="Today.AddDays(-Options.BackdatingDays)" aria-label="@StockTexts.ColDate" />
                         </td>
                         <td style="min-width:100px"><MudNumericField T="int?" @bind-Value="line.Good" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" HideSpinButtons="true" InputMode="InputMode.numeric" aria-label="@StockTexts.GoodQuantity" Error="@(error is not null)" /></td>

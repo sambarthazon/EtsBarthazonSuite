@@ -11,7 +11,9 @@ Une mise à jour remplace le programme ; **les données et la configuration loca
 
 Cette version range les données de chaque application dans ses propres tables d'historique de migrations. **Au premier démarrage**, une base créée par une version précédente est **reprise automatiquement** : rien n'est modifié dans les données, les migrations déjà appliquées sont reconnues et l'ancienne table d'historique est conservée sous le nom `__ef_migrations_legacy`. Le journal de l'application l'indique (« Reprise d'une base de l'ancienne génération… »). Ensuite, les tables des nouvelles applications (stock) sont créées.
 
-Comme pour toute mise à jour : faire d'abord une sauvegarde (*Administration → Sauvegardes → Sauvegarder maintenant*). Après le démarrage, *Administration* affiche l'état de la base de chaque application (« à jour »).
+Comme pour toute mise à jour : faire d'abord une sauvegarde (*Administration → Sauvegardes → Sauvegarder maintenant*). Après le démarrage, *Administration* affiche l'état de la base de chaque application (« à jour ») et la version de chacune (socle, portail, annuaire, stock).
+
+Le stock est **actif par défaut** (`Features:Stock = true`). Pour le masquer le temps de le paramétrer, mettre `"Features": { "Stock": false }` dans `appsettings.Production.json` : ses tables sont tout de même créées et sauvegardées, et l'annuaire fonctionne exactement comme avant. Paramétrage : [Démarrer avec le stock](stock-demarrage.md).
 
 ## Windows
 
@@ -39,6 +41,7 @@ Même fonctionnement : arrêt du service, copie de la base, remplacement du prog
 
 - Ouvrir l'application ; *Administration* affiche le numéro de version.
 - Vérifier une fiche pièce et l'aperçu d'un plan.
+- Stock : ouvrir *Administration → Stock → Vérifier les soldes* (aucun écart attendu).
 - Les utilisateurs déjà connectés le restent (les clés de session sont conservées dans le dossier `keys`, à côté de la base).
 
 ## En cas de problème : revenir à la version précédente

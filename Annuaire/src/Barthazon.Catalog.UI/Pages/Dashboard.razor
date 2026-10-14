@@ -23,7 +23,7 @@
 <section class="bz-dashboard-search mb-4" role="search" aria-label="@CatalogTexts.DashboardSearchLabel">
     <form @onsubmit="SubmitSearch" @onsubmit:preventDefault="true">
         <MudTextField T="string" Value="_query" ValueChanged="OnQueryChangedAsync" Label="@CatalogTexts.DashboardSearchLabel" Placeholder="@CatalogTexts.DashboardSearchPlaceholder"
-                      Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" DebounceInterval="250"
+                      Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentAriaLabel="@SharedTexts.Search" Immediate="true" DebounceInterval="250"
                       Clearable="true" InputId="bz-dashboard-search" Class="bz-dashboard-search-field" autocomplete="off" />
     </form>
     @if (!string.IsNullOrWhiteSpace(_query) && _hits is not null)

@@ -1,7 +1,7 @@
 @inject IPartLookup Parts
 
 @* Recherche d'une pièce de l'annuaire (par ses contrats). *@
-<MudAutocomplete T="PartSummary" Value="_selected" ValueChanged="OnChangedAsync" SearchFunc="SearchAsync"
+<MudAutocomplete T="PartSummary" AdornmentAriaLabel="@StockTexts.OpenList" Value="_selected" ValueChanged="OnChangedAsync" SearchFunc="SearchAsync"
                  ToStringFunc="@(p => p is null ? string.Empty : $"{p.InternalReference} — {p.Designation}")" Label="@(Label ?? StockTexts.Part)"
                  Placeholder="@StockTexts.SearchPart" Variant="Variant.Outlined" Required="Required" RequiredError="@SharedTexts.RequiredField"
                  Clearable="true" ResetValueOnEmptyText="true" DebounceInterval="200" MaxItems="30" OpenOnFocus="true"
