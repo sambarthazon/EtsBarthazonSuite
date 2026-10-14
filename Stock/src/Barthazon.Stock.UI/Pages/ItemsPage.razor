@@ -7,6 +7,7 @@
 
 <PageHeader Title="@StockTexts.ItemsTitle" Subtitle="@(_items is null ? null : string.Format(CultureInfo.CurrentCulture, StockTexts.ItemsCount, _items.Count))">
     <Actions>
+        <MudButton Href="stock/etiquettes?type=articles" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.QrCode2">@StockTexts.PrintLabels</MudButton>
         @if (CurrentUser.Role >= UserRole.Editor)
         {
             <MudButton Href="stock/articles/nouveau" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">@StockTexts.NewItem</MudButton>

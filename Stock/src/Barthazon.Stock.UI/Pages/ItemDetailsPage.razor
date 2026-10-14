@@ -41,6 +41,7 @@ else
                     <ActivatorContent><MudIconButton Icon="@Icons.Material.Filled.MoreVert" Variant="Variant.Outlined" OnClick="@context.ToggleAsync" aria-label="@StockTexts.MoreActions" /></ActivatorContent>
                     <ChildContent>
                         <MudMenuItem Icon="@Icons.Material.Filled.Tune" OnClick="() => RecordAsync(StockAction.Adjustment)">@StockTexts.ActionAdjustment</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.QrCode2" Href="@($"stock/etiquettes?type=articles&codes={Uri.EscapeDataString(_item.Code)}")">@StockTexts.Label</MudMenuItem>
                         <MudMenuItem Icon="@Icons.Material.Filled.Edit" Href="@($"stock/articles/{Uri.EscapeDataString(_item.Code)}/modifier")">@StockTexts.Edit</MudMenuItem>
                         <MudMenuItem Icon="@(_item.IsArchived ? Icons.Material.Filled.Unarchive : Icons.Material.Filled.Archive)" OnClick="ToggleArchiveAsync">
                             @(_item.IsArchived ? StockTexts.Restore : StockTexts.Archive)

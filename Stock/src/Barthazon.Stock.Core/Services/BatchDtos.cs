@@ -215,3 +215,34 @@ public sealed record PipelineColumn(int OperationNumber, OperationType Operation
 
 /// <summary>Ligne d'un lancement : pièces en attente de chaque opération (absente = opération hors de sa gamme).</summary>
 public sealed record PipelineRow(Guid BatchId, string Number, string RevisionIndex, IReadOnlyDictionary<int, int> Waiting, IReadOnlyDictionary<int, int> StepByOperation, int Finished);
+
+/// <summary>Ligne de saisie d'une fiche suiveuse : une opération.</summary>
+public sealed class TravelerLineInput
+{
+    public int StepSequence { get; set; }
+
+    /// <summary>Date notée sur la fiche (vide = maintenant).</summary>
+    public DateTimeOffset? OccurredAt { get; set; }
+
+    public int GoodQuantity { get; set; }
+
+    public int ScrapQuantity { get; set; }
+
+    public StockReason? ScrapReason { get; set; }
+
+    public bool Skipped { get; set; }
+}
+
+/// <summary>Saisie d'une fiche suiveuse revenue de l'atelier : toutes les opérations, enregistrées dans l'ordre, tout ou rien.</summary>
+public sealed class TravelerInput
+{
+    public Guid BatchId { get; set; }
+
+    public List<TravelerLineInput> Lines { get; set; } = [];
+
+    /// <summary>Rangement des pièces finies (dernière opération).</summary>
+    public Guid? DestinationLocationId { get; set; }
+
+    public string? Comment { get; set; }
+}
+

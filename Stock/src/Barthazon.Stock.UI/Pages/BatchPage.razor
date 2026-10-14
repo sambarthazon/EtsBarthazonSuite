@@ -32,35 +32,45 @@ else
             </div>
         </SubContent>
         <Actions>
-            @if (CanEdit || CurrentUser.IsAuthenticated)
-            {
-                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@StockTexts.MoreActions">
-                    <ActivatorContent><MudButton Variant="Variant.Outlined" EndIcon="@Icons.Material.Filled.ArrowDropDown" OnClick="@context.ToggleAsync">@StockTexts.MoreActions</MudButton></ActivatorContent>
-                    <ChildContent>
-                        @if (IsOpen && CurrentUser.IsAuthenticated)
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Print" Href="@($"stock/lancements/{Uri.EscapeDataString(_batch.Number)}/fiche")">@StockTexts.PrintTraveler</MudButton>
+            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@StockTexts.MoreActions">
+                <ActivatorContent><MudButton Variant="Variant.Outlined" EndIcon="@Icons.Material.Filled.ArrowDropDown" OnClick="@context.ToggleAsync">@StockTexts.MoreActions</MudButton></ActivatorContent>
+                <ChildContent>
+                    @if (IsOpen && CurrentUser.IsAuthenticated)
+                    {
+                        <MudMenuItem Icon="@Icons.Material.Filled.Replay" OnClick="ReworkAsync" Disabled="@(!_batch.Steps.Skip(1).Any(s => s.Waiting > 0))">@StockTexts.ActionRework</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.SwapHoriz" OnClick="TransferAsync" Disabled="@(_batch.InProgress == 0)">@StockTexts.ActionTransferWip</MudMenuItem>
+                    }
+                    @if (IsOpen && CurrentUser.IsAuthenticated)
+                    {
+                        <MudMenuItem Icon="@Icons.Material.Filled.EditNote" Href="@($"stock/lancements/{Uri.EscapeDataString(_batch.Number)}/saisie")">@StockTexts.EnterTraveler</MudMenuItem>
+                    }
+                    @if (_batch.Finished > 0)
+                    {
+                        <MudMenuItem Icon="@Icons.Material.Filled.QrCode2" Href="@($"stock/etiquettes?type=caisse&lancement={Uri.EscapeDataString(_batch.Number)}")">@StockTexts.CrateLabel</MudMenuItem>
+                    }
+                    @if (CanEdit)
+                    {
+                        <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="EditAsync">@StockTexts.Edit</MudMenuItem>
+                        @if (IsOpen)
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Replay" OnClick="ReworkAsync" Disabled="@(!_batch.Steps.Skip(1).Any(s => s.Waiting > 0))">@StockTexts.ActionRework</MudMenuItem>
-                            <MudMenuItem Icon="@Icons.Material.Filled.SwapHoriz" OnClick="TransferAsync" Disabled="@(_batch.InProgress == 0)">@StockTexts.ActionTransferWip</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Sync" OnClick="ResyncAsync">@StockTexts.ResyncRouting</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Lock" OnClick="CloseAsync">@StockTexts.CloseBatch</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Cancel" OnClick="CancelAsync">@StockTexts.CancelBatch</MudMenuItem>
                         }
-                        @if (CanEdit)
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="EditAsync">@StockTexts.Edit</MudMenuItem>
-                            @if (IsOpen)
-                            {
-                                <MudMenuItem Icon="@Icons.Material.Filled.Sync" OnClick="ResyncAsync">@StockTexts.ResyncRouting</MudMenuItem>
-                                <MudMenuItem Icon="@Icons.Material.Filled.Lock" OnClick="CloseAsync">@StockTexts.CloseBatch</MudMenuItem>
-                                <MudMenuItem Icon="@Icons.Material.Filled.Cancel" OnClick="CancelAsync">@StockTexts.CancelBatch</MudMenuItem>
-                            }
-                        }
-                    </ChildContent>
-                </MudMenu>
-            }
+                    }
+                </ChildContent>
+            </MudMenu>
         </Actions>
     </PageHeader>
 
     @if (Created)
     {
-        <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Class="mb-3">@string.Format(CultureInfo.CurrentCulture, StockTexts.BatchLaunched, _batch.Number)</MudAlert>
+        <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Class="mb-3">
+            @string.Format(CultureInfo.CurrentCulture, StockTexts.BatchLaunched, _batch.Number)
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Print" Class="ml-2"
+                       Href="@($"stock/lancements/{Uri.EscapeDataString(_batch.Number)}/fiche")">@StockTexts.PrintTraveler</MudButton>
+        </MudAlert>
     }
     @if (!_batch.RevisionIsInForce && _batch.Status != BatchStatus.Cancelled)
     {

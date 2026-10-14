@@ -6,10 +6,13 @@
 @* Onglet « Emplacements » de la page Référentiels (inséré par le stock). *@
 <div class="d-flex flex-wrap align-center justify-space-between gap-3 mb-3">
     <MudSwitch T="bool" Value="_includeArchived" ValueChanged="OnArchivedChangedAsync" Color="Color.Primary" Label="@StockTexts.ShowArchived" />
-    @if (CanEdit)
-    {
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => EditAsync(null)">@StockTexts.NewLocation</MudButton>
-    }
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.QrCode2" Href="stock/etiquettes?type=emplacements">@StockTexts.PrintLabels</MudButton>
+        @if (CanEdit)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => EditAsync(null)">@StockTexts.NewLocation</MudButton>
+        }
+    </div>
 </div>
 
 <AdaptiveList T="LocationItem" Items="_items" Loading="_loading" Dense="true" OnItemClick="EditAsync" AriaLabel="@StockTexts.TabLocations">

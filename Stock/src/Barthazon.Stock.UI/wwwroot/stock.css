@@ -23,3 +23,8 @@
 .bz-pipeline td button.bz-pipeline-cell { all: unset; cursor: pointer; padding: 2px 6px; border-radius: var(--bz-radius-sm); }
 .bz-pipeline td button.bz-pipeline-cell:hover, .bz-pipeline td button.bz-pipeline-cell:focus-visible { outline: 2px solid var(--bz-info); }
 .bz-pipeline tfoot td { font-weight: 700; border-bottom: none; }
+
+/* Fiche suiveuse : colonnes vides assez hautes pour écrire à la main. */
+.bz-traveler td { height: 14mm; }
+.bz-traveler td.bz-traveler-blank { min-width: 14mm; }
+.bz-queue summary { cursor: pointer; padding: 6px 0; min-height: var(--bz-touch); display: list-item; }

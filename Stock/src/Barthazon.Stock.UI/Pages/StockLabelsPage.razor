@@ -1,0 +1,118 @@
+@page "/stock/etiquettes"
+@layout Barthazon.Shared.UI.Layout.PrintLayout
+@inject IItemService Items
+@inject ILocationService Locations
+@inject IBatchService Batches
+@inject BrowserInterop Browser
+@inject StockQrCodes QrCodes
+@inject TimeProvider Time
+
+@* Étiquettes QR (planche A4 de 3 × 8) : articles, emplacements, caisses de pièces finies d'un lancement. *@
+<PageTitle>@StockTexts.LabelsTitle</PageTitle>
+<HeadContent><style>@@page { size: A4 portrait; margin: 13mm 0 0 0; }</style></HeadContent>
+
+<div class="bz-print-toolbar">
+    <MudButton Href="@BackHref" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack">@SharedTexts.Back</MudButton>
+    <MudText Typo="Typo.subtitle1"><b>@StockTexts.LabelsTitle</b> — @string.Format(CultureInfo.CurrentCulture, StockTexts.LabelsSelected, _labels.Count(l => l.Selected), _labels.Count)</MudText>
+    <MudSpacer />
+    <MudNumericField T="int" @bind-Value="_skip" Label="@StockTexts.LabelsSkip" Min="0" Max="23" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:230px" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="() => Browser.PrintAsync()" Disabled="@(!_labels.Any(l => l.Selected))">@StockTexts.Print</MudButton>
+</div>
+
+<div class="bz-labels">
+    @for (var i = 0; i < _skip; i++)
+    {
+        <div class="bz-label" aria-hidden="true"></div>
+    }
+    @foreach (var label in _labels)
+    {
+        <div class="bz-label @(label.Selected ? null : "bz-label-excluded")">
+            <div>@((MarkupString)label.Svg)</div>
+            <div style="min-width:0">
+                <div class="bz-label-ref">@label.Title</div>
+                @foreach (var line in label.Lines)
+                {
+                    <div class="bz-label-text">@line</div>
+                }
+            </div>
+            <label class="bz-label-check"><input type="checkbox" checked="@label.Selected" @onchange="e => label.Selected = e.Value is true" aria-label="@label.Title" /></label>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly List<Label> _labels = [];
+    private int _skip;
+
+    [SupplyParameterFromQuery(Name = "type")] public string? Type { get; set; }
+
+    [SupplyParameterFromQuery(Name = "codes")] public string? Codes { get; set; }
+
+    [SupplyParameterFromQuery(Name = "lancement")] public string? BatchNumber { get; set; }
+
+    [SupplyParameterFromQuery(Name = "exemplaires")] public int? Copies { get; set; }
+
+    private string BackHref => Type switch
+    {
+        "emplacements" => "referentiels",
+        "caisse" when BatchNumber is not null => $"stock/lancements/{Uri.EscapeDataString(BatchNumber)}",
+        _ => "stock/articles",
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _labels.Clear();
+        var codes = (Codes ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        switch (Type)
+        {
+            case "emplacements":
+                var locations = await Locations.ListAsync(includeArchived: false);
+                foreach (var location in locations.IsSuccess ? locations.Value : [])
+                {
+                    if (codes.Count == 0 || codes.Contains(location.Code))
+                    {
+                        _labels.Add(new Label(location.Code, [location.Name, location.Kind.Label()], await QrCodes.LocationAsync(location.Code)));
+                    }
+                }
+
+                break;
+            case "caisse":
+                var batch = BatchNumber is null ? null : await Batches.GetByNumberAsync(BatchNumber);
+                if (batch is { IsSuccess: true })
+                {
+                    var b = batch.Value;
+                    var svg = await QrCodes.PartAsync(b.PartReference);
+                    for (var i = 0; i < Math.Clamp(Copies ?? 1, 1, 24); i++)
+                    {
+                        _labels.Add(new Label(b.PartReference,
+                            [b.PartDesignation ?? string.Empty, string.Format(CultureInfo.CurrentCulture, StockTexts.CrateLabelLine, b.RevisionIndex, b.Number),
+                             string.Format(CultureInfo.CurrentCulture, StockTexts.CrateLabelQuantity, b.Finished, Time.GetLocalNow().ToString("d", CultureInfo.CurrentCulture))], svg));
+                    }
+                }
+
+                break;
+            default:
+                var items = await Items.SearchAsync(new ItemSearchRequest());
+                foreach (var item in items.IsSuccess ? items.Value : [])
+                {
+                    if (codes.Count == 0 || codes.Contains(item.Code))
+                    {
+                        _labels.Add(new Label(item.Code, [item.Designation, item.Dimensions ?? string.Empty], await QrCodes.ItemAsync(item.Code)));
+                    }
+                }
+
+                break;
+        }
+    }
+
+    private sealed class Label(string title, IReadOnlyList<string> lines, string svg)
+    {
+        public string Title { get; } = title;
+
+        public IReadOnlyList<string> Lines { get; } = lines.Where(l => l.Length > 0).ToList();
+
+        public string Svg { get; } = svg;
+
+        public bool Selected { get; set; } = true;
+    }
+}

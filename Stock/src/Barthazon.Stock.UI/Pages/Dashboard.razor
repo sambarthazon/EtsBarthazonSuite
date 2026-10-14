@@ -1,7 +1,8 @@
 @page "/stock"
-@inject IItemService Items
+@inject IStockDashboardService DashboardData
 @inject IMovementService Movements
 @inject ICurrentUser CurrentUser
+@inject IEnumerable<IGlobalSearchProvider> SearchProviders
 @inject Notifier Notifier
 
 <PageHeader Title="@StockTexts.DashboardTitle" Subtitle="@StockTexts.ModuleDescription">
@@ -10,63 +11,181 @@
         {
             <MudButton Href="stock/saisie" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.QrCodeScanner">@StockTexts.MenuQuickEntry</MudButton>
         }
-        <MudButton Href="stock/articles" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Category">@StockTexts.MenuItems</MudButton>
+        @if (CurrentUser.Role >= UserRole.Editor)
+        {
+            <MudButton Href="stock/lancements/nouveau" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.PlayArrow">@StockTexts.NewBatch</MudButton>
+        }
     </Actions>
 </PageHeader>
 
-<MudGrid Spacing="3">
-    <MudItem xs="12" md="5">
-        <section class="bz-card bz-dashboard-card pa-4" aria-labelledby="bz-stock-alerts">
-            <h2 id="bz-stock-alerts" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Size="Size.Small" Color="Color.Warning" /> @StockTexts.Alerts</h2>
-            @if (_belowThreshold is null)
+@* Grande barre de recherche : pièce, article, lancement, emplacement (recherche globale). *@
+<section class="bz-dashboard-search mb-4" role="search" aria-label="@StockTexts.DashboardSearch">
+    <MudTextField T="string" Value="_query" ValueChanged="SearchAsync" Label="@StockTexts.DashboardSearch" Placeholder="@StockTexts.DashboardSearchPlaceholder" Variant="Variant.Outlined"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="bz-dashboard-search-field" autocomplete="off"
+                  Immediate="true" DebounceInterval="250" Clearable="true" />
+    @if (!string.IsNullOrWhiteSpace(_query) && _hits is not null)
+    {
+        <MudPaper Class="bz-card mt-2 pa-2" Elevation="0" aria-live="polite">
+            @if (_hits.Count == 0)
             {
-                <MudSkeleton Height="60px" SkeletonType="SkeletonType.Rectangle" />
+                <MudText Class="pa-2 bz-muted">@StockTexts.NoSearchResult</MudText>
             }
-            else if (_belowThreshold.Count == 0)
+            @foreach (var hit in _hits)
             {
-                <MudText Class="bz-muted">@StockTexts.NoAlerts</MudText>
+                <a href="@hit.Href" class="d-flex align-center gap-2 pa-2" style="color:inherit">
+                    @if (hit.Icon is not null) { <MudIcon Icon="@hit.Icon" Size="Size.Small" /> }
+                    <span><b>@hit.Title</b> <span class="bz-muted">@hit.Subtitle</span></span>
+                </a>
             }
-            else
-            {
-                <a href="stock/articles?seuil=1" class="d-block mb-2"><b>@string.Format(CultureInfo.CurrentCulture, StockTexts.ItemsBelowThreshold, _belowThreshold.Count)</b></a>
-                <ul class="bz-part-mini-list">
-                    @foreach (var item in _belowThreshold.Take(8))
+        </MudPaper>
+    }
+</section>
+
+@if (_data is null)
+{
+    <MudSkeleton Height="200px" SkeletonType="SkeletonType.Rectangle" />
+}
+else
+{
+    <div class="bz-batch-counters mb-4">
+        <a class="bz-card pa-3" href="stock/articles" style="color:inherit"><MudText Typo="Typo.h5">@_data.ItemCount</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.MenuItems</MudText></a>
+        <a class="bz-card pa-3" href="stock/pieces" style="color:inherit"><MudText Typo="Typo.h5">@_data.TrackedPartCount</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.PartsTitle</MudText></a>
+        <a class="bz-card pa-3" href="stock/lancements" style="color:inherit"><MudText Typo="Typo.h5">@_data.BatchesInProgress.Count</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.BatchesInProgress</MudText></a>
+        <div class="bz-card pa-3"><MudText Typo="Typo.h5">@_data.MaterialValue.ToString("C0", CultureInfo.CurrentCulture)</MudText><MudText Typo="Typo.caption" Class="bz-muted">@StockTexts.MaterialValue</MudText></div>
+    </div>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="6">
+            <section class="bz-card bz-dashboard-card pa-4" aria-labelledby="bz-stock-alerts">
+                <h2 id="bz-stock-alerts" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Size="Size.Small" Color="Color.Warning" /> @StockTexts.Alerts</h2>
+                @if (_data.AlertCount == 0)
+                {
+                    <MudText Class="bz-muted">@StockTexts.NoAlerts</MudText>
+                }
+                <ul class="bz-count-list">
+                    @AlertRow(_data.ItemsBelowThreshold.Count, StockTexts.AlertItemsBelowThreshold, "stock/articles?seuil=1", StatusTone.Warning)
+                    @AlertRow(_data.PartsBelowThreshold.Count, StockTexts.AlertPartsBelowThreshold, "stock/pieces?etat=seuil", StatusTone.Warning)
+                    @AlertRow(_data.PartsWithSupersededStock.Count, StockTexts.AlertSupersededStock, "stock/pieces?etat=indice", StatusTone.Warning)
+                    @AlertRow(_data.StaleBatches.Count, StockTexts.AlertStaleBatches, "stock/lancements", StatusTone.Warning)
+                    @AlertRow(_data.BatchesOnSupersededRevision.Count, StockTexts.AlertBatchesSupersededRevision, "stock/lancements", StatusTone.Warning)
+                    @if (_data.InconsistentBalances is { } inconsistent)
                     {
-                        <li>
-                            <a href="@($"stock/articles/{Uri.EscapeDataString(item.Code)}")"><b>@item.Code</b> @item.Designation</a>
-                            <span class="ml-2"><ItemQuantity Item="item" /> / @StockLabels.Quantity(item.MinimumThreshold ?? 0, item.Unit)</span>
-                        </li>
+                        @AlertRow(inconsistent, StockTexts.AlertInconsistentBalances, "stock/soldes", StatusTone.Error)
                     }
                 </ul>
-            }
-        </section>
-    </MudItem>
-    <MudItem xs="12" md="7">
-        <section aria-labelledby="bz-stock-last">
-            <div class="d-flex justify-space-between align-center mb-2">
-                <h2 id="bz-stock-last" class="bz-dashboard-title">@StockTexts.LastMovements</h2>
-                <MudButton Variant="Variant.Text" Href="stock/mouvements" EndIcon="@Icons.Material.Filled.ArrowForward">@StockTexts.AllMovements</MudButton>
-            </div>
-            <MovementTable Items="_movements" Loading="@(_movements is null)" OnChanged="LoadAsync" />
-        </section>
-    </MudItem>
-</MudGrid>
+                @if (_data.PartsBelowThreshold.Count > 0)
+                {
+                    <ul class="bz-count-list mt-2">
+                        @foreach (var part in _data.PartsBelowThreshold.Take(5))
+                        {
+                            <li class="bz-count-row"><a href="@($"stock/pieces/{Uri.EscapeDataString(part.Reference)}")"><b>@part.Reference</b></a> <span style="white-space:nowrap">@part.Finished / @part.MinimumThreshold</span> <PartStateChips Item="part" /></li>
+                        }
+                    </ul>
+                }
+            </section>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <section class="bz-card bz-dashboard-card pa-4" aria-labelledby="bz-stock-queues">
+                <h2 id="bz-stock-queues" class="bz-dashboard-title"><MudIcon Icon="@Icons.Material.Filled.PrecisionManufacturing" Size="Size.Small" /> @StockTexts.MachineQueues</h2>
+                @if (_data.Queues.Count == 0)
+                {
+                    <MudText Class="bz-muted">@StockTexts.NoQueue</MudText>
+                }
+                @foreach (var queue in _data.Queues)
+                {
+                    <details class="bz-queue mb-2">
+                        <summary>
+                            <b>@queue.Name</b> · @string.Format(CultureInfo.CurrentCulture, StockTexts.QueueSummary, queue.Quantity)
+                            @if (queue.LoadMinutes is { } load) { <span class="bz-muted"> · @string.Format(CultureInfo.CurrentCulture, StockTexts.QueueLoad, FormatLoad(load))</span> }
+                        </summary>
+                        <ul class="bz-count-list">
+                            @foreach (var line in queue.Lines)
+                            {
+                                <li class="bz-count-row">
+                                    <a href="@($"stock/lancements/{Uri.EscapeDataString(line.BatchNumber)}")"><b>@line.BatchNumber</b> @line.PartReference</a>
+                                    <span>@string.Format(CultureInfo.CurrentCulture, StockTexts.WaitingForOpLine, line.Quantity, line.OperationNumber, line.OperationType.Label())</span>
+                                </li>
+                            }
+                        </ul>
+                    </details>
+                }
+            </section>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <section class="bz-card bz-dashboard-card pa-4" aria-labelledby="bz-stock-batches">
+                <h2 id="bz-stock-batches" class="bz-dashboard-title">@StockTexts.BatchesInProgress</h2>
+                @if (_data.BatchesInProgress.Count == 0)
+                {
+                    <MudText Class="bz-muted">@StockTexts.NoBatchInProgress</MudText>
+                }
+                @foreach (var batch in _data.BatchesInProgress.Take(8))
+                {
+                    <a href="@($"stock/lancements/{Uri.EscapeDataString(batch.Number)}")" class="d-block mb-2" style="color:inherit">
+                        <b>@batch.Number</b> @batch.PartReference <span class="bz-muted">@batch.RevisionIndex</span>
+                        <BatchProgress Item="batch" />
+                    </a>
+                }
+            </section>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <section aria-labelledby="bz-stock-last">
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <h2 id="bz-stock-last" class="bz-dashboard-title">@StockTexts.LastMovements</h2>
+                    <MudButton Variant="Variant.Text" Href="stock/mouvements" EndIcon="@Icons.Material.Filled.ArrowForward">@StockTexts.AllMovements</MudButton>
+                </div>
+                <MovementTable Items="_movements" Loading="@(_movements is null)" OnChanged="LoadAsync" />
+            </section>
+        </MudItem>
+    </MudGrid>
+}
 
 @code {
-    private IReadOnlyList<ItemListItem>? _belowThreshold;
+    private StockDashboard? _data;
     private IReadOnlyList<MovementItem>? _movements;
+    private string? _query;
+    private List<GlobalSearchHit>? _hits;
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
     private async Task LoadAsync()
     {
-        var items = await Items.SearchAsync(new ItemSearchRequest { BelowThresholdOnly = true });
-        if (Notifier.Handle(items))
+        var data = await DashboardData.GetAsync();
+        if (Notifier.Handle(data))
         {
-            _belowThreshold = items.Value;
+            _data = data.Value;
         }
 
         var movements = await Movements.SearchAsync(new MovementSearchRequest { PageSize = 10 });
         _movements = movements.IsSuccess ? movements.Value.Items : [];
     }
+
+    /// <summary>Pièces (annuaire), articles, lancements et emplacements : tous les fournisseurs de la recherche globale.</summary>
+    private async Task SearchAsync(string? query)
+    {
+        _query = query;
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            _hits = null;
+            return;
+        }
+
+        var hits = new List<GlobalSearchHit>();
+        foreach (var provider in SearchProviders.OrderBy(p => p.Order))
+        {
+            hits.AddRange(await provider.SearchAsync(query, 6, CancellationToken.None));
+        }
+
+        _hits = hits;
+    }
+
+    private static string FormatLoad(decimal minutes) =>
+        minutes >= 60 ? $"{(int)(minutes / 60)} h {(int)(minutes % 60):00}" : $"{minutes:0} min";
+
+    private static RenderFragment AlertRow(int count, string label, string href, StatusTone tone) => __builder =>
+    {
+        if (count > 0)
+        {
+            <li class="bz-count-row"><a href="@href">@label</a> <StatusChip Text="@count.ToString(CultureInfo.CurrentCulture)" Tone="tone" /></li>
+        }
+    };
 }

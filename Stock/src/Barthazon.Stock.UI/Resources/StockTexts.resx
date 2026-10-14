@@ -406,4 +406,54 @@
   <data name="SearchHitItem" xml:space="preserve"><value>Article en stock</value></data>
   <data name="SearchHitBatch" xml:space="preserve"><value>Lancement</value></data>
   <data name="SearchHitLocation" xml:space="preserve"><value>Emplacement de stockage</value></data>
+  <data name="AdminOnly" xml:space="preserve"><value>Réservé aux administrateurs.</value></data>
+  <data name="AlertBatchesSupersededRevision" xml:space="preserve"><value>Lancements sur un indice qui n'est plus en vigueur</value></data>
+  <data name="AlertInconsistentBalances" xml:space="preserve"><value>Soldes incohérents avec les mouvements</value></data>
+  <data name="AlertItemsBelowThreshold" xml:space="preserve"><value>Articles sous le seuil</value></data>
+  <data name="AlertPartsBelowThreshold" xml:space="preserve"><value>Pièces sous le seuil</value></data>
+  <data name="AlertStaleBatches" xml:space="preserve"><value>Lancements à l'arrêt</value></data>
+  <data name="AlertSupersededStock" xml:space="preserve"><value>Pièces finies à un indice remplacé</value></data>
+  <data name="BalancesDiscrepancies" xml:space="preserve"><value>{0} case(s) dont le solde diffère de la somme des mouvements.</value></data>
+  <data name="BalancesOk" xml:space="preserve"><value>Tous les soldes sont égaux à la somme des mouvements.</value></data>
+  <data name="BalancesSubtitle" xml:space="preserve"><value>Compare chaque solde à la somme des lignes de mouvements.</value></data>
+  <data name="BalancesTitle" xml:space="preserve"><value>Vérifier les soldes</value></data>
+  <data name="BatchesInProgress" xml:space="preserve"><value>Lancements en cours</value></data>
+  <data name="ColDescription" xml:space="preserve"><value>Description</value></data>
+  <data name="ComputedQuantity" xml:space="preserve"><value>Selon les mouvements</value></data>
+  <data name="CrateLabel" xml:space="preserve"><value>Étiquette de caisse</value></data>
+  <data name="CrateLabelLine" xml:space="preserve"><value>Indice {0} · {1}</value></data>
+  <data name="CrateLabelQuantity" xml:space="preserve"><value>{0} pce · {1}</value></data>
+  <data name="DashboardSearch" xml:space="preserve"><value>Rechercher</value></data>
+  <data name="DashboardSearchPlaceholder" xml:space="preserve"><value>Pièce, article, lancement, emplacement…</value></data>
+  <data name="EnterTraveler" xml:space="preserve"><value>Saisir la fiche suiveuse</value></data>
+  <data name="GoodShort" xml:space="preserve"><value>Qté bonne</value></data>
+  <data name="Label" xml:space="preserve"><value>Étiquette</value></data>
+  <data name="LabelsSelected" xml:space="preserve"><value>{0} / {1} étiquette(s)</value></data>
+  <data name="LabelsSkip" xml:space="preserve"><value>Étiquettes déjà utilisées sur la planche</value></data>
+  <data name="LabelsTitle" xml:space="preserve"><value>Étiquettes</value></data>
+  <data name="LaunchedOn" xml:space="preserve"><value>Lancé le</value></data>
+  <data name="Machine" xml:space="preserve"><value>Machine</value></data>
+  <data name="MachineQueues" xml:space="preserve"><value>Files d'attente par machine</value></data>
+  <data name="MaterialValue" xml:space="preserve"><value>Valeur indicative du stock matière</value></data>
+  <data name="NoQueue" xml:space="preserve"><value>Aucune pièce en attente.</value></data>
+  <data name="NoSearchResult" xml:space="preserve"><value>Aucun résultat.</value></data>
+  <data name="PlannedTimes" xml:space="preserve"><value>Temps prévus</value></data>
+  <data name="Print" xml:space="preserve"><value>Imprimer</value></data>
+  <data name="PrintLabels" xml:space="preserve"><value>Étiquettes</value></data>
+  <data name="PrintTraveler" xml:space="preserve"><value>Fiche suiveuse</value></data>
+  <data name="QueueLoad" xml:space="preserve"><value>charge estimée {0}</value></data>
+  <data name="QueueSummary" xml:space="preserve"><value>{0} pièce(s) en attente</value></data>
+  <data name="RecordedQuantity" xml:space="preserve"><value>Solde enregistré</value></data>
+  <data name="RepairBalances" xml:space="preserve"><value>Corriger les soldes</value></data>
+  <data name="RepairBalancesText" xml:space="preserve"><value>Les soldes seront recalculés à partir des mouvements.</value></data>
+  <data name="SaveTraveler" xml:space="preserve"><value>Enregistrer la fiche</value></data>
+  <data name="SkippedShort" xml:space="preserve"><value>Non réalisée</value></data>
+  <data name="TimesValue" xml:space="preserve"><value>Réglage {0} min · {1} min/pce</value></data>
+  <data name="TravelerEntrySubtitle" xml:space="preserve"><value>Saisissez la fiche revenue de l'atelier : les opérations sont enregistrées dans l'ordre, tout ou rien.</value></data>
+  <data name="TravelerEntryTitle" xml:space="preserve"><value>Fiche suiveuse {0}</value></data>
+  <data name="TravelerFooter" xml:space="preserve"><value>Imprimé le {0} — indice {1} — vérifier l'indice en vigueur avant usinage</value></data>
+  <data name="TravelerHeading" xml:space="preserve"><value>Fiche suiveuse</value></data>
+  <data name="TravelerSaved" xml:space="preserve"><value>Fiche suiveuse enregistrée.</value></data>
+  <data name="TravelerTitle" xml:space="preserve"><value>Fiche suiveuse {0}</value></data>
+  <data name="Visa" xml:space="preserve"><value>Visa</value></data>
 </root>

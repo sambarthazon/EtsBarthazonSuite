@@ -1,0 +1,111 @@
+@page "/stock/lancements/{Number}/fiche"
+@layout Barthazon.Shared.UI.Layout.PrintLayout
+@inject IBatchService Batches
+@inject IPartLookup PartLookup
+@inject ICustomerLookup Customers
+@inject BrowserInterop Browser
+@inject StockQrCodes QrCodes
+@inject TimeProvider Time
+@inject Microsoft.Extensions.Options.IOptions<BrandingOptions> Branding
+
+@* Fiche suiveuse : accompagne la caisse dans l'atelier (pas de wifi) ; elle se ressaisit au bureau d'un coup. *@
+<PageTitle>@string.Format(CultureInfo.CurrentCulture, StockTexts.TravelerTitle, Number)</PageTitle>
+<HeadContent><style>@@page { size: A4 portrait; margin: 12mm 12mm 16mm; }</style></HeadContent>
+
+<div class="bz-print-toolbar">
+    <MudButton Href="@($"stock/lancements/{Uri.EscapeDataString(Number)}")" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack">@SharedTexts.Back</MudButton>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="() => Browser.PrintAsync()">@StockTexts.Print</MudButton>
+</div>
+
+@if (_batch is not null)
+{
+    <article class="bz-sheet">
+        <header class="bz-sheet-header">
+            <div>
+                <div class="d-flex align-center gap-2 mb-2">
+                    <img src="@Branding.Value.LogoUrl" alt="" style="height:10mm" />
+                    <span style="font-weight:700">@Branding.Value.CompanyName</span>
+                    <span>— @StockTexts.TravelerHeading</span>
+                </div>
+                <h1 style="font-size:28pt">@_batch.Number</h1>
+                <div style="font-size:14pt;font-weight:700">@_batch.PartReference — @_batch.PartDesignation</div>
+                @if (_customer is not null) { <div>@StockTexts.Customer : <b>@_customer</b></div> }
+                <div class="bz-sheet-index">@string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionValue, _batch.RevisionIndex)</div>
+            </div>
+            <div class="bz-sheet-qr">@((MarkupString)(_qr ?? string.Empty))</div>
+        </header>
+
+        <div class="bz-sheet-grid mt-2">
+            <FieldView Label="@StockTexts.LaunchedQuantity" Value="@_batch.LaunchedQuantity.ToString(CultureInfo.CurrentCulture)" />
+            <FieldView Label="@StockTexts.LaunchedOn" Value="@_batch.LaunchedOn.ToString("d", CultureInfo.CurrentCulture)" />
+            <FieldView Label="@StockTexts.DueDate" Value="@_batch.DueDate?.ToString("d", CultureInfo.CurrentCulture)" />
+            <FieldView Label="@StockTexts.CustomerOrderReference" Value="@_batch.CustomerOrderReference" />
+            <FieldView Label="@StockTexts.SourceConsumed" Value="@(string.Join(" ; ", _batch.Consumed.Select(l => $"{l.SubjectCode} {StockLabels.Quantity(-l.Delta, l.Unit)}{(l.Lot is null ? null : $" lot {l.Lot}")}")))" />
+        </div>
+
+        @if (!_batch.RevisionIsInForce)
+        {
+            <div class="bz-sheet-warning">@string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionNotInForceBanner, _batch.RevisionIndex)</div>
+        }
+
+        <h2>@StockTexts.Operations</h2>
+        <table class="bz-traveler">
+            <thead>
+                <tr>
+                    <th>@StockTexts.ColNumber</th><th>@StockTexts.ColType</th><th>@StockTexts.Machine</th><th>@StockTexts.ColDescription</th>
+                    <th>@StockTexts.PlannedTimes</th><th>@StockTexts.ColDate</th><th>@StockTexts.GoodShort</th><th>@StockTexts.Scrapped</th><th>@StockTexts.Reason</th><th>@StockTexts.Visa</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var step in _batch.Steps)
+                {
+                    <tr>
+                        <td><b>@step.OperationNumber</b></td>
+                        <td>@step.OperationType.Label()</td>
+                        <td>@(step.MachineName ?? step.Subcontractor)</td>
+                        <td style="white-space:pre-line">@step.Description</td>
+                        <td style="white-space:nowrap">@Times(step)</td>
+                        <td class="bz-traveler-blank"></td><td class="bz-traveler-blank"></td><td class="bz-traveler-blank"></td><td class="bz-traveler-blank"></td><td class="bz-traveler-blank"></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <h2>@StockTexts.Notes</h2>
+        <div class="bz-sheet-box" style="min-height:25mm">@_batch.Notes</div>
+
+        <footer class="bz-sheet-footer">
+            @string.Format(CultureInfo.CurrentCulture, StockTexts.TravelerFooter, Time.GetLocalNow().ToString("dd/MM/yyyy", CultureInfo.CurrentCulture), _batch.RevisionIndex)
+        </footer>
+    </article>
+}
+
+@code {
+    private BatchDetails? _batch;
+    private string? _qr;
+    private string? _customer;
+
+    [Parameter] public string Number { get; set; } = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await Batches.GetByNumberAsync(Number);
+        if (result.IsFailure)
+        {
+            return;
+        }
+
+        _batch = result.Value;
+        _qr = await QrCodes.BatchAsync(_batch.Number);
+        if (await PartLookup.GetAsync(_batch.PartId) is { } part && await Customers.GetAsync(part.CustomerId) is { } customer)
+        {
+            _customer = customer.Display;
+        }
+    }
+
+    private static string? Times(BatchStepView step) =>
+        step.SetupTimeMin is null && step.CycleTimeMin is null
+            ? null
+            : string.Format(CultureInfo.CurrentCulture, StockTexts.TimesValue, step.SetupTimeMin?.ToString("0.#", CultureInfo.CurrentCulture) ?? "—", step.CycleTimeMin?.ToString("0.##", CultureInfo.CurrentCulture) ?? "—");
+}

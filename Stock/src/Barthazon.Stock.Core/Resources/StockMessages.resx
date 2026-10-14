@@ -84,4 +84,8 @@
   <data name="InsufficientFinishedParts" xml:space="preserve"><value>Seulement {0} pièce(s) finie(s) disponible(s).</value></data>
   <data name="SeveralLocations" xml:space="preserve"><value>Plusieurs emplacements</value></data>
   <data name="PieceUnit" xml:space="preserve"><value>pce</value></data>
+  <data name="QueueSubcontracting" xml:space="preserve"><value>Sous-traitance</value></data>
+  <data name="QueueNoMachine" xml:space="preserve"><value>Sans machine</value></data>
+  <data name="TravelerEmpty" xml:space="preserve"><value>Aucune quantité saisie sur la fiche.</value></data>
+  <data name="TravelerLineError" xml:space="preserve"><value>Op {0} : {1}</value></data>
 </root>

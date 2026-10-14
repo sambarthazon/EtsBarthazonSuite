@@ -29,6 +29,12 @@ public interface IBatchService
     /// <summary>Déclaration d'une opération : bonnes, rebuts (avec motif), opération non réalisée (connecté).</summary>
     Task<Result<BatchDetails>> DeclareAsync(DeclareInput input, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Saisie d'une fiche suiveuse (connecté) : les déclarations sont enregistrées dans l'ordre des opérations, en une
+    /// seule transaction ; les erreurs sont rattachées à leur ligne (champ « Lines[n] »).
+    /// </summary>
+    Task<Result<BatchDetails>> DeclareTravelerAsync(TravelerInput input, CancellationToken cancellationToken = default);
+
     /// <summary>Renvoi en reprise vers une étape antérieure (connecté).</summary>
     Task<Result<BatchDetails>> ReworkAsync(ReworkInput input, CancellationToken cancellationToken = default);
 
@@ -269,6 +275,55 @@ internal sealed class BatchService(
             var entry = new LedgerEntry();
             var prepared = await PrepareDeclarationAsync(uow, batch, input, entry, cancellationToken);
             return prepared.IsFailure ? Result<LedgerEntry>.Failure(prepared.Errors) : entry;
+        }, cancellationToken);
+
+        return recorded.IsFailure ? Result<BatchDetails>.Failure(recorded.Errors) : await GetAsync(input.BatchId, cancellationToken);
+    }
+
+    public async Task<Result<BatchDetails>> DeclareTravelerAsync(TravelerInput input, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        var allowed = access.CanDeclare();
+        if (allowed.IsFailure)
+        {
+            return Result<BatchDetails>.Failure(allowed.Errors);
+        }
+
+        var lines = input.Lines.Select((line, index) => (Line: line, Index: index))
+            .Where(l => l.Line.GoodQuantity != 0 || l.Line.ScrapQuantity != 0)
+            .OrderBy(l => l.Line.StepSequence)
+            .ToList();
+        if (lines.Count == 0)
+        {
+            return Error.Validation(StockMessages.TravelerEmpty);
+        }
+
+        var recorded = await ledger.RecordAsync(async uow =>
+        {
+            var batch = await uow.Batches.GetWithStepsAsync(input.BatchId, cancellationToken);
+            if (batch is null)
+            {
+                return Error.NotFound(StockMessages.BatchNotFound);
+            }
+
+            var entry = new LedgerEntry();
+            var errors = new List<Error>();
+            foreach (var (line, index) in lines)
+            {
+                var declared = await PrepareDeclarationAsync(uow, batch, new DeclareInput
+                {
+                    BatchId = batch.Id, StepSequence = line.StepSequence, GoodQuantity = line.GoodQuantity, ScrapQuantity = line.ScrapQuantity,
+                    ScrapReason = line.ScrapReason, Skipped = line.Skipped, OccurredAt = line.OccurredAt, Comment = input.Comment,
+                    DestinationLocationId = input.DestinationLocationId,
+                }, entry, cancellationToken);
+                errors.AddRange(declared.Errors.Select(e => e with
+                {
+                    Field = $"Lines[{index}]",
+                    Message = string.Format(CultureInfo.CurrentCulture, StockMessages.TravelerLineError, batch.Step(line.StepSequence)?.OperationNumber, e.Message),
+                }));
+            }
+
+            return errors.Count > 0 ? Result<LedgerEntry>.Failure(errors) : entry;
         }, cancellationToken);
 
         return recorded.IsFailure ? Result<BatchDetails>.Failure(recorded.Errors) : await GetAsync(input.BatchId, cancellationToken);

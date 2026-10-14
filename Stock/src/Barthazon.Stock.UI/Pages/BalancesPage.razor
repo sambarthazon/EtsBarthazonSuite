@@ -1,0 +1,70 @@
+@page "/stock/soldes"
+@inject IBalanceVerificationService Verification
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+
+@* Outil d'administration « Vérifier les soldes » : soldes enregistrés comparés à la somme des mouvements. *@
+<PageHeader Title="@StockTexts.BalancesTitle" Subtitle="@StockTexts.BalancesSubtitle" BackHref="stock" />
+
+@if (CurrentUser.Role < UserRole.Administrator)
+{
+    <EmptyState Title="@StockTexts.AdminOnly" Icon="@Icons.Material.Outlined.Lock" />
+}
+else if (_discrepancies is null)
+{
+    <MudSkeleton Height="80px" SkeletonType="SkeletonType.Rectangle" />
+}
+else if (_discrepancies.Count == 0)
+{
+    <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">@StockTexts.BalancesOk</MudAlert>
+}
+else
+{
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-3">@string.Format(CultureInfo.CurrentCulture, StockTexts.BalancesDiscrepancies, _discrepancies.Count)</MudAlert>
+    <MudSimpleTable Dense="true" Elevation="0" Class="bz-card mb-3">
+        <thead><tr><th>@StockTexts.ColSubject</th><th>@StockTexts.Location</th><th>@StockTexts.Lot</th><th style="text-align:right">@StockTexts.RecordedQuantity</th><th style="text-align:right">@StockTexts.ComputedQuantity</th></tr></thead>
+        <tbody>
+            @foreach (var d in _discrepancies)
+            {
+                <tr>
+                    <td>@(d.Key.IsItem ? d.Key.ItemId : d.Key.PartId) @(d.Key.IsWorkInProgress ? $"· {StockTexts.WorkInProgress}" : null)</td>
+                    <td>@d.Key.LocationId</td>
+                    <td>@d.Key.Lot</td>
+                    <td style="text-align:right">@StockFormat.Quantity(d.RecordedQuantity)</td>
+                    <td style="text-align:right"><b>@StockFormat.Quantity(d.ComputedQuantity)</b></td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+    <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Build" OnClick="RepairAsync">@StockTexts.RepairBalances</MudButton>
+}
+
+@code {
+    private IReadOnlyList<BalanceDiscrepancy>? _discrepancies;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        if (CurrentUser.Role < UserRole.Administrator)
+        {
+            return;
+        }
+
+        var result = await Verification.CheckAsync();
+        if (Notifier.Handle(result))
+        {
+            _discrepancies = result.Value;
+        }
+    }
+
+    private async Task RepairAsync()
+    {
+        if (await Dialogs.ConfirmAsync(StockTexts.RepairBalances, StockTexts.RepairBalancesText, StockTexts.RepairBalances, danger: true)
+            && Notifier.Handle(await Verification.RepairAsync(), StockTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+}

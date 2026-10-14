@@ -55,6 +55,7 @@ public sealed class StockModule : IModule
         services.AddStockCore();
 
         services.AddScoped<IGlobalSearchProvider, StockGlobalSearchProvider>();
+        services.AddScoped<StockQrCodes>();
 
         // Emplacements de l'annuaire : onglet Stock de la fiche pièce et cartes du tableau de bord.
         services.AddUiExtension(new UiExtension(CatalogUiSlots.PartStockTab, typeof(PartStockPanel), StockTexts.ModuleName, 10));

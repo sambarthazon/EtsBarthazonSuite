@@ -1,0 +1,145 @@
+@page "/stock/lancements/{Number}/saisie"
+@inject IBatchService Batches
+@inject ICurrentUser CurrentUser
+@inject TimeProvider Clock
+@inject StockOptions Options
+@inject NavigationManager Navigation
+@inject Notifier Notifier
+
+@* Saisie d'une fiche suiveuse revenue de l'atelier : toutes les opérations en une fois, dans l'ordre, tout ou rien. *@
+<PageHeader Title="@string.Format(CultureInfo.CurrentCulture, StockTexts.TravelerEntryTitle, Number)" Subtitle="@StockTexts.TravelerEntrySubtitle"
+            BackHref="@($"stock/lancements/{Uri.EscapeDataString(Number)}")" BackText="@Number" />
+
+@if (!CurrentUser.IsAuthenticated)
+{
+    <EmptyState Title="@StockTexts.LoginToDeclare" Text="@StockTexts.LoginToDeclareText" Icon="@Icons.Material.Outlined.Lock" />
+}
+else if (_batch is not null)
+{
+    <FormErrors State="_form" />
+    <div style="overflow-x:auto" class="bz-card">
+        <table class="bz-pipeline" aria-label="@StockTexts.Operations">
+            <thead>
+                <tr>
+                    <th scope="col">@StockTexts.Operations</th><th scope="col">@StockTexts.Waiting</th><th scope="col">@StockTexts.ColDate</th>
+                    <th scope="col">@StockTexts.GoodQuantity</th><th scope="col">@StockTexts.ScrapQuantity</th><th scope="col">@StockTexts.ScrapReason</th><th scope="col">@StockTexts.SkippedShort</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < _lines.Count; i++)
+                {
+                    var index = i;
+                    var line = _lines[index];
+                    var step = _batch.Steps[index];
+                    var error = _form.ErrorFor($"Lines[{index}]");
+                    <tr>
+                        <td style="text-align:left"><b>@step.OperationNumber</b> @step.OperationType.Label()
+                            @if (error is not null) { <div class="bz-tone-error" style="white-space:normal;font-weight:600">@error</div> }</td>
+                        <td>@step.Waiting</td>
+                        <td style="min-width:150px">
+                            <MudDatePicker Date="line.Date" DateChanged="d => line.Date = d" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" Clearable="true"
+                                           MaxDate="Today" MinDate="Today.AddDays(-Options.BackdatingDays)" aria-label="@StockTexts.ColDate" />
+                        </td>
+                        <td style="min-width:100px"><MudNumericField T="int?" @bind-Value="line.Good" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" HideSpinButtons="true" InputMode="InputMode.numeric" aria-label="@StockTexts.GoodQuantity" Error="@(error is not null)" /></td>
+                        <td style="min-width:90px"><MudNumericField T="int?" @bind-Value="line.Scrap" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" HideSpinButtons="true" InputMode="InputMode.numeric" aria-label="@StockTexts.ScrapQuantity" /></td>
+                        <td style="min-width:150px">
+                            <MudSelect T="StockReason?" @bind-Value="line.Reason" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" ToStringFunc="r => r?.Label() ?? string.Empty" aria-label="@StockTexts.ScrapReason">
+                                @foreach (var reason in new[] { StockReason.Dimension, StockReason.Aspect, StockReason.Material, StockReason.Setup, StockReason.Handling, StockReason.Other })
+                                {
+                                    <MudSelectItem T="StockReason?" Value="reason">@reason.Label()</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </td>
+                        <td><MudCheckBox T="bool" @bind-Value="line.Skipped" aria-label="@StockTexts.SkippedShort" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <MudGrid Spacing="3" Class="mt-2">
+        <MudItem xs="12" md="6">
+            <LocationSelect Value="_destination" ValueChanged="v => _destination = v" Label="@StockTexts.FinishedLocation" Clearable="true" HelperText="@StockTexts.FinishedLocationHelp" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_comment" Label="@StockTexts.Comment" Variant="Variant.Outlined" MaxLength="1000" />
+        </MudItem>
+    </MudGrid>
+    <div class="d-flex justify-end gap-2 mt-4">
+        <MudButton Href="@($"stock/lancements/{Uri.EscapeDataString(Number)}")">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="_saving">@StockTexts.SaveTraveler</MudButton>
+    </div>
+}
+
+@code {
+    private readonly FormState _form = new();
+    private BatchDetails? _batch;
+    private List<Line> _lines = [];
+    private Guid? _destination;
+    private string? _comment;
+    private bool _saving;
+
+    [Parameter] public string Number { get; set; } = string.Empty;
+
+    private DateTime Today => TimeZoneInfo.ConvertTime(Clock.GetUtcNow(), Clock.LocalTimeZone).Date;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await Batches.GetByNumberAsync(Number);
+        if (Notifier.Handle(result))
+        {
+            _batch = result.Value;
+            _lines = _batch.Steps.Select(_ => new Line()).ToList();
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = await Batches.DeclareTravelerAsync(new TravelerInput
+        {
+            BatchId = _batch!.Id,
+            DestinationLocationId = _destination,
+            Comment = _comment,
+            Lines = _lines.Select((line, index) => new TravelerLineInput
+            {
+                StepSequence = _batch.Steps[index].Sequence,
+                GoodQuantity = line.Good ?? 0,
+                ScrapQuantity = line.Scrap ?? 0,
+                ScrapReason = line.Reason,
+                Skipped = line.Skipped,
+                OccurredAt = OccurredAt(line.Date),
+            }).ToList(),
+        });
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            Notifier.Success(StockTexts.TravelerSaved);
+            Navigation.NavigateTo($"stock/lancements/{Uri.EscapeDataString(Number)}");
+        }
+    }
+
+    private DateTimeOffset? OccurredAt(DateTime? date)
+    {
+        if (date is not { } day || day.Date >= Today)
+        {
+            return null;
+        }
+
+        var local = day.Date.AddHours(12);
+        return new DateTimeOffset(local, Clock.LocalTimeZone.GetUtcOffset(local));
+    }
+
+    private sealed class Line
+    {
+        public DateTime? Date { get; set; }
+
+        public int? Good { get; set; }
+
+        public int? Scrap { get; set; }
+
+        public StockReason? Reason { get; set; }
+
+        public bool Skipped { get; set; }
+    }
+}
