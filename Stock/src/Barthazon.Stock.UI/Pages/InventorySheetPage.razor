@@ -1,0 +1,99 @@
+@page "/stock/inventaires/{Number}/feuille"
+@layout Barthazon.Shared.UI.Layout.PrintLayout
+@inject IInventoryService Inventories
+@inject BrowserInterop Browser
+@inject TimeProvider Time
+@inject Microsoft.Extensions.Options.IOptions<BrandingOptions> Branding
+
+@* Feuille de comptage : par emplacement, objet, lot, case vide « compté » (comptage à l'aveugle : la quantité attendue n'est pas imprimée). *@
+<PageTitle>@string.Format(CultureInfo.CurrentCulture, StockTexts.CountSheetTitle, Number)</PageTitle>
+<HeadContent><style>@@page { size: A4 portrait; margin: 12mm 12mm 16mm; }</style></HeadContent>
+
+<div class="bz-print-toolbar">
+    <MudButton Href="@($"stock/inventaires/{Uri.EscapeDataString(Number)}")" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack">@SharedTexts.Back</MudButton>
+    <MudSpacer />
+    <MudSwitch T="bool" @bind-Value="_showExpected" Color="Color.Primary" Label="@StockTexts.CountSheetShowExpected" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="() => Browser.PrintAsync()">@StockTexts.Print</MudButton>
+</div>
+
+@if (_inventory is not null)
+{
+    <article class="bz-sheet">
+        <header class="bz-sheet-header">
+            <div>
+                <div class="d-flex align-center gap-2 mb-2">
+                    <img src="@Branding.Value.LogoUrl" alt="" style="height:10mm" />
+                    <span style="font-weight:700">@Branding.Value.CompanyName</span>
+                    <span>— @StockTexts.CountSheet</span>
+                </div>
+                <h1>@_inventory.Number</h1>
+                <div style="font-size:13pt;font-weight:700">@_inventory.Title</div>
+                <div>@StockTexts.InventoryScope : @_inventory.Scope @(_inventory.IncludeWorkInProgress ? "· " + StockTexts.InventoryWithWip : null)</div>
+            </div>
+            <div style="text-align:right">
+                <div>@StockTexts.InventoryOpenedOn : @_inventory.StartedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div>
+                <div class="mt-4">@StockTexts.CountedBy : ____________________</div>
+            </div>
+        </header>
+
+        @foreach (var group in _inventory.Groups)
+        {
+            <section class="bz-count-group">
+                <h2>@group.LocationCode — @group.LocationName</h2>
+                <table class="bz-count-sheet">
+                    <thead>
+                        <tr>
+                            <th>@StockTexts.Subject</th><th>@StockTexts.ColDesignation</th><th>@StockTexts.Lot</th><th>@StockTexts.Unit</th>
+                            @if (_showExpected) { <th>@StockTexts.InventoryExpected</th> }
+                            <th style="width:28mm">@StockTexts.InventoryCounted</th><th style="width:30mm">@StockTexts.Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in group.Lines)
+                        {
+                            <tr>
+                                <td><b>@line.SubjectCode</b></td>
+                                <td>@line.SubjectLabel
+                                    @if (line.RevisionIndex is { } index) { <span> · @string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionValue, index)</span> }
+                                    @if (line.StageLabel is { } stage) { <div>@stage</div> }</td>
+                                <td>@line.Lot</td>
+                                <td>@line.Unit.Symbol()</td>
+                                @if (_showExpected) { <td style="text-align:right">@StockFormat.Quantity(line.Expected)</td> }
+                                <td class="bz-traveler-blank"></td><td class="bz-traveler-blank"></td>
+                            </tr>
+                        }
+                        @* Lignes vides : objets trouvés là où on ne les attendait pas. *@
+                        @for (var i = 0; i < 3; i++)
+                        {
+                            <tr class="bz-count-extra">
+                                <td></td><td></td><td></td><td></td>
+                                @if (_showExpected) { <td></td> }
+                                <td></td><td></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </section>
+        }
+
+        <footer class="bz-sheet-footer">
+            @string.Format(CultureInfo.CurrentCulture, StockTexts.CountSheetFooter, Time.GetLocalNow().ToString("dd/MM/yyyy", CultureInfo.CurrentCulture))
+        </footer>
+    </article>
+}
+
+@code {
+    private InventoryDetails? _inventory;
+    private bool _showExpected;
+
+    [Parameter] public string Number { get; set; } = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await Inventories.GetByNumberAsync(Number);
+        if (result.IsSuccess)
+        {
+            _inventory = result.Value;
+        }
+    }
+}

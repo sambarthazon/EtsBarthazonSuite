@@ -128,6 +128,9 @@ public interface IStockTransactionRepository
 
     /// <summary>Toutes les lignes (clé et variation), pour recalculer les soldes.</summary>
     Task<IReadOnlyList<StockTransactionLine>> ListAllLinesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Cases touchées par un mouvement enregistré après <paramref name="recordedAfter"/> (avertissement d'inventaire).</summary>
+    Task<IReadOnlyList<StockKey>> ListKeysRecordedAfterAsync(DateTimeOffset recordedAfter, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Critères de lecture des soldes (tous facultatifs).</summary>
@@ -165,6 +168,21 @@ public interface IStockBalanceRepository
     void Remove(StockBalance balance);
 }
 
+public interface IInventoryRepository : IRepository<InventoryCount>
+{
+    /// <summary>Inventaire et ses lignes (avec suivi des modifications).</summary>
+    Task<InventoryCount?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Inventaire et ses lignes (sans suivi).</summary>
+    Task<InventoryCount?> GetByNumberAsync(string number, CancellationToken cancellationToken = default);
+
+    /// <summary>Inventaires et leurs lignes (sans suivi), du plus récent au plus ancien.</summary>
+    Task<IReadOnlyList<InventoryCount>> ListAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Plus grand rang de l'année (numérotation annuelle).</summary>
+    Task<int> GetLastYearSequenceAsync(int year, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Unité de travail du stock : une par opération applicative, n'écrit que dans les tables <c>stk_</c>.</summary>
 public interface IStockUnitOfWork : IUnitOfWork
 {
@@ -179,4 +197,6 @@ public interface IStockUnitOfWork : IUnitOfWork
     ITrackedPartRepository TrackedParts { get; }
 
     IProductionBatchRepository Batches { get; }
+
+    IInventoryRepository Inventories { get; }
 }

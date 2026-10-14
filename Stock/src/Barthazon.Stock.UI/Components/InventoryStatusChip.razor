@@ -1,0 +1,19 @@
+<StatusChip Text="@Text" Tone="@Tone" />
+
+@code {
+    [Parameter, EditorRequired] public InventoryStatus Status { get; set; }
+
+    private string Text => Status switch
+    {
+        InventoryStatus.Open => StockTexts.InventoryOpen,
+        InventoryStatus.Validated => StockTexts.InventoryValidated,
+        _ => StockTexts.InventoryCancelled,
+    };
+
+    private StatusTone Tone => Status switch
+    {
+        InventoryStatus.Open => StatusTone.Info,
+        InventoryStatus.Validated => StatusTone.Success,
+        _ => StatusTone.Neutral,
+    };
+}

@@ -28,3 +28,11 @@
 .bz-traveler td { height: 14mm; }
 .bz-traveler td.bz-traveler-blank { min-width: 14mm; }
 .bz-queue summary { cursor: pointer; padding: 6px 0; min-height: var(--bz-touch); display: list-item; }
+
+/* Inventaire : feuille de comptage et saisie */
+.bz-count-group { break-inside: avoid-page; }
+.bz-count-sheet td { height: 9mm; }
+.bz-count-sheet tr.bz-count-extra td { height: 9mm; }
+.bz-inventory-table td { vertical-align: middle; }
+.bz-inventory-card { padding: 10px 0; border-bottom: 1px solid var(--bz-lines); }
+.bz-inventory-card:last-child { border-bottom: none; }

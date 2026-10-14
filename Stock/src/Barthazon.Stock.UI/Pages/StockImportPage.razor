@@ -1,0 +1,213 @@
+@page "/stock/import"
+@attribute [Authorize(Roles = "Editor,Administrator")]
+@inject IStockImportService Import
+@inject BrowserInterop Browser
+@inject Notifier Notifier
+
+@* Import du stock initial : modèle, aperçu avec erreurs ligne par ligne, confirmation (même déroulé que l'import de l'annuaire). *@
+<PageHeader Title="@StockTexts.ImportTitle" Subtitle="@StockTexts.ImportSubtitle" BackHref="stock/inventaires" BackText="@StockTexts.InventoriesTitle">
+    <Actions>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Description" OnClick="DownloadTemplateAsync">@StockTexts.ImportTemplate</MudButton>
+    </Actions>
+</PageHeader>
+
+@if (_result is not null)
+{
+    <MudPaper Class="pa-4 bz-card" Elevation="0">
+        <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">3. @StockTexts.ImportStep3</MudText>
+        <MudAlert Severity="@(_result.Failed.Count == 0 ? Severity.Success : Severity.Warning)" Class="mb-3">
+            @string.Format(CultureInfo.CurrentCulture, StockTexts.ImportDone, _result.ItemsCreated, _result.ItemsUpdated, _result.QuantitiesSet, _result.RecoveryBatches)
+        </MudAlert>
+        @if (_result.Failed.Count > 0)
+        {
+            <MudText Typo="Typo.subtitle1" Class="mb-2"><b>@StockTexts.ImportFailedLines</b></MudText>
+            @RowsTable(_result.Failed)
+        }
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <MudButton Href="stock/articles" Variant="Variant.Filled" Color="Color.Primary">@StockTexts.ItemsTitle</MudButton>
+            <MudButton Href="stock/mouvements?type=Adjustment" Variant="Variant.Outlined">@StockTexts.MovementsTitle</MudButton>
+            <MudButton Variant="Variant.Text" OnClick="Reset">@StockTexts.ImportOtherFile</MudButton>
+        </div>
+    </MudPaper>
+}
+else if (_preview is null)
+{
+    <MudPaper Class="pa-4 bz-card" Elevation="0">
+        <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">1. @StockTexts.ImportStep1</MudText>
+        <MudText Class="mb-1">@StockTexts.ImportHelp</MudText>
+        <ul class="mb-3 bz-muted" style="padding-left:20px">
+            <li>@StockTexts.ImportHelpItems</li>
+            <li>@StockTexts.ImportHelpFinished</li>
+            <li>@StockTexts.ImportHelpWip</li>
+        </ul>
+        <div class="bz-dropzone">
+            <svg viewBox="0 0 24 24" aria-hidden="true">@((MarkupString)Icons.Material.Filled.UploadFile)</svg>
+            @if (_busy)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" Style="max-width:320px" />
+                <span>@StockTexts.ImportAnalyzing</span>
+            }
+            else
+            {
+                <b>@StockTexts.ImportChooseFile</b>
+            }
+            <InputFile OnChange="OnFileAsync" accept=".xlsx" aria-label="@StockTexts.ImportChooseFile" disabled="@_busy" />
+        </div>
+    </MudPaper>
+}
+else
+{
+    <MudPaper Class="pa-4 bz-card" Elevation="0">
+        <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">2. @StockTexts.ImportStep2 — @_fileName</MudText>
+        @foreach (var error in _preview.FileErrors)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-2">@error</MudAlert>
+        }
+        @if (_preview.FileErrors.Count == 0)
+        {
+            <MudAlert Severity="@(_preview.ErrorCount == 0 ? Severity.Info : Severity.Warning)" Class="mb-3">
+                @string.Format(CultureInfo.CurrentCulture, StockTexts.ImportSummary, _preview.ValidCount, _preview.ErrorCount)
+            </MudAlert>
+            @if (_preview.MissingLocations.Count > 0)
+            {
+                <MudCheckBox T="bool" @bind-Value="_createLocations" Color="Color.Primary" Label="@StockTexts.ImportCreateLocations" />
+                <MudText Typo="Typo.body2" Class="bz-muted ml-8 mb-2">@string.Join(", ", _preview.MissingLocations)</MudText>
+            }
+            @if (_preview.MissingMaterials.Count > 0)
+            {
+                <MudCheckBox T="bool" @bind-Value="_createMaterials" Color="Color.Primary" Label="@StockTexts.ImportCreateMaterials" />
+                <MudText Typo="Typo.body2" Class="bz-muted ml-8 mb-2">@string.Join(", ", _preview.MissingMaterials)</MudText>
+            }
+            @if (_preview.MissingCustomers.Count > 0)
+            {
+                <MudCheckBox T="bool" @bind-Value="_createCustomers" Color="Color.Primary" Label="@StockTexts.ImportCreateCustomers" />
+                <MudText Typo="Typo.body2" Class="bz-muted ml-8 mb-2">@string.Join(", ", _preview.MissingCustomers)</MudText>
+            }
+            <MudSwitch T="bool" @bind-Value="_onlyProblems" Color="Color.Primary" Label="@StockTexts.ImportOnlyErrors" Class="mt-2" />
+            @RowsTable(_preview.Rows.Where(r => !_onlyProblems || r.Action == StockImportAction.Error).ToList())
+        }
+        <div class="d-flex gap-2 mt-3 justify-end">
+            <MudButton Variant="Variant.Text" OnClick="Reset">@StockTexts.ImportOtherFile</MudButton>
+            @if (_preview.FileErrors.Count == 0)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlaylistAddCheck" OnClick="ApplyAsync"
+                           Disabled="@(_busy || _preview.ValidCount == 0)">
+                    @(_busy ? StockTexts.ImportRunning : StockTexts.ImportConfirm)
+                </MudButton>
+            }
+        </div>
+    </MudPaper>
+}
+
+@code {
+    private const long MaxImportBytes = 20 * 1024 * 1024;
+    private byte[]? _content;
+    private string _fileName = string.Empty;
+    private StockImportPreview? _preview;
+    private StockImportResult? _result;
+    private bool _busy;
+    private bool _onlyProblems;
+    private bool _createLocations = true;
+    private bool _createMaterials = true;
+    private bool _createCustomers = true;
+
+    private async Task DownloadTemplateAsync()
+    {
+        var template = Import.CreateTemplate();
+        await Browser.DownloadAsync(template.FileName, template.Content);
+    }
+
+    private async Task OnFileAsync(InputFileChangeEventArgs e)
+    {
+        _busy = true;
+        _fileName = e.File.Name;
+        using var memory = new MemoryStream();
+        await using (var stream = e.File.OpenReadStream(MaxImportBytes))
+        {
+            await stream.CopyToAsync(memory);
+        }
+
+        _content = memory.ToArray();
+        using var analysis = new MemoryStream(_content);
+        var result = await Import.AnalyzeAsync(analysis, _fileName);
+        if (Notifier.Handle(result))
+        {
+            _preview = result.Value;
+            _onlyProblems = _preview.ErrorCount > 0;
+        }
+
+        _busy = false;
+    }
+
+    private async Task ApplyAsync()
+    {
+        _busy = true;
+        using var stream = new MemoryStream(_content!);
+        var result = await Import.ApplyAsync(stream, _fileName, new StockImportOptions(_createMaterials, _createCustomers, _createLocations));
+        if (Notifier.Handle(result))
+        {
+            _result = result.Value;
+        }
+
+        _busy = false;
+    }
+
+    private void Reset()
+    {
+        _content = null;
+        _preview = null;
+        _result = null;
+    }
+
+    private static string SheetLabel(StockImportSheet sheet) => sheet switch
+    {
+        StockImportSheet.Items => StockExchangeColumns.ItemsSheet,
+        StockImportSheet.FinishedParts => StockExchangeColumns.FinishedPartsSheet,
+        _ => StockExchangeColumns.WorkInProgressSheet,
+    };
+
+    private static RenderFragment RowsTable(IReadOnlyList<StockImportRow> rows) => __builder =>
+    {
+        <div style="overflow-x:auto">
+            <MudSimpleTable Dense="true" Hover="true" Elevation="0" Bordered="true">
+                <thead>
+                    <tr>
+                        <th>@StockTexts.ImportColSheet</th>
+                        <th>@StockTexts.ImportColLine</th>
+                        <th>@StockTexts.Subject</th>
+                        <th>@StockTexts.Location</th>
+                        <th style="text-align:right">@StockTexts.ColQuantity</th>
+                        <th>@StockTexts.ImportColAction</th>
+                        <th>@StockTexts.ImportColMessages</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in rows)
+                    {
+                        <tr>
+                            <td>@SheetLabel(row.Sheet)</td>
+                            <td>@row.LineNumber</td>
+                            <td style="white-space:nowrap"><b>@row.Subject</b></td>
+                            <td>@row.Location</td>
+                            <td style="text-align:right">@(row.Quantity is { } q ? StockFormat.Quantity(q) : null)</td>
+                            <td>
+                                @switch (row.Action)
+                                {
+                                    case StockImportAction.CreateItem: <StatusChip Text="@StockTexts.ImportActionCreateItem" Tone="StatusTone.Success" />; break;
+                                    case StockImportAction.UpdateItem: <StatusChip Text="@StockTexts.ImportActionUpdateItem" Tone="StatusTone.Info" />; break;
+                                    case StockImportAction.SetQuantity: <StatusChip Text="@StockTexts.ImportActionSetQuantity" Tone="StatusTone.Info" />; break;
+                                    case StockImportAction.CreateRecoveryBatch: <StatusChip Text="@StockTexts.ImportActionRecovery" Tone="StatusTone.Info" />; break;
+                                    default: <StatusChip Text="@StockTexts.ImportActionError" Tone="StatusTone.Error" />; break;
+                                }
+                            </td>
+                            <td>
+                                @foreach (var error in row.Errors) { <div class="bz-tone-error">@error</div> }
+                                @foreach (var warning in row.Warnings) { <div class="bz-tone-warning">@warning</div> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </div>
+    };
+}

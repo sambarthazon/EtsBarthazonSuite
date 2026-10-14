@@ -1,0 +1,61 @@
+@inject IInventoryService Inventories
+@inject ILocationService Locations
+@inject Notifier Notifier
+
+@* Ouverture d'un inventaire : portée (emplacements, ou tout le stock) et en-cours inclus ou non. *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudTextField @bind-Value="_input.Title" Label="@StockTexts.InventoryTitleLabel" Placeholder="@StockTexts.InventoryTitlePlaceholder" Variant="Variant.Outlined" MaxLength="200" />
+        <MudSelect T="Guid" MultiSelection="true" SelectedValues="_locations" SelectedValuesChanged="v => _locations = v.ToHashSet()" Label="@StockTexts.InventoryLocations"
+                   HelperText="@StockTexts.InventoryLocationsHelp" Variant="Variant.Outlined" Class="mt-3" Clearable="true"
+                   MultiSelectionTextFunc="LocationsText"
+                   Error="_form.HasError(nameof(OpenInventoryInput.LocationIds))" ErrorText="@_form.ErrorFor(nameof(OpenInventoryInput.LocationIds))">
+            @foreach (var location in _all)
+            {
+                <MudSelectItem T="Guid" Value="location.Id">@location.Code — @location.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSwitch T="bool" @bind-Value="_input.IncludeWorkInProgress" Color="Color.Primary" Label="@StockTexts.InventoryIncludeWip" Class="mt-3" />
+        <MudText Typo="Typo.body2" Class="bz-muted">@StockTexts.InventoryOpenHelp</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenAsync" Disabled="_saving">@StockTexts.OpenInventory</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private readonly OpenInventoryInput _input = new();
+    private IReadOnlyList<LocationItem> _all = [];
+    private HashSet<Guid> _locations = [];
+    private bool _saving;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Locations.ListAsync(includeArchived: false);
+        if (Notifier.Handle(result))
+        {
+            _all = result.Value;
+        }
+    }
+
+    private string LocationsText(IReadOnlyList<string> values) =>
+        _locations.Count == 0 ? StockTexts.InventoryWholeStock : string.Join(", ", _all.Where(l => _locations.Contains(l.Id)).Select(l => l.Code));
+
+    private async Task OpenAsync()
+    {
+        _saving = true;
+        _input.LocationIds = [.. _locations];
+        var result = await Inventories.OpenAsync(_input);
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            Dialog!.Close(DialogResult.Ok(result.Value.Number));
+        }
+    }
+}

@@ -1,0 +1,98 @@
+@inject IInventoryService Inventories
+@inject IItemService Items
+@inject IPartRoutingLookup Routings
+@inject Notifier Notifier
+
+@* Objet trouvé là où il n'était pas attendu : article ou pièce finie, emplacement de l'inventaire, quantité comptée. *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudRadioGroup T="bool" Value="_isPart" ValueChanged="KindChanged" Class="mb-2">
+            <MudRadio T="bool" Value="false" Color="Color.Primary">@StockTexts.Item</MudRadio>
+            <MudRadio T="bool" Value="true" Color="Color.Primary">@StockTexts.FinishedPart</MudRadio>
+        </MudRadioGroup>
+        @if (_isPart)
+        {
+            <PartPicker Value="_input.PartId" ValueChanged="PartChangedAsync" Label="@StockTexts.Part" Required="true" AutoFocus="true"
+                        Error="_form.HasError(nameof(InventoryLineInput.ItemId))" ErrorText="@_form.ErrorFor(nameof(InventoryLineInput.ItemId))" />
+            @if (_revisions.Count > 0)
+            {
+                <MudSelect T="Guid?" @bind-Value="_input.RevisionId" Label="@StockTexts.Revision" Variant="Variant.Outlined" Class="mt-3"
+                           Error="_form.HasError(nameof(InventoryLineInput.RevisionId))" ErrorText="@_form.ErrorFor(nameof(InventoryLineInput.RevisionId))">
+                    @foreach (var revision in _revisions)
+                    {
+                        <MudSelectItem T="Guid?" Value="revision.Id">@revision.Index @(revision.Status == RevisionStatus.InForce ? $"({StockTexts.InForce})" : null)</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+        }
+        else
+        {
+            <ItemPicker Value="_input.ItemId" ValueChanged="ItemChangedAsync" Label="@StockTexts.Item" Required="true" AutoFocus="true"
+                        Error="_form.HasError(nameof(InventoryLineInput.ItemId))" ErrorText="@_form.ErrorFor(nameof(InventoryLineInput.ItemId))" />
+        }
+        <LocationSelect Value="_input.LocationId" ValueChanged="v => _input.LocationId = v ?? Guid.Empty" Label="@StockTexts.Location" Required="true"
+                        Error="_form.HasError(nameof(InventoryLineInput.LocationId))" ErrorText="@_form.ErrorFor(nameof(InventoryLineInput.LocationId))" />
+        <MudTextField @bind-Value="_input.Lot" Label="@StockTexts.Lot" Variant="Variant.Outlined" Class="mt-3" MaxLength="50" />
+        <QuantityField Value="_counted" ValueChanged="v => _counted = v" Unit="_unit" Label="@StockTexts.InventoryCounted" Class="mt-3"
+                       Error="_form.HasError(nameof(InventoryLineInput.Counted))" ErrorText="@_form.ErrorFor(nameof(InventoryLineInput.Counted))" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving">@StockTexts.InventoryAddLine</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private readonly InventoryLineInput _input = new();
+    private IReadOnlyList<PartRevisionSummary> _revisions = [];
+    private StockUnit _unit = StockUnit.Piece;
+    private decimal? _counted;
+    private bool _isPart;
+    private bool _saving;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public Guid InventoryId { get; set; }
+
+    [Parameter] public Guid LocationId { get; set; }
+
+    protected override void OnInitialized() => _input.LocationId = LocationId;
+
+    private void KindChanged(bool isPart)
+    {
+        _isPart = isPart;
+        _input.ItemId = null;
+        _input.PartId = null;
+        _input.RevisionId = null;
+        _revisions = [];
+        _unit = StockUnit.Piece;
+    }
+
+    private async Task ItemChangedAsync(Guid? itemId)
+    {
+        _input.ItemId = itemId;
+        _unit = itemId is { } id && await Items.GetAsync(id) is { IsSuccess: true } item ? item.Value.Unit : StockUnit.Piece;
+    }
+
+    private async Task PartChangedAsync(Guid? partId)
+    {
+        _input.PartId = partId;
+        _revisions = partId is { } id ? (await Routings.GetRevisionsAsync(id)).Where(r => r.Status != RevisionStatus.Cancelled).ToList() : [];
+        _input.RevisionId = _revisions.FirstOrDefault(r => r.Status == RevisionStatus.InForce)?.Id;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _input.Counted = _counted ?? 0;
+        var result = await Inventories.AddLineAsync(InventoryId, _input);
+        _form.Apply(result);
+        _saving = false;
+        if (result.IsSuccess)
+        {
+            Dialog!.Close(DialogResult.Ok(result.Value));
+        }
+    }
+}

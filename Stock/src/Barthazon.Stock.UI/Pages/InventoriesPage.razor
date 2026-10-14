@@ -1,3 +1,78 @@
 @page "/stock/inventaires"
+@inject IInventoryService Inventories
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject NavigationManager Navigation
+@inject Notifier Notifier
 
-<UpcomingPage Title="@StockTexts.MenuInventories" Icon="@Icons.Material.Filled.FactCheck" />
+<PageHeader Title="@StockTexts.InventoriesTitle" Subtitle="@StockTexts.InventoriesSubtitle">
+    <Actions>
+        @if (CurrentUser.Role >= UserRole.Editor)
+        {
+            <MudButton Href="stock/import" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.UploadFile">@StockTexts.ImportInitialStock</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="OpenAsync">@StockTexts.OpenInventory</MudButton>
+        }
+    </Actions>
+</PageHeader>
+
+<AdaptiveList T="InventoryListItem" Items="_items" Loading="_loading" ItemHref="@(i => $"stock/inventaires/{Uri.EscapeDataString(i.Number)}")" AriaLabel="@StockTexts.InventoriesTitle">
+    <HeaderContent>
+        <MudTh>@StockTexts.ColNumber</MudTh>
+        <MudTh>@StockTexts.InventoryTitleLabel</MudTh>
+        <MudTh>@StockTexts.InventoryScope</MudTh>
+        <MudTh>@StockTexts.InventoryOpenedOn</MudTh>
+        <MudTh>@StockTexts.InventoryProgress</MudTh>
+        <MudTh Style="text-align:right">@StockTexts.InventoryDifferences</MudTh>
+        <MudTh>@StockTexts.Status</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="i">
+        <MudTd><b>@i.Number</b></MudTd>
+        <MudTd>@i.Title</MudTd>
+        <MudTd>@i.Scope @if (i.IncludeWorkInProgress) { <span class="bz-muted">· @StockTexts.InventoryWithWip</span> }</MudTd>
+        <MudTd>@i.StartedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</MudTd>
+        <MudTd>@string.Format(CultureInfo.CurrentCulture, StockTexts.InventoryCountedOf, i.CountedCount, i.LineCount)</MudTd>
+        <MudTd Style="text-align:right">@i.DifferenceCount</MudTd>
+        <MudTd><InventoryStatusChip Status="i.Status" /></MudTd>
+    </RowTemplate>
+    <CardTemplate Context="i">
+        <div class="d-flex justify-space-between gap-2">
+            <MudText Typo="Typo.subtitle1"><b>@i.Number</b> · @i.Title</MudText>
+            <InventoryStatusChip Status="i.Status" />
+        </div>
+        <MudText Typo="Typo.caption" Class="bz-muted">
+            @i.Scope · @string.Format(CultureInfo.CurrentCulture, StockTexts.InventoryCountedOf, i.CountedCount, i.LineCount)
+        </MudText>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@StockTexts.NoInventories" Text="@StockTexts.NoInventoriesText" Icon="@Icons.Material.Outlined.FactCheck" /></EmptyContent>
+</AdaptiveList>
+
+<MudPaper Class="pa-4 mt-4 bz-card" Elevation="0">
+    <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-2">@StockTexts.InitialStockTitle</MudText>
+    <MudText Typo="Typo.body2">@StockTexts.InitialStockHelp</MudText>
+</MudPaper>
+
+@code {
+    private IReadOnlyList<InventoryListItem>? _items;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Inventories.ListAsync();
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private async Task OpenAsync()
+    {
+        var dialog = await Dialogs.ShowAsync<OpenInventoryDialog>(StockTexts.OpenInventory, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: string number })
+        {
+            Navigation.NavigateTo($"stock/inventaires/{Uri.EscapeDataString(number)}");
+        }
+    }
+}

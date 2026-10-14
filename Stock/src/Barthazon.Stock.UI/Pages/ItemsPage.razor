@@ -2,11 +2,17 @@
 @inject IItemService Items
 @inject IMaterialLookup Materials
 @inject ICurrentUser CurrentUser
+@inject IStockExportService Exports
 @inject NavigationManager Navigation
 @inject Notifier Notifier
 
 <PageHeader Title="@StockTexts.ItemsTitle" Subtitle="@(_items is null ? null : string.Format(CultureInfo.CurrentCulture, StockTexts.ItemsCount, _items.Count))">
     <Actions>
+        <ExportButton Export="() => Exports.ExportStockAsync()" Text="@StockTexts.ExportStock" />
+        @if (CurrentUser.Role >= UserRole.Editor)
+        {
+            <MudButton Href="stock/import" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.UploadFile">@StockTexts.ImportInitialStock</MudButton>
+        }
         <MudButton Href="stock/etiquettes?type=articles" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.QrCode2">@StockTexts.PrintLabels</MudButton>
         @if (CurrentUser.Role >= UserRole.Editor)
         {

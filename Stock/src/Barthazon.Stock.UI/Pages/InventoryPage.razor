@@ -1,0 +1,264 @@
+@page "/stock/inventaires/{Number}"
+@inject IInventoryService Inventories
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+
+@* Comptage emplacement par emplacement (téléphone ou ordinateur) : chaque quantité est enregistrée dès la saisie. *@
+<PageHeader Title="@string.Format(CultureInfo.CurrentCulture, StockTexts.InventoryHeading, Number)" Subtitle="@Subtitle" BackHref="stock/inventaires" BackText="@StockTexts.InventoriesTitle">
+    <Actions>
+        <MudButton Href="@($"stock/inventaires/{Uri.EscapeDataString(Number)}/feuille")" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Print">@StockTexts.CountSheet</MudButton>
+        @if (CanEdit)
+        {
+            <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="CancelAsync">@StockTexts.CancelInventory</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.TaskAlt" OnClick="ValidateAsync" Disabled="_busy">@StockTexts.ValidateInventory</MudButton>
+        }
+    </Actions>
+</PageHeader>
+
+@if (_inventory is not null)
+{
+    <div class="d-flex flex-wrap align-center gap-2 mb-3">
+        <InventoryStatusChip Status="_inventory.Status" />
+        <StatusChip Text="@string.Format(CultureInfo.CurrentCulture, StockTexts.InventoryCountedOf, _inventory.CountedCount, _inventory.LineCount)" Tone="StatusTone.Neutral" />
+        <StatusChip Text="@string.Format(CultureInfo.CurrentCulture, StockTexts.InventoryDifferencesCount, _inventory.DifferenceCount)" Tone="@(_inventory.DifferenceCount == 0 ? StatusTone.Neutral : StatusTone.Warning)" />
+        @if (_inventory.ClosedAt is { } closed)
+        {
+            <span class="bz-muted">@string.Format(CultureInfo.CurrentCulture, StockTexts.InventoryClosedBy, closed.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), _inventory.ClosedByName)</span>
+        }
+    </div>
+
+    @if (_inventory.IsOpen && _inventory.MovedCount > 0)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3">@string.Format(CultureInfo.CurrentCulture, StockTexts.InventoryMovedWarning, _inventory.MovedCount)</MudAlert>
+    }
+
+    <div class="d-flex flex-wrap align-center gap-3 mb-3">
+        <MudSelect T="Guid?" @bind-Value="_location" Label="@StockTexts.Location" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="max-width:320px"
+                   ToStringFunc="LocationLabel">
+            @foreach (var group in _inventory.Groups)
+            {
+                <MudSelectItem T="Guid?" Value="group.LocationId">@group.LocationCode — @group.LocationName</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="string" @bind-Value="_filter" Label="@StockTexts.Show" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:220px">
+            <MudSelectItem T="string" Value="@("tout")">@StockTexts.InventoryShowAll</MudSelectItem>
+            <MudSelectItem T="string" Value="@("acompter")">@StockTexts.InventoryShowToCount</MudSelectItem>
+            <MudSelectItem T="string" Value="@("ecarts")">@StockTexts.InventoryShowDifferences</MudSelectItem>
+        </MudSelect>
+    </div>
+
+    @foreach (var group in _inventory.Groups.Where(g => _location is null || g.LocationId == _location))
+    {
+        var lines = group.Lines.Where(Visible).ToList();
+        <MudPaper Class="pa-3 mb-3 bz-card" Elevation="0">
+            <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-2">
+                <MudText Typo="Typo.h6" HtmlTag="h2"><b>@group.LocationCode</b> — @group.LocationName</MudText>
+                @if (CanEdit)
+                {
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddCircleOutline" OnClick="() => AddLineAsync(group.LocationId)">@StockTexts.InventoryFound</MudButton>
+                }
+            </div>
+            @if (lines.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="bz-muted">@(group.Lines.Count == 0 ? StockTexts.InventoryNothingExpected : StockTexts.InventoryNothingToShow)</MudText>
+            }
+            else
+            {
+                @* Ordinateur : tableau ; téléphone : une carte par case (comptage debout, emplacement par emplacement). *@
+                <div class="d-none d-md-block" style="overflow-x:auto">
+                    <MudSimpleTable Dense="true" Elevation="0" Class="bz-inventory-table">
+                        <thead>
+                            <tr>
+                                <th>@StockTexts.Subject</th>
+                                <th>@StockTexts.Lot</th>
+                                <th style="text-align:right">@StockTexts.InventoryExpected</th>
+                                <th>@StockTexts.InventoryCounted</th>
+                                <th style="text-align:right">@StockTexts.InventoryDifference</th>
+                                @if (CanEdit) { <th><span class="d-sr-only">@StockTexts.Actions</span></th> }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var line in lines)
+                            {
+                                <tr>
+                                    <td>@Subject(line)</td>
+                                    <td>@line.Lot</td>
+                                    <td style="text-align:right;white-space:nowrap">@StockLabels.Quantity(line.Expected, line.Unit)</td>
+                                    <td style="min-width:150px">@Counted(line)</td>
+                                    <td style="text-align:right;white-space:nowrap" class="@DifferenceClass(line)">@Difference(line)</td>
+                                    @if (CanEdit) { <td style="white-space:nowrap">@LineActions(line)</td> }
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </div>
+                <div class="d-md-none">
+                    @foreach (var line in lines)
+                    {
+                        <div class="bz-inventory-card">
+                            <div class="d-flex justify-space-between gap-2">
+                                <div style="min-width:0">@Subject(line)</div>
+                                @if (CanEdit) { <div style="white-space:nowrap">@LineActions(line)</div> }
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 bz-muted" style="font-size:.9em">
+                                @if (line.Lot is { } lot) { <span>@StockTexts.Lot @lot</span> }
+                                <span>@StockTexts.InventoryExpected : <b>@StockLabels.Quantity(line.Expected, line.Unit)</b></span>
+                                @if (line.HasDifference) { <span class="@DifferenceClass(line)">@StockTexts.InventoryDifference : @Difference(line)</span> }
+                            </div>
+                            <div class="mt-1">@Counted(line)</div>
+                        </div>
+                    }
+                </div>
+            }
+        </MudPaper>
+    }
+}
+
+@code {
+    private InventoryDetails? _inventory;
+    private Guid? _location;
+    private string _filter = "tout";
+    private bool _busy;
+
+    [Parameter] public string Number { get; set; } = string.Empty;
+
+    private bool CanEdit => _inventory is { IsOpen: true } && CurrentUser.Role >= UserRole.Editor;
+
+    private RenderFragment Subject(InventoryLineView line) => __builder =>
+    {
+        <b>@line.SubjectCode</b> <span class="bz-muted">@line.SubjectLabel</span>
+        @if (line.RevisionIndex is not null || line.StageLabel is not null)
+        {
+            <div class="bz-muted" style="font-size:.85em">
+                @(line.RevisionIndex is { } index ? string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionValue, index) : null) @line.StageLabel
+            </div>
+        }
+        @if (line.IsUnexpected) { <StatusChip Text="@StockTexts.InventoryUnexpected" Tone="StatusTone.Info" /> }
+        @if (line.MovedSinceStart && _inventory!.IsOpen) { <StatusChip Text="@StockTexts.InventoryMoved" Tone="StatusTone.Warning" /> }
+    };
+
+    private RenderFragment Counted(InventoryLineView line) => __builder =>
+    {
+        if (CanEdit)
+        {
+            <MudNumericField T="decimal?" Value="line.Counted" ValueChanged="v => CountAsync(line, v)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="0" HideSpinButtons="true" Adornment="Adornment.End" AdornmentText="@line.Unit.Symbol()" Culture="CultureInfo.CurrentCulture"
+                             InputMode="@(line.Unit == StockUnit.Piece ? InputMode.numeric : InputMode.@decimal)"
+                             aria-label="@string.Format(CultureInfo.CurrentCulture, StockTexts.InventoryCountedFor, line.SubjectCode)" />
+        }
+        else if (line.Counted is { } counted)
+        {
+            <span>@StockTexts.InventoryCounted : <b>@StockLabels.Quantity(counted, line.Unit)</b></span>
+        }
+    };
+
+    private RenderFragment LineActions(InventoryLineView line) => __builder =>
+    {
+        if (line.Counted is null)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Done" Size="Size.Small" OnClick="() => CountAsync(line, line.Expected)"
+                           aria-label="@StockTexts.InventoryAsExpected" title="@StockTexts.InventoryAsExpected" />
+        }
+        if (line.IsUnexpected)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="() => RemoveAsync(line)"
+                           aria-label="@StockTexts.InventoryRemoveLine" title="@StockTexts.InventoryRemoveLine" />
+        }
+    };
+
+    private static string? Difference(InventoryLineView line) => line.Difference is { } d ? StockLabels.Delta(d, line.Unit) : null;
+
+    private string? Subtitle => _inventory is null
+        ? null
+        : string.Format(CultureInfo.CurrentCulture, StockTexts.InventorySubtitle, _inventory.Title, _inventory.Scope,
+            _inventory.StartedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture))
+          + (_inventory.IncludeWorkInProgress ? " · " + StockTexts.InventoryWithWip : null);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await Inventories.GetByNumberAsync(Number);
+        if (Notifier.Handle(result))
+        {
+            _inventory = result.Value;
+        }
+    }
+
+    private bool Visible(InventoryLineView line) => _filter switch
+    {
+        "acompter" => line.Counted is null,
+        "ecarts" => line.HasDifference,
+        _ => true,
+    };
+
+    private string LocationLabel(Guid? id) =>
+        _inventory?.Groups.FirstOrDefault(g => g.LocationId == id) is { } group ? $"{group.LocationCode} — {group.LocationName}" : string.Empty;
+
+    private static string? DifferenceClass(InventoryLineView line) =>
+        line.Difference is { } d && d != 0 ? "bz-tone-warning" : null;
+
+    private async Task CountAsync(InventoryLineView line, decimal? counted)
+    {
+        var result = await Inventories.CountAsync(_inventory!.Id, [new InventoryCountInput(line.Id, counted)]);
+        if (Notifier.Handle(result))
+        {
+            _inventory = result.Value;
+        }
+    }
+
+    private async Task AddLineAsync(Guid locationId)
+    {
+        var parameters = new DialogParameters<AddInventoryLineDialog>
+        {
+            { d => d.InventoryId, _inventory!.Id },
+            { d => d.LocationId, locationId },
+        };
+        var dialog = await Dialogs.ShowAsync<AddInventoryLineDialog>(StockTexts.InventoryFound, parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
+        if (await dialog.Result is { Canceled: false, Data: InventoryDetails details })
+        {
+            _inventory = details;
+        }
+    }
+
+    private async Task RemoveAsync(InventoryLineView line)
+    {
+        var result = await Inventories.RemoveLineAsync(_inventory!.Id, line.Id);
+        if (Notifier.Handle(result))
+        {
+            _inventory = result.Value;
+        }
+    }
+
+    private async Task ValidateAsync()
+    {
+        var uncounted = _inventory!.LineCount - _inventory.CountedCount;
+        var message = string.Format(CultureInfo.CurrentCulture, StockTexts.InventoryValidateConfirm, _inventory.DifferenceCount, uncounted);
+        if (!await Dialogs.ConfirmAsync(StockTexts.ValidateInventory, message, StockTexts.ValidateInventory))
+        {
+            return;
+        }
+
+        _busy = true;
+        var result = await Inventories.ValidateAsync(_inventory.Id);
+        _busy = false;
+        if (Notifier.Handle(result))
+        {
+            _inventory = result.Value;
+            Notifier.Success(StockTexts.InventoryValidatedMessage);
+        }
+    }
+
+    private async Task CancelAsync()
+    {
+        if (!await Dialogs.ConfirmAsync(StockTexts.CancelInventory, StockTexts.CancelInventoryConfirm, StockTexts.CancelInventory, danger: true))
+        {
+            return;
+        }
+
+        var result = await Inventories.CancelAsync(_inventory!.Id);
+        if (Notifier.Handle(result))
+        {
+            _inventory = result.Value;
+        }
+    }
+}

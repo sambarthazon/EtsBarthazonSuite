@@ -166,6 +166,14 @@ internal sealed class StockTransactionRepository(StockDbContext context) : IStoc
 
     public async Task<IReadOnlyList<StockTransactionLine>> ListAllLinesAsync(CancellationToken cancellationToken = default) =>
         await context.Set<StockTransactionLine>().AsNoTracking().ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<StockKey>> ListKeysRecordedAfterAsync(DateTimeOffset recordedAfter, CancellationToken cancellationToken = default)
+    {
+        var transactionIds = Set.Where(t => t.RecordedAt > recordedAfter).Select(t => t.Id);
+        var lines = await context.Set<StockTransactionLine>().AsNoTracking()
+            .Where(l => transactionIds.Contains(l.TransactionId)).ToListAsync(cancellationToken);
+        return lines.Select(l => l.Key).Distinct().ToList();
+    }
 }
 
 internal sealed class StockBalanceRepository(StockDbContext context) : IStockBalanceRepository
@@ -321,6 +329,25 @@ internal sealed class ProductionBatchRepository(StockDbContext context) : EfRepo
         await Set.Where(b => b.Year == year).MaxAsync(b => (int?)b.YearSequence, cancellationToken) ?? 0;
 }
 
+internal sealed class InventoryRepository(StockDbContext context) : EfRepository<InventoryCount>(context), IInventoryRepository
+{
+    public Task<InventoryCount?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default) =>
+        Set.Include(i => i.Lines).FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+
+    public async Task<InventoryCount?> GetByNumberAsync(string number, CancellationToken cancellationToken = default)
+    {
+        var normalized = number.Trim().ToUpperInvariant();
+        return await Set.AsNoTracking().Include(i => i.Lines).FirstOrDefaultAsync(i => i.Number.ToUpper() == normalized, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<InventoryCount>> ListAsync(CancellationToken cancellationToken = default) =>
+        await Set.AsNoTracking().Include(i => i.Lines).OrderByDescending(i => i.Year).ThenByDescending(i => i.YearSequence)
+            .AsSplitQuery().ToListAsync(cancellationToken);
+
+    public async Task<int> GetLastYearSequenceAsync(int year, CancellationToken cancellationToken = default) =>
+        await Set.Where(i => i.Year == year).MaxAsync(i => (int?)i.YearSequence, cancellationToken) ?? 0;
+}
+
 internal sealed class StockUnitOfWork : EfUnitOfWork, IStockUnitOfWork
 {
     public StockUnitOfWork(StockDbContext context, string? userName)
@@ -332,6 +359,7 @@ internal sealed class StockUnitOfWork : EfUnitOfWork, IStockUnitOfWork
         Balances = new StockBalanceRepository(context);
         TrackedParts = new TrackedPartRepository(context);
         Batches = new ProductionBatchRepository(context);
+        Inventories = new InventoryRepository(context);
     }
 
     public IStockLocationRepository Locations { get; }
@@ -345,6 +373,8 @@ internal sealed class StockUnitOfWork : EfUnitOfWork, IStockUnitOfWork
     public ITrackedPartRepository TrackedParts { get; }
 
     public IProductionBatchRepository Batches { get; }
+
+    public IInventoryRepository Inventories { get; }
 }
 
 /// <summary>Fabrique d'unités de travail du stock (une par opération applicative).</summary>

@@ -164,6 +164,150 @@ namespace Barthazon.Stock.Migrations.Sqlite.Migrations
                     b.ToTable("stk_blank_sources", (string)null);
                 });
 
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.InventoryCount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("ClosedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ClosedByName")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IncludeWorkInProgress")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LocationScope")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("StartedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("YearSequence")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Number")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Year", "YearSequence")
+                        .IsUnique();
+
+                    b.ToTable("stk_inventories", (string)null);
+                });
+
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.InventoryCountLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Bucket")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("CountedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CountedByName")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double?>("CountedQuantity")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("ExpectedQuantity")
+                        .HasColumnType("REAL");
+
+                    b.Property<Guid>("InventoryId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsUnexpected")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("LocationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Lot")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PartId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Stage")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SubjectKind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryId", "SubjectKind", "ItemId", "PartId", "RevisionId", "Bucket", "BatchId", "Stage", "LocationId", "Lot")
+                        .IsUnique()
+                        .HasDatabaseName("UX_stk_inventory_lines_key");
+
+                    b.ToTable("stk_inventory_lines", (string)null);
+                });
+
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.ProductionBatch", b =>
                 {
                     b.Property<Guid>("Id")
@@ -677,6 +821,15 @@ namespace Barthazon.Stock.Migrations.Sqlite.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.InventoryCountLine", b =>
+                {
+                    b.HasOne("Barthazon.Stock.Core.Domain.InventoryCount", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("InventoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.StockTransactionLine", b =>
                 {
                     b.HasOne("Barthazon.Stock.Core.Domain.StockTransaction", null)
@@ -684,6 +837,11 @@ namespace Barthazon.Stock.Migrations.Sqlite.Migrations
                         .HasForeignKey("TransactionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.InventoryCount", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.ProductionBatch", b =>

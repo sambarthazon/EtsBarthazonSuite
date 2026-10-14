@@ -456,4 +456,96 @@
   <data name="TravelerSaved" xml:space="preserve"><value>Fiche suiveuse enregistrée.</value></data>
   <data name="TravelerTitle" xml:space="preserve"><value>Fiche suiveuse {0}</value></data>
   <data name="Visa" xml:space="preserve"><value>Visa</value></data>
+  <data name="Actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="CancelInventory" xml:space="preserve"><value>Annuler l'inventaire</value></data>
+  <data name="CancelInventoryConfirm" xml:space="preserve"><value>L'inventaire sera annulé : les quantités comptées sont abandonnées et le stock ne change pas.</value></data>
+  <data name="CountSheet" xml:space="preserve"><value>Feuille de comptage</value></data>
+  <data name="CountSheetFooter" xml:space="preserve"><value>Imprimé le {0} — reporter les quantités comptées dans l'application, emplacement par emplacement.</value></data>
+  <data name="CountSheetShowExpected" xml:space="preserve"><value>Imprimer les quantités attendues</value></data>
+  <data name="CountSheetTitle" xml:space="preserve"><value>Feuille de comptage {0}</value></data>
+  <data name="CountedBy" xml:space="preserve"><value>Compté par</value></data>
+  <data name="ExportExcel" xml:space="preserve"><value>Exporter (Excel)</value></data>
+  <data name="ExportStock" xml:space="preserve"><value>Exporter l'état du stock</value></data>
+  <data name="Exporting" xml:space="preserve"><value>Export en cours…</value></data>
+  <data name="FinishedPart" xml:space="preserve"><value>Pièce finie</value></data>
+  <data name="ImportActionCreateItem" xml:space="preserve"><value>Article créé</value></data>
+  <data name="ImportActionError" xml:space="preserve"><value>Erreur</value></data>
+  <data name="ImportActionRecovery" xml:space="preserve"><value>Lancement de reprise</value></data>
+  <data name="ImportActionSetQuantity" xml:space="preserve"><value>Quantité reprise</value></data>
+  <data name="ImportActionUpdateItem" xml:space="preserve"><value>Article mis à jour</value></data>
+  <data name="ImportAnalyzing" xml:space="preserve"><value>Analyse du fichier…</value></data>
+  <data name="ImportChooseFile" xml:space="preserve"><value>Choisir un fichier Excel (.xlsx) ou le déposer ici</value></data>
+  <data name="ImportColAction" xml:space="preserve"><value>Action</value></data>
+  <data name="ImportColLine" xml:space="preserve"><value>Ligne</value></data>
+  <data name="ImportColMessages" xml:space="preserve"><value>Messages</value></data>
+  <data name="ImportColSheet" xml:space="preserve"><value>Feuille</value></data>
+  <data name="ImportConfirm" xml:space="preserve"><value>Importer les lignes valides</value></data>
+  <data name="ImportCreateCustomers" xml:space="preserve"><value>Créer les clients inconnus</value></data>
+  <data name="ImportCreateLocations" xml:space="preserve"><value>Créer les emplacements inconnus</value></data>
+  <data name="ImportCreateMaterials" xml:space="preserve"><value>Créer les matières inconnues</value></data>
+  <data name="ImportDone" xml:space="preserve"><value>Import terminé : {0} article(s) créé(s), {1} mis à jour, {2} quantité(s) reprise(s) dont {3} lancement(s) de reprise.</value></data>
+  <data name="ImportFailedLines" xml:space="preserve"><value>Lignes non importées</value></data>
+  <data name="ImportHelp" xml:space="preserve"><value>Le classeur contient jusqu'à trois feuilles (téléchargez le modèle). Chaque quantité remplace celle de la case (correction « Stock initial ») : un même fichier peut être réimporté sans doubler le stock.</value></data>
+  <data name="ImportHelpItems" xml:space="preserve"><value>« Articles » : code, désignation, type, matière, forme, dimensions, unité, propriétaire (code client), seuil, emplacement, quantité, lot, prix de référence. Un article peut figurer sur plusieurs lignes (plusieurs emplacements ou lots).</value></data>
+  <data name="ImportHelpFinished" xml:space="preserve"><value>« Pièces finies » : référence de la pièce, indice (vide = en vigueur), emplacement, quantité, lot.</value></data>
+  <data name="ImportHelpWip" xml:space="preserve"><value>« En-cours » : référence, indice, n° de l'opération attendue, quantité, emplacement. Chaque ligne crée un lancement de reprise : à n'importer qu'une fois.</value></data>
+  <data name="ImportInitialStock" xml:space="preserve"><value>Importer le stock initial</value></data>
+  <data name="ImportOnlyErrors" xml:space="preserve"><value>Afficher seulement les lignes en erreur</value></data>
+  <data name="ImportOtherFile" xml:space="preserve"><value>Importer un autre fichier</value></data>
+  <data name="ImportRunning" xml:space="preserve"><value>Import en cours…</value></data>
+  <data name="ImportStep1" xml:space="preserve"><value>Choisir le fichier</value></data>
+  <data name="ImportStep2" xml:space="preserve"><value>Vérifier l'aperçu</value></data>
+  <data name="ImportStep3" xml:space="preserve"><value>Résultat</value></data>
+  <data name="ImportSubtitle" xml:space="preserve"><value>Articles, pièces finies et en-cours existants, depuis un classeur Excel</value></data>
+  <data name="ImportSummary" xml:space="preserve"><value>{0} ligne(s) valide(s), {1} ligne(s) en erreur (non importées).</value></data>
+  <data name="ImportTemplate" xml:space="preserve"><value>Télécharger le modèle</value></data>
+  <data name="ImportTitle" xml:space="preserve"><value>Import du stock initial</value></data>
+  <data name="InitialStockHelp" xml:space="preserve"><value>Trois façons de reprendre le stock existant : importer un classeur Excel (articles, pièces finies, en-cours), ouvrir un inventaire sur un stock vide et ajouter les objets trouvés à chaque emplacement, ou saisir les réceptions et entrées une à une. Les en-cours existants deviennent des lancements de reprise.</value></data>
+  <data name="InitialStockTitle" xml:space="preserve"><value>Stock initial</value></data>
+  <data name="InventoriesSubtitle" xml:space="preserve"><value>Comptage physique et correction des écarts</value></data>
+  <data name="InventoriesTitle" xml:space="preserve"><value>Inventaires</value></data>
+  <data name="InventoryAddLine" xml:space="preserve"><value>Ajouter</value></data>
+  <data name="InventoryAsExpected" xml:space="preserve"><value>Conforme à l'attendu</value></data>
+  <data name="InventoryCancelled" xml:space="preserve"><value>Annulé</value></data>
+  <data name="InventoryClosedBy" xml:space="preserve"><value>Clos le {0} par {1}</value></data>
+  <data name="InventoryCounted" xml:space="preserve"><value>Compté</value></data>
+  <data name="InventoryCountedFor" xml:space="preserve"><value>Quantité comptée de {0}</value></data>
+  <data name="InventoryCountedOf" xml:space="preserve"><value>{0} / {1} comptée(s)</value></data>
+  <data name="InventoryDifference" xml:space="preserve"><value>Écart</value></data>
+  <data name="InventoryDifferences" xml:space="preserve"><value>Écarts</value></data>
+  <data name="InventoryDifferencesCount" xml:space="preserve"><value>{0} écart(s)</value></data>
+  <data name="InventoryExpected" xml:space="preserve"><value>Attendu</value></data>
+  <data name="InventoryFound" xml:space="preserve"><value>Ajouter un objet trouvé</value></data>
+  <data name="InventoryHeading" xml:space="preserve"><value>Inventaire {0}</value></data>
+  <data name="InventoryIncludeWip" xml:space="preserve"><value>Compter aussi les pièces en cours</value></data>
+  <data name="InventoryLocations" xml:space="preserve"><value>Emplacements à compter</value></data>
+  <data name="InventoryLocationsHelp" xml:space="preserve"><value>Aucun : tout le stock.</value></data>
+  <data name="InventoryMoved" xml:space="preserve"><value>Mouvement depuis l'ouverture</value></data>
+  <data name="InventoryMovedWarning" xml:space="preserve"><value>{0} case(s) ont bougé depuis l'ouverture de l'inventaire : vérifiez leur comptage (l'écart s'ajoute au stock connu).</value></data>
+  <data name="InventoryNothingExpected" xml:space="preserve"><value>Aucun stock attendu à cet emplacement.</value></data>
+  <data name="InventoryNothingToShow" xml:space="preserve"><value>Aucune ligne à afficher avec ce filtre.</value></data>
+  <data name="InventoryOpen" xml:space="preserve"><value>Ouvert</value></data>
+  <data name="InventoryOpenHelp" xml:space="preserve"><value>Les quantités attendues sont celles du stock à l'ouverture. Le stock ne change qu'à la validation.</value></data>
+  <data name="InventoryOpenedOn" xml:space="preserve"><value>Ouvert le</value></data>
+  <data name="InventoryProgress" xml:space="preserve"><value>Avancement</value></data>
+  <data name="InventoryRemoveLine" xml:space="preserve"><value>Retirer la ligne</value></data>
+  <data name="InventoryScope" xml:space="preserve"><value>Portée</value></data>
+  <data name="InventoryShowAll" xml:space="preserve"><value>Toutes les lignes</value></data>
+  <data name="InventoryShowDifferences" xml:space="preserve"><value>Écarts seulement</value></data>
+  <data name="InventoryShowToCount" xml:space="preserve"><value>À compter</value></data>
+  <data name="InventorySubtitle" xml:space="preserve"><value>{0} · {1} · ouvert le {2}</value></data>
+  <data name="InventoryTitleLabel" xml:space="preserve"><value>Titre</value></data>
+  <data name="InventoryTitlePlaceholder" xml:space="preserve"><value>Inventaire du jour</value></data>
+  <data name="InventoryUnexpected" xml:space="preserve"><value>Imprévu</value></data>
+  <data name="InventoryValidateConfirm" xml:space="preserve"><value>{0} case(s) en écart seront corrigées (motif « Inventaire »). {1} case(s) non comptée(s) ne changeront pas. L'inventaire sera clos.</value></data>
+  <data name="InventoryValidated" xml:space="preserve"><value>Validé</value></data>
+  <data name="InventoryValidatedMessage" xml:space="preserve"><value>Inventaire validé : les écarts ont été corrigés.</value></data>
+  <data name="InventoryWholeStock" xml:space="preserve"><value>Tout le stock</value></data>
+  <data name="InventoryWithWip" xml:space="preserve"><value>en-cours compris</value></data>
+  <data name="NoInventories" xml:space="preserve"><value>Aucun inventaire</value></data>
+  <data name="NoInventoriesText" xml:space="preserve"><value>Ouvrez un inventaire pour compter le stock d'un ou plusieurs emplacements.</value></data>
+  <data name="OpenInventory" xml:space="preserve"><value>Ouvrir un inventaire</value></data>
+  <data name="Show" xml:space="preserve"><value>Afficher</value></data>
+  <data name="Subject" xml:space="preserve"><value>Objet</value></data>
+  <data name="ValidateInventory" xml:space="preserve"><value>Valider l'inventaire</value></data>
 </root>

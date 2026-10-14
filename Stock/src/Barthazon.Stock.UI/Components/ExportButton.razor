@@ -1,0 +1,32 @@
+@inject BrowserInterop Browser
+@inject Notifier Notifier
+
+@* Export Excel : le fichier est produit sur le serveur puis téléchargé par le navigateur. *@
+<MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportAsync" Disabled="_exporting">
+    @(_exporting ? StockTexts.Exporting : Text ?? StockTexts.ExportExcel)
+</MudButton>
+
+@code {
+    private bool _exporting;
+
+    [Parameter, EditorRequired] public Func<Task<Result<StockFile>>> Export { get; set; } = default!;
+
+    [Parameter] public string? Text { get; set; }
+
+    private async Task ExportAsync()
+    {
+        _exporting = true;
+        try
+        {
+            var result = await Export();
+            if (Notifier.Handle(result))
+            {
+                await Browser.DownloadAsync(result.Value.FileName, result.Value.Content);
+            }
+        }
+        finally
+        {
+            _exporting = false;
+        }
+    }
+}

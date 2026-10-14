@@ -26,6 +26,9 @@ public static class StockCoreServiceCollectionExtensions
         services.AddScoped<IBatchService>(sp => sp.GetRequiredService<BatchService>());
         services.AddScoped<IFinishedPartService, FinishedPartService>();
         services.AddScoped<IStockDashboardService, StockDashboardService>();
+        services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<IStockImportService, StockImportService>();
+        services.AddScoped<IStockExportService, StockExportService>();
 
         // Contrats exposés aux futures applications (commandes, pointage).
         services.AddScoped<StockContractsService>();

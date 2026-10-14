@@ -1,6 +1,8 @@
 using Barthazon.Shared.Infrastructure.Persistence;
 using Barthazon.Shared.Kernel.Persistence;
 using Barthazon.Stock.Core.Persistence;
+using Barthazon.Stock.Core.Services;
+using Barthazon.Stock.Infrastructure.Exchange;
 using Barthazon.Stock.Infrastructure.Persistence;
 using Barthazon.Stock.Infrastructure.Seeding;
 using Microsoft.Extensions.Configuration;
@@ -21,5 +23,6 @@ public sealed class StockPersistence : IModulePersistence
         services.AddModuleDatabase<StockDbContext>(StockDbContext.Info, (sp, options) => new StockDbContext(options, sp.GetRequiredService<TimeProvider>()));
         services.AddScoped<IUnitOfWorkFactory<IStockUnitOfWork>, StockUnitOfWorkFactory>();
         services.AddSingleton<IDataSeeder, StockSeeder>();
+        services.AddSingleton<IStockSpreadsheet, ClosedXmlStockSpreadsheet>();
     }
 }

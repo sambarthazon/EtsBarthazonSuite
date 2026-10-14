@@ -88,4 +88,42 @@
   <data name="QueueNoMachine" xml:space="preserve"><value>Sans machine</value></data>
   <data name="TravelerEmpty" xml:space="preserve"><value>Aucune quantité saisie sur la fiche.</value></data>
   <data name="TravelerLineError" xml:space="preserve"><value>Op {0} : {1}</value></data>
+  <data name="InventoryNotFound" xml:space="preserve"><value>Inventaire introuvable.</value></data>
+  <data name="InventoryClosed" xml:space="preserve"><value>Cet inventaire est clos : il ne peut plus être modifié.</value></data>
+  <data name="InventoryDefaultTitle" xml:space="preserve"><value>Inventaire du {0}</value></data>
+  <data name="InventoryLineNotFound" xml:space="preserve"><value>Ligne d'inventaire introuvable.</value></data>
+  <data name="InventoryLocationOutOfScope" xml:space="preserve"><value>Cet emplacement ne fait pas partie de l'inventaire.</value></data>
+  <data name="InventorySubjectRequired" xml:space="preserve"><value>Choisissez un article ou une pièce.</value></data>
+  <data name="InventoryLineExists" xml:space="preserve"><value>Cette case est déjà dans l'inventaire : saisissez la quantité sur sa ligne.</value></data>
+  <data name="InventoryLineNotRemovable" xml:space="preserve"><value>Seule une ligne ajoutée pendant le comptage peut être retirée.</value></data>
+  <data name="InventoryNothingCounted" xml:space="preserve"><value>Aucune case n'a été comptée.</value></data>
+  <data name="InventoryWholeStock" xml:space="preserve"><value>Tout le stock</value></data>
+  <data name="ImportNoSheet" xml:space="preserve"><value>Aucune feuille reconnue : le classeur doit contenir une feuille « Articles », « Pièces finies » ou « En-cours » (voir le modèle).</value></data>
+  <data name="ImportTooManyRows" xml:space="preserve"><value>Le fichier dépasse {0} lignes : découpez-le en plusieurs imports.</value></data>
+  <data name="ImportUnsupportedFormat" xml:space="preserve"><value>Format non pris en charge : utilisez un classeur Excel (.xlsx) construit à partir du modèle.</value></data>
+  <data name="ImportUnreadable" xml:space="preserve"><value>Le fichier n'a pas pu être lu : vérifiez qu'il s'agit bien d'un classeur Excel (.xlsx).</value></data>
+  <data name="ImportLocationArchived" xml:space="preserve"><value>L'emplacement {0} est archivé.</value></data>
+  <data name="ImportLocationUnknown" xml:space="preserve"><value>Emplacement inconnu : {0}.</value></data>
+  <data name="ImportMaterialUnknown" xml:space="preserve"><value>Matière inconnue : {0}.</value></data>
+  <data name="ImportCustomerUnknown" xml:space="preserve"><value>Client inconnu : {0}.</value></data>
+  <data name="ImportWillBeCreated" xml:space="preserve"><value>« {0} » sera créé.</value></data>
+  <data name="ImportDuplicateCell" xml:space="preserve"><value>Cette case (même objet, emplacement et lot) figure déjà plus haut dans le fichier.</value></data>
+  <data name="ImportKindUnknown" xml:space="preserve"><value>Type inconnu : « {0} » (Matière, Brut ou Autre).</value></data>
+  <data name="ImportUnitUnknown" xml:space="preserve"><value>Unité inconnue : « {0} » (u, m, kg ou m²).</value></data>
+  <data name="ImportUnitRequired" xml:space="preserve"><value>L'unité est obligatoire pour créer un article (u, m, kg ou m²).</value></data>
+  <data name="ImportShapeUnknown" xml:space="preserve"><value>Forme inconnue : « {0} ».</value></data>
+  <data name="ImportNothingToDo" xml:space="preserve"><value>Article déjà défini plus haut et aucune quantité : rien à faire.</value></data>
+  <data name="ImportQuantityRequired" xml:space="preserve"><value>La quantité est obligatoire.</value></data>
+  <data name="ImportWaitingOperationRequired" xml:space="preserve"><value>Indiquez le numéro de l'opération que les pièces attendent.</value></data>
+  <data name="ImportNumberInvalid" xml:space="preserve"><value>{0} : « {1} » n'est pas un nombre.</value></data>
+  <data name="ImportNumberNegative" xml:space="preserve"><value>{0} : la valeur ne peut pas être négative.</value></data>
+  <data name="ImportOperationUnknown" xml:space="preserve"><value>L'opération {0} n'existe pas dans la gamme de l'indice {1}.</value></data>
+  <data name="LaunchNoRouting" xml:space="preserve"><value>Cet indice n'a pas de gamme : impossible de placer des pièces en attente d'une opération.</value></data>
+  <data name="ImportRecoveryWarning" xml:space="preserve"><value>Un lancement de reprise sera créé (à chaque import de cette ligne).</value></data>
+  <data name="ImportPartReferenceRequired" xml:space="preserve"><value>La référence de la pièce est obligatoire.</value></data>
+  <data name="ImportPartUnknown" xml:space="preserve"><value>Pièce inconnue dans l'annuaire : {0}.</value></data>
+  <data name="ImportRevisionUnknown" xml:space="preserve"><value>L'indice {0} n'existe pas pour la pièce {1}.</value></data>
+  <data name="ImportTooLong" xml:space="preserve"><value>{0} : texte trop long.</value></data>
+  <data name="ImportRecoveryNote" xml:space="preserve"><value>Reprise de l'en-cours existant (import du stock initial).</value></data>
+  <data name="ImportAdjustmentComment" xml:space="preserve"><value>Import du stock initial</value></data>
 </root>

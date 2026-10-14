@@ -2,10 +2,15 @@
 @inject IMovementService Movements
 @inject IItemService Items
 @inject ILocationService Locations
+@inject IStockExportService Exports
 @inject NavigationManager Navigation
 @inject Notifier Notifier
 
-<PageHeader Title="@StockTexts.MovementsTitle" Subtitle="@(_result is null ? null : string.Format(CultureInfo.CurrentCulture, StockTexts.MovementsCount, _result.TotalCount))" />
+<PageHeader Title="@StockTexts.MovementsTitle" Subtitle="@(_result is null ? null : string.Format(CultureInfo.CurrentCulture, StockTexts.MovementsCount, _result.TotalCount))">
+    <Actions>
+        <ExportButton Export="() => Exports.ExportMovementsAsync(Request(0))" />
+    </Actions>
+</PageHeader>
 
 <MudPaper Class="pa-3 mb-3 bz-card" Elevation="0">
     <MudGrid Spacing="2">
@@ -88,20 +93,7 @@
     private async Task LoadAsync()
     {
         _loading = true;
-        var result = await Movements.SearchAsync(new MovementSearchRequest
-        {
-            From = ParseDate(Du),
-            To = ParseDate(Au),
-            Type = Enum.TryParse<StockTransactionType>(Type, true, out var type) ? type : null,
-            ItemId = Article,
-            PartId = Piece,
-            BatchId = Lancement,
-            LocationId = Emplacement,
-            UserName = Utilisateur,
-            IncludeReversed = Annules != "0",
-            PageIndex = PageNumber - 1,
-            PageSize = PageSize,
-        });
+        var result = await Movements.SearchAsync(Request(PageNumber - 1));
         if (Notifier.Handle(result))
         {
             _result = result.Value;
@@ -109,6 +101,22 @@
 
         _loading = false;
     }
+
+    /// <summary>Critères de la page (filtres de l'adresse), utilisés aussi par l'export.</summary>
+    private MovementSearchRequest Request(int pageIndex) => new()
+    {
+        From = ParseDate(Du),
+        To = ParseDate(Au),
+        Type = Enum.TryParse<StockTransactionType>(Type, true, out var type) ? type : null,
+        ItemId = Article,
+        PartId = Piece,
+        BatchId = Lancement,
+        LocationId = Emplacement,
+        UserName = Utilisateur,
+        IncludeReversed = Annules != "0",
+        PageIndex = pageIndex,
+        PageSize = PageSize,
+    };
 
     private static DateOnly? ParseDate(string? value) =>
         DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ? date : null;

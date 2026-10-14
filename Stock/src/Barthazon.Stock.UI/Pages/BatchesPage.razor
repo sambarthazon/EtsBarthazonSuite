@@ -1,11 +1,13 @@
 @page "/stock/lancements"
 @inject IBatchService Batches
 @inject ICurrentUser CurrentUser
+@inject IStockExportService Exports
 @inject NavigationManager Navigation
 @inject Notifier Notifier
 
 <PageHeader Title="@StockTexts.BatchesTitle" Subtitle="@(_items is null ? null : string.Format(CultureInfo.CurrentCulture, StockTexts.BatchesCount, _items.Count))">
     <Actions>
+        <ExportButton Export="() => Exports.ExportBatchesAsync(Request())" />
         @if (CurrentUser.Role >= UserRole.Editor)
         {
             <MudButton Href="stock/lancements/nouveau" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">@StockTexts.NewBatch</MudButton>
@@ -78,18 +80,7 @@
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
-        var result = await Batches.SearchAsync(new BatchSearchRequest
-        {
-            Query = Q,
-            PartId = Piece,
-            Status = StatusValue switch
-            {
-                "termine" => BatchStatus.Completed,
-                "annule" => BatchStatus.Cancelled,
-                "tous" => null,
-                _ => BatchStatus.InProgress,
-            },
-        });
+        var result = await Batches.SearchAsync(Request());
         if (Notifier.Handle(result))
         {
             _items = result.Value;
@@ -97,6 +88,19 @@
 
         _loading = false;
     }
+
+    private BatchSearchRequest Request() => new()
+    {
+        Query = Q,
+        PartId = Piece,
+        Status = StatusValue switch
+        {
+            "termine" => BatchStatus.Completed,
+            "annule" => BatchStatus.Cancelled,
+            "tous" => null,
+            _ => BatchStatus.InProgress,
+        },
+    };
 
     private void Navigate(string? q = null, string? statut = null)
     {
