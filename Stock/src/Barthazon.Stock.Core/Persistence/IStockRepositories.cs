@@ -26,6 +26,28 @@ public interface IStockItemRepository : IRepository<StockItem>
 
 }
 
+public interface ITrackedPartRepository : IRepository<TrackedPart>
+{
+    /// <summary>Pièce suivie et ses sources (avec suivi des modifications).</summary>
+    Task<TrackedPart?> GetByPartIdAsync(Guid partId, CancellationToken cancellationToken = default);
+
+    /// <summary>Toutes les pièces suivies et leurs sources (sans suivi).</summary>
+    Task<IReadOnlyList<TrackedPart>> ListAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TrackedPart>> GetManyAsync(IEnumerable<Guid> partIds, CancellationToken cancellationToken = default);
+
+    /// <summary>Pièce suivie dont la dernière référence connue est celle-ci (pièce devenue introuvable dans l'annuaire).</summary>
+    Task<TrackedPart?> FindByLastKnownReferenceAsync(string reference, CancellationToken cancellationToken = default);
+
+    /// <summary>Nouvelle source d'une pièce suivie déjà enregistrée.</summary>
+    void AddSource(BlankSource source);
+
+    void RemoveSource(BlankSource source);
+
+    /// <summary>Toutes les sources de brut (sans suivi), avec la pièce qui les déclare.</summary>
+    Task<IReadOnlyList<(Guid PartId, BlankSource Source)>> ListSourcesAsync(CancellationToken cancellationToken = default);
+}
+
 /// <summary>Critères de recherche dans le journal des mouvements.</summary>
 public sealed record MovementFilter
 {
@@ -121,4 +143,6 @@ public interface IStockUnitOfWork : IUnitOfWork
     IStockTransactionRepository Transactions { get; }
 
     IStockBalanceRepository Balances { get; }
+
+    ITrackedPartRepository TrackedParts { get; }
 }

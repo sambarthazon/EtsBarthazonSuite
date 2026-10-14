@@ -1,0 +1,197 @@
+@inject ITrackedPartService TrackedParts
+@inject IItemService Items
+@inject IPartRoutingLookup Routings
+@inject Notifier Notifier
+
+@* Ajout ou modification d'une source de brut (article ou pièce de l'annuaire), avec aide au calcul de la quantité par pièce. *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        @if (Source is null && Hint is { MaterialName: not null } hint)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-3">
+                @string.Format(CultureInfo.CurrentCulture, StockTexts.BlankHintText, hint.MaterialName, hint.Shape?.Label() ?? "—", hint.Dimensions ?? "—")
+            </MudAlert>
+        }
+        <MudRadioGroup T="BlankSourceKind" Value="_input.Kind" ValueChanged="OnKindChanged">
+            <MudRadio T="BlankSourceKind" Value="BlankSourceKind.Item">@StockTexts.SourceKindItem</MudRadio>
+            <MudRadio T="BlankSourceKind" Value="BlankSourceKind.Part">@StockTexts.SourceKindPart</MudRadio>
+        </MudRadioGroup>
+
+        @if (_input.Kind == BlankSourceKind.Item)
+        {
+            <ItemPicker Value="_input.ItemId" ValueChanged="OnItemChangedAsync" Required="true"
+                        Error="_form.HasError(nameof(BlankSourceInput.ItemId))" ErrorText="@_form.ErrorFor(nameof(BlankSourceInput.ItemId))" />
+        }
+        else
+        {
+            <PartPicker Value="_input.SourcePartId" ValueChanged="OnSourcePartChangedAsync" Required="true" Exclude="@([PartId])"
+                        Error="_form.HasError(nameof(BlankSourceInput.SourcePartId))" ErrorText="@_form.ErrorFor(nameof(BlankSourceInput.SourcePartId))" />
+            <MudSelect T="int?" @bind-Value="_input.SourceAfterOperation" Label="@StockTexts.SourceStage" Variant="Variant.Outlined" Class="mt-3"
+                       ToStringFunc="StageLabel" Error="_form.HasError(nameof(BlankSourceInput.SourceAfterOperation))" ErrorText="@_form.ErrorFor(nameof(BlankSourceInput.SourceAfterOperation))">
+                <MudSelectItem T="int?" Value="null">@StockTexts.SourceFinished</MudSelectItem>
+                @foreach (var operation in _sourceOperations.SkipLast(1))
+                {
+                    <MudSelectItem T="int?" Value="operation.Number">@StageLabel(operation.Number)</MudSelectItem>
+                }
+            </MudSelect>
+        }
+
+        @if (_unit == StockUnit.Meter && _input.Kind == BlankSourceKind.Item)
+        {
+            <div class="d-flex flex-wrap gap-2 mt-3 align-center">
+                <MudNumericField T="decimal?" Value="_cutLength" ValueChanged="OnCutLengthChanged" Label="@StockTexts.CutLength" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 HideSpinButtons="true" Immediate="true" Style="max-width:200px" InputMode="@(InputMode.@decimal)" />
+                <span aria-hidden="true">+</span>
+                <MudNumericField T="decimal?" Value="_kerf" ValueChanged="OnKerfChanged" Label="@StockTexts.Kerf" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 HideSpinButtons="true" Immediate="true" Style="max-width:200px" InputMode="@(InputMode.@decimal)" />
+            </div>
+        }
+        else if (_input.Kind == BlankSourceKind.Item)
+        {
+            <MudNumericField T="int?" Value="_partsPerBlank" ValueChanged="OnPartsPerBlankChanged" Label="@StockTexts.PartsPerBlank" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="1" HideSpinButtons="true" Immediate="true" Class="mt-3" Style="max-width:260px" InputMode="InputMode.numeric" />
+        }
+        <MudNumericField T="decimal" @bind-Value="_input.QuantityPerPart" Label="@StockTexts.QuantityPerPart" Variant="Variant.Outlined" Class="mt-3" HideSpinButtons="true"
+                         Adornment="Adornment.End" AdornmentText="@($"{_unit.Symbol()} / {StockTexts.PerPart}")" InputMode="@(InputMode.@decimal)"
+                         HelperText="@StockTexts.QuantityPerPartHelp" Culture="CultureInfo.CurrentCulture" Format="0.######"
+                         Error="_form.HasError(nameof(BlankSourceInput.QuantityPerPart))" ErrorText="@_form.ErrorFor(nameof(BlankSourceInput.QuantityPerPart))" />
+
+        <MudSelect T="Guid?" @bind-Value="_input.RevisionId" Label="@StockTexts.SourceScope" Variant="Variant.Outlined" Class="mt-3"
+                   ToStringFunc="id => id is null ? StockTexts.AllRevisions : string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionOnly, Revisions.FirstOrDefault(r => r.Id == id)?.Index)">
+            <MudSelectItem T="Guid?" Value="null">@StockTexts.AllRevisions</MudSelectItem>
+            @foreach (var revision in Revisions.Where(r => r.Status != RevisionStatus.Cancelled))
+            {
+                <MudSelectItem T="Guid?" Value="revision.Id">@string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionOnly, revision.Index)</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSwitch T="bool" @bind-Value="_input.IsDefault" Color="Color.Primary" Label="@StockTexts.DefaultSource" Class="mt-3" />
+        <MudTextField @bind-Value="_input.Note" Label="@StockTexts.Note" Variant="Variant.Outlined" Class="mt-3" MaxLength="500" Placeholder="@StockTexts.SourceNoteExample" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private BlankSourceInput _input = new();
+    private StockUnit _unit = StockUnit.Piece;
+    private IReadOnlyList<RoutingOperationSummary> _sourceOperations = [];
+    private decimal? _cutLength;
+    private decimal? _kerf = 3;
+    private int? _partsPerBlank;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter] public Guid PartId { get; set; }
+
+    [Parameter] public BlankSourceView? Source { get; set; }
+
+    [Parameter] public IReadOnlyList<PartRevisionSummary> Revisions { get; set; } = [];
+
+    [Parameter] public BlankHint? Hint { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Source is { } s)
+        {
+            _input = new BlankSourceInput
+            {
+                Kind = s.Kind, ItemId = s.ItemId, SourcePartId = s.SourcePartId, SourceAfterOperation = s.SourceAfterOperation,
+                QuantityPerPart = s.QuantityPerPart, RevisionId = s.RevisionId, IsDefault = s.IsDefault, Note = s.Note,
+            };
+            _unit = s.Unit;
+            if (s.SourcePartId is { } sourcePartId)
+            {
+                await LoadOperationsAsync(sourcePartId);
+            }
+        }
+        else if (Hint?.SuggestedItemId is { } suggested)
+        {
+            _input.ItemId = suggested;
+            await OnItemChangedAsync(suggested);
+        }
+    }
+
+    private void OnKindChanged(BlankSourceKind kind)
+    {
+        _input.Kind = kind;
+        _unit = StockUnit.Piece;
+    }
+
+    private async Task OnItemChangedAsync(Guid? itemId)
+    {
+        _input.ItemId = itemId;
+        _unit = itemId is { } id && await Items.GetAsync(id) is { IsSuccess: true } item ? item.Value.Unit : StockUnit.Piece;
+    }
+
+    private async Task OnSourcePartChangedAsync(Guid? partId)
+    {
+        _input.SourcePartId = partId;
+        _input.SourceAfterOperation = null;
+        _sourceOperations = [];
+        if (partId is { } id)
+        {
+            await LoadOperationsAsync(id);
+        }
+    }
+
+    private async Task LoadOperationsAsync(Guid partId)
+    {
+        var inForce = (await Routings.GetRevisionsAsync(partId)).FirstOrDefault(r => r.Status == RevisionStatus.InForce);
+        _sourceOperations = inForce is null ? [] : (await Routings.GetRoutingAsync(inForce.Id))?.Operations ?? [];
+    }
+
+    private string StageLabel(int? number)
+    {
+        if (number is null)
+        {
+            return StockTexts.SourceFinished;
+        }
+
+        var operation = _sourceOperations.FirstOrDefault(o => o.Number == number);
+        return string.Format(CultureInfo.CurrentCulture, StockTexts.AfterOperation, number, operation?.Type.Label());
+    }
+
+    private void OnCutLengthChanged(decimal? value)
+    {
+        _cutLength = value;
+        UpdateFromCut();
+    }
+
+    private void OnKerfChanged(decimal? value)
+    {
+        _kerf = value;
+        UpdateFromCut();
+    }
+
+    private void UpdateFromCut()
+    {
+        if (_cutLength is { } length)
+        {
+            _input.QuantityPerPart = Math.Round((length + (_kerf ?? 0)) / 1000m, 6);
+        }
+    }
+
+    private void OnPartsPerBlankChanged(int? value)
+    {
+        _partsPerBlank = value;
+        if (value is > 0)
+        {
+            _input.QuantityPerPart = Math.Round(1m / value.Value, 6);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        var result = await TrackedParts.SaveSourceAsync(PartId, Source?.Id, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(StockTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

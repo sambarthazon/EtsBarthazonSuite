@@ -50,4 +50,12 @@
   <data name="ReversalDelayExpired" xml:space="preserve"><value>Le délai de {0} minutes pour annuler votre propre mouvement est dépassé : demandez à un éditeur.</value></data>
   <data name="ReversalWouldBeNegative" xml:space="preserve"><value>Annulation impossible : les quantités concernées ont déjà été utilisées.</value></data>
   <data name="ReversalBlockedBy" xml:space="preserve"><value>Annulation impossible : ces quantités ont déjà été utilisées. Annulez d'abord le mouvement {0}.</value></data>
+  <data name="PartNotFound" xml:space="preserve"><value>Pièce introuvable dans l'annuaire.</value></data>
+  <data name="PartNotTracked" xml:space="preserve"><value>Cette pièce n'est pas suivie en stock.</value></data>
+  <data name="RevisionNotFound" xml:space="preserve"><value>Indice introuvable pour cette pièce.</value></data>
+  <data name="SourceNotFound" xml:space="preserve"><value>Source de brut introuvable.</value></data>
+  <data name="SourceCycle" xml:space="preserve"><value>Cette source créerait une boucle : la pièce choisie dépend déjà de celle-ci.</value></data>
+  <data name="SourceOperationUnknown" xml:space="preserve"><value>Cette opération n'existe pas dans la gamme en vigueur de la pièce source.</value></data>
+  <data name="SourceDuplicate" xml:space="preserve"><value>Cette source est déjà déclarée pour cette pièce.</value></data>
+  <data name="QuantityPerPartPrecision" xml:space="preserve"><value>Six décimales au plus.</value></data>
 </root>

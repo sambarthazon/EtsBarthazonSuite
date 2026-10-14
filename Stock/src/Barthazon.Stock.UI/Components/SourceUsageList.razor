@@ -1,0 +1,31 @@
+@* Pièces issues d'un brut ou d'une pièce : quantité par pièce et nombre de pièces que le stock actuel permet de lancer. *@
+<MudSimpleTable Dense="true" Elevation="0">
+    <thead><tr><th>@StockTexts.Part</th><th style="text-align:right">@StockTexts.QuantityPerPart</th><th style="text-align:right">@StockTexts.Launchable</th></tr></thead>
+    <tbody>
+        @foreach (var usage in Usages)
+        {
+            <tr>
+                <td>
+                    <a href="@($"stock/pieces/{Uri.EscapeDataString(usage.Reference)}")"><b>@usage.Reference</b></a> @usage.Designation
+                    @if (usage.SourceAfterOperation is { } op) { <span class="bz-muted"> · @string.Format(CultureInfo.CurrentCulture, StockTexts.AfterOperationShort, op)</span> }
+                    @if (usage.RevisionIndex is not null) { <span class="bz-muted"> · @string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionOnly, usage.RevisionIndex)</span> }
+                </td>
+                <td style="text-align:right;white-space:nowrap">@StockFormat.Quantity(usage.QuantityPerPart) @Unit.Symbol()</td>
+                <td style="text-align:right"><b>@usage.Launchable</b></td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+@if (Usages.Count > 1 && Summary is not null)
+{
+    <MudText Typo="Typo.body2" Class="bz-muted mt-2">@Summary</MudText>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<SourceUsage> Usages { get; set; } = [];
+
+    [Parameter] public StockUnit Unit { get; set; } = StockUnit.Piece;
+
+    /// <summary>Phrase de synthèse (« 30 bruts = 30 P-0012 ou 30 P-0013 »).</summary>
+    [Parameter] public string? Summary { get; set; }
+}

@@ -36,7 +36,11 @@ internal sealed class StockNames
         var items = itemIds.Count == 0 ? [] : (await uow.Items.GetManyAsync(itemIds, cancellationToken)).ToDictionary(i => i.Id);
         var summaries = partIds.Count == 0 ? new Dictionary<Guid, PartSummary>() : (await parts.GetManyAsync(partIds, cancellationToken)).ToDictionary(p => p.Key, p => p.Value);
         var locations = (await uow.Locations.ListAsync(includeArchived: true, cancellationToken)).ToDictionary(l => l.Id);
-        return new StockNames(items, summaries, locations, []);
+        var unknown = partIds.Where(id => !summaries.ContainsKey(id)).ToList();
+        var known = unknown.Count == 0
+            ? []
+            : (await uow.TrackedParts.GetManyAsync(unknown, cancellationToken)).ToDictionary(t => t.PartId, t => (t.LastKnownReference, t.LastKnownDesignation));
+        return new StockNames(items, summaries, locations, known);
     }
 
     public StockItem? Item(Guid id) => _items.GetValueOrDefault(id);
@@ -58,7 +62,8 @@ internal sealed class StockNames
     /// <summary>Désignation de l'objet.</summary>
     public string SubjectLabel(StockKey key) => key.IsItem
         ? _items.TryGetValue(key.ItemId, out var item) ? item.Designation : StockMessages.UnknownItem
-        : _parts.TryGetValue(key.PartId, out var part) ? part.Designation : StockMessages.UnknownPart;
+        : _parts.TryGetValue(key.PartId, out var part) ? part.Designation
+        : _knownParts.TryGetValue(key.PartId, out var known) ? $"{StockMessages.UnknownPart} ({known.Designation})" : StockMessages.UnknownPart;
 
     public StockUnit Unit(StockKey key) => key.IsItem && _items.TryGetValue(key.ItemId, out var item) ? item.Unit : StockUnit.Piece;
 

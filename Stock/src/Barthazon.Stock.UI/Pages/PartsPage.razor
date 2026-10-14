@@ -1,3 +1,139 @@
 @page "/stock/pieces"
+@inject ITrackedPartService TrackedParts
+@inject ICustomerLookup Customers
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
+@inject IDialogService Dialogs
+@inject Notifier Notifier
 
-<UpcomingPage Title="@StockTexts.MenuParts" Icon="@Icons.Material.Filled.Widgets" />
+<PageHeader Title="@StockTexts.PartsTitle" Subtitle="@(_items is null ? null : string.Format(CultureInfo.CurrentCulture, StockTexts.PartsCount, _items.Count))">
+    <Actions>
+        @if (CurrentUser.Role >= UserRole.Editor)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="TrackAsync">@StockTexts.TrackPart</MudButton>
+        }
+    </Actions>
+</PageHeader>
+
+<div class="d-flex flex-wrap align-center gap-3 mb-3">
+    <MudTextField T="string" Value="Q" ValueChanged="v => Navigate(q: v ?? string.Empty)" Placeholder="@StockTexts.SearchPart"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Immediate="true" DebounceInterval="300" Clearable="true" Style="max-width:420px;min-width:220px" Class="flex-grow-1" aria-label="@StockTexts.SearchPart" />
+    <MudSelect T="string" Value="@(Client ?? string.Empty)" ValueChanged="v => Navigate(client: v)" Label="@StockTexts.Customer" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:240px">
+        <MudSelectItem T="string" Value="@string.Empty">@StockTexts.All</MudSelectItem>
+        @foreach (var c in _customers)
+        {
+            <MudSelectItem T="string" Value="c.Code">@c.Display</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSelect T="string" Value="@(Etat ?? string.Empty)" ValueChanged="v => Navigate(etat: v)" Label="@StockTexts.State" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:220px">
+        <MudSelectItem T="string" Value="@string.Empty">@StockTexts.All</MudSelectItem>
+        <MudSelectItem T="string" Value="@("ok")">@StockTexts.StateOk</MudSelectItem>
+        <MudSelectItem T="string" Value="@("seuil")">@StockTexts.BelowThreshold</MudSelectItem>
+        <MudSelectItem T="string" Value="@("rupture")">@StockTexts.OutOfStock</MudSelectItem>
+        <MudSelectItem T="string" Value="@("indice")">@StockTexts.SupersededRevisionStock</MudSelectItem>
+    </MudSelect>
+    <MudSwitch T="bool" Value="WithWip" ValueChanged="v => Navigate(encours: Flag(v))" Color="Color.Primary" Label="@StockTexts.WithWorkInProgressOnly" />
+</div>
+
+<AdaptiveList T="TrackedPartListItem" Items="_items" Loading="_loading" ItemHref="@(p => $"stock/pieces/{Uri.EscapeDataString(p.Reference)}")" AriaLabel="@StockTexts.PartsTitle">
+    <HeaderContent>
+        <MudTh>@StockTexts.ColReference</MudTh>
+        <MudTh>@StockTexts.ColDesignation</MudTh>
+        <MudTh>@StockTexts.Customer</MudTh>
+        <MudTh>@StockTexts.RevisionInForce</MudTh>
+        <MudTh Style="text-align:right">@StockTexts.Finished</MudTh>
+        <MudTh Style="text-align:right">@StockTexts.WorkInProgress</MudTh>
+        <MudTh Style="text-align:right">@StockTexts.Threshold</MudTh>
+        <MudTh>@StockTexts.State</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="p">
+        <MudTd><b>@p.Reference</b></MudTd>
+        <MudTd>@p.Designation</MudTd>
+        <MudTd>@p.CustomerName</MudTd>
+        <MudTd>@p.InForceIndex</MudTd>
+        <MudTd Style="text-align:right"><b>@p.Finished</b></MudTd>
+        <MudTd Style="text-align:right">@p.WorkInProgress</MudTd>
+        <MudTd Style="text-align:right">@p.MinimumThreshold</MudTd>
+        <MudTd><PartStateChips Item="p" /></MudTd>
+    </RowTemplate>
+    <CardTemplate Context="p">
+        <div class="d-flex justify-space-between gap-2">
+            <MudText Typo="Typo.subtitle1"><b>@p.Reference</b> @(p.InForceIndex is null ? null : $"· {p.InForceIndex}")</MudText>
+            <MudText><b>@p.Finished</b> <span class="bz-muted">+ @p.WorkInProgress @StockTexts.InProgressShort</span></MudText>
+        </div>
+        <MudText Typo="Typo.body2">@p.Designation</MudText>
+        <div class="mt-1"><PartStateChips Item="p" /></div>
+    </CardTemplate>
+    <EmptyContent><EmptyState Title="@StockTexts.NoTrackedParts" Text="@StockTexts.NoTrackedPartsText" Icon="@Icons.Material.Outlined.Widgets" /></EmptyContent>
+</AdaptiveList>
+
+@code {
+    private IReadOnlyList<TrackedPartListItem>? _items;
+    private IReadOnlyList<CustomerSummary> _customers = [];
+    private bool _loading = true;
+
+    [SupplyParameterFromQuery(Name = "q")] public string? Q { get; set; }
+
+    [SupplyParameterFromQuery(Name = "client")] public string? Client { get; set; }
+
+    [SupplyParameterFromQuery(Name = "etat")] public string? Etat { get; set; }
+
+    [SupplyParameterFromQuery(Name = "encours")] public string? EnCours { get; set; }
+
+    [SupplyParameterFromQuery(Name = "emplacement")] public Guid? Emplacement { get; set; }
+
+    private bool WithWip => EnCours == "1";
+
+    private static string Flag(bool value) => value ? "1" : string.Empty;
+
+    protected override async Task OnInitializedAsync() => _customers = await Customers.ListAsync();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        Guid? customerId = Client is null ? null : _customers.FirstOrDefault(c => string.Equals(c.Code, Client, StringComparison.OrdinalIgnoreCase))?.Id ?? Guid.Empty;
+        var result = await TrackedParts.SearchAsync(new TrackedPartSearchRequest
+        {
+            Query = Q,
+            CustomerId = customerId,
+            State = Etat switch
+            {
+                "ok" => TrackedPartStateFilter.Ok,
+                "seuil" => TrackedPartStateFilter.BelowThreshold,
+                "rupture" => TrackedPartStateFilter.OutOfStock,
+                "indice" => TrackedPartStateFilter.SupersededRevision,
+                _ => TrackedPartStateFilter.All,
+            },
+            WithWorkInProgressOnly = WithWip,
+            LocationId = Emplacement,
+        });
+        if (Notifier.Handle(result))
+        {
+            _items = result.Value;
+        }
+
+        _loading = false;
+    }
+
+    private async Task TrackAsync()
+    {
+        var dialog = await Dialogs.ShowAsync<TrackPartDialog>(StockTexts.TrackPart, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false, Data: string reference })
+        {
+            Navigation.NavigateTo($"stock/pieces/{Uri.EscapeDataString(reference)}");
+        }
+    }
+
+    private void Navigate(string? q = null, string? client = null, string? etat = null, string? encours = null)
+    {
+        static string? Pick(string? value, string? current) => value is null ? current : value.Length == 0 ? null : value;
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["q"] = Pick(q, Q),
+            ["client"] = Pick(client, Client),
+            ["etat"] = Pick(etat, Etat),
+            ["encours"] = Pick(encours, EnCours),
+        }));
+    }
+}

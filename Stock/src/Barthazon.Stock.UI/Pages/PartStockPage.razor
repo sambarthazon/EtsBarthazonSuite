@@ -1,0 +1,221 @@
+@page "/stock/pieces/{Reference}"
+@inject ITrackedPartService TrackedParts
+@inject IMovementService Movements
+@inject ICurrentUser CurrentUser
+@inject IDialogService Dialogs
+@inject Notifier Notifier
+
+@if (_notFound)
+{
+    <PageHeader Title="@StockTexts.PartNotFound" BackHref="stock/pieces" BackText="@StockTexts.PartsTitle" />
+    <EmptyState Title="@StockTexts.PartNotFound" Icon="@Icons.Material.Outlined.SearchOff" />
+}
+else if (_part is null)
+{
+    <MudSkeleton Height="48px" Width="40%" />
+    <MudSkeleton Height="200px" SkeletonType="SkeletonType.Rectangle" Class="mt-4" />
+}
+else
+{
+    <PageHeader Title="@($"{_part.Reference} — {_part.Designation}")" BackHref="stock/pieces" BackText="@StockTexts.PartsTitle">
+        <SubContent>
+            <div class="d-flex flex-wrap align-center gap-2 mt-1">
+                @if (!_part.IsUnknownPart)
+                {
+                    <MudLink Href="@($"pieces/{Uri.EscapeDataString(_part.Reference)}")" Typo="Typo.body2">@StockTexts.OpenInCatalog</MudLink>
+                }
+                @if (_part.CustomerName is not null) { <span class="bz-muted">· @_part.CustomerName</span> }
+                @if (_part.InForceRevision is { } inForce)
+                {
+                    <StatusChip Text="@string.Format(CultureInfo.CurrentCulture, StockTexts.IndexInForce, inForce.Index)" Tone="StatusTone.Success" />
+                }
+                @if (_part.IsUnknownPart) { <StatusChip Text="@StockTexts.UnknownPart" Tone="StatusTone.Disabled" Tooltip="@StockTexts.UnknownPartHelp" /> }
+                @if (_part.IsArchived) { <StatusChip Text="@StockTexts.Archived" Tone="StatusTone.Disabled" /> }
+                @if (!_part.IsTracked) { <StatusChip Text="@StockTexts.NotTracked" Tone="StatusTone.Neutral" /> }
+                @if (_part.IsBelowThreshold) { <StatusChip Text="@StockTexts.BelowThreshold" Tone="StatusTone.Warning" /> }
+            </div>
+        </SubContent>
+        <Actions>
+            @if (CanEdit && !_part.IsTracked && !_part.IsUnknownPart)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddTask" OnClick="TrackAsync">@StockTexts.TrackThisPart</MudButton>
+            }
+            @if (CanEdit && _part.IsTracked)
+            {
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="EditSettingsAsync">@StockTexts.Settings</MudButton>
+            }
+        </Actions>
+    </PageHeader>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="4">
+            <section class="bz-card pa-4" aria-labelledby="bz-part-summary">
+                <h2 id="bz-part-summary" class="bz-dashboard-title">@StockTexts.StockByLocation</h2>
+                <div class="d-flex gap-6">
+                    <div><MudText Typo="Typo.h4" Class="@(_part.IsBelowThreshold ? "bz-tone-warning" : null)">@_part.Finished</MudText><MudText Typo="Typo.body2" Class="bz-muted">@StockTexts.Finished</MudText></div>
+                    <div><MudText Typo="Typo.h4">@_part.WorkInProgress</MudText><MudText Typo="Typo.body2" Class="bz-muted">@StockTexts.WorkInProgress</MudText></div>
+                </div>
+                @if (_part.MinimumThreshold is { } threshold)
+                {
+                    <MudText Typo="Typo.body2" Class="mt-2">@string.Format(CultureInfo.CurrentCulture, StockTexts.ThresholdAndCoverage, threshold, _part.Finished + _part.WorkInProgress)</MudText>
+                }
+                @if (_part.DefaultLocationCode is not null)
+                {
+                    <MudText Typo="Typo.body2" Class="bz-muted">@string.Format(CultureInfo.CurrentCulture, StockTexts.StoredIn, _part.DefaultLocationCode)</MudText>
+                }
+                @if (_part.Notes is not null)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mt-3">@_part.Notes</MudAlert>
+                }
+            </section>
+        </MudItem>
+        <MudItem xs="12" md="8">
+            <section class="bz-card pa-4" aria-labelledby="bz-part-finished">
+                <h2 id="bz-part-finished" class="bz-dashboard-title">@StockTexts.FinishedParts</h2>
+                @if (_part.FinishedStock.Count == 0)
+                {
+                    <MudText Class="bz-muted">@StockTexts.NoFinishedParts</MudText>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Elevation="0">
+                        <thead><tr><th>@StockTexts.Revision</th><th>@StockTexts.Location</th><th>@StockTexts.LotBatch</th><th style="text-align:right">@StockTexts.ColQuantity</th></tr></thead>
+                        <tbody>
+                            @foreach (var cell in _part.FinishedStock)
+                            {
+                                var revision = _part.Revisions.FirstOrDefault(r => r.Id == cell.Key.RevisionId);
+                                <tr>
+                                    <td>@(revision?.Index ?? "?") @if (revision?.Status != RevisionStatus.InForce) { <StatusChip Text="@StockTexts.Superseded" Tone="StatusTone.Warning" Class="ml-1" /> }</td>
+                                    <td><a href="@($"stock/emplacements/{Uri.EscapeDataString(cell.LocationCode)}")">@cell.LocationCode</a></td>
+                                    <td>@cell.Lot</td>
+                                    <td style="text-align:right"><b>@StockFormat.Quantity(cell.Quantity)</b></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+            </section>
+        </MudItem>
+        <MudItem xs="12">
+            <section class="bz-card pa-4" aria-labelledby="bz-part-sources">
+                <div class="d-flex justify-space-between align-center mb-2 flex-wrap gap-2">
+                    <h2 id="bz-part-sources" class="bz-dashboard-title">@StockTexts.BlankSources</h2>
+                    @if (CanEdit && !_part.IsUnknownPart)
+                    {
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => EditSourceAsync(null)">@StockTexts.AddSource</MudButton>
+                    }
+                </div>
+                @if (_part.Sources.Count == 0)
+                {
+                    <MudText Class="bz-muted">@StockTexts.NoSources</MudText>
+                    @if (_part.Hint.MaterialName is not null)
+                    {
+                        <MudText Typo="Typo.body2" Class="bz-muted mt-1">
+                            @string.Format(CultureInfo.CurrentCulture, StockTexts.BlankHintText, _part.Hint.MaterialName, _part.Hint.Shape?.Label() ?? "—", _part.Hint.Dimensions ?? "—")
+                        </MudText>
+                    }
+                }
+                else
+                {
+                    <BlankSourceList Sources="_part.Sources" CanEdit="CanEdit" OnEdit="EditSourceAsync" OnRemove="RemoveSourceAsync" />
+                }
+            </section>
+        </MudItem>
+        @if (_madeFromThis is { Count: > 0 })
+        {
+            <MudItem xs="12">
+                <section class="bz-card pa-4" aria-labelledby="bz-part-variants">
+                    <h2 id="bz-part-variants" class="bz-dashboard-title">@StockTexts.PartsMadeFromThisPart</h2>
+                    <SourceUsageList Usages="_madeFromThis" Unit="StockUnit.Piece" />
+                </section>
+            </MudItem>
+        }
+        <MudItem xs="12">
+            <section aria-labelledby="bz-part-movements">
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <h2 id="bz-part-movements" class="bz-dashboard-title">@StockTexts.MovementsTitle</h2>
+                    <MudButton Variant="Variant.Text" Href="@($"stock/mouvements?piece={_part.PartId}")" EndIcon="@Icons.Material.Filled.ArrowForward">@StockTexts.AllMovements</MudButton>
+                </div>
+                <MovementTable Items="_movements" Loading="@(_movements is null)" OnChanged="LoadAsync" />
+            </section>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private TrackedPartDetails? _part;
+    private IReadOnlyList<SourceUsage>? _madeFromThis;
+    private IReadOnlyList<MovementItem>? _movements;
+    private bool _notFound;
+
+    [Parameter] public string Reference { get; set; } = string.Empty;
+
+    private bool CanEdit => CurrentUser.Role >= UserRole.Editor;
+
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await TrackedParts.GetByReferenceAsync(Reference);
+        _notFound = result.HasError(ErrorKind.NotFound);
+        if (result.IsFailure)
+        {
+            if (!_notFound)
+            {
+                Notifier.Handle(result);
+            }
+
+            return;
+        }
+
+        _part = result.Value;
+        var usages = await TrackedParts.ListPartsMadeFromPartAsync(_part.PartId);
+        _madeFromThis = usages.IsSuccess ? usages.Value : [];
+        var movements = await Movements.SearchAsync(new MovementSearchRequest { PartId = _part.PartId, PageSize = 20 });
+        _movements = movements.IsSuccess ? movements.Value.Items : [];
+    }
+
+    private async Task TrackAsync()
+    {
+        if (Notifier.Handle(await TrackedParts.TrackAsync(_part!.PartId), StockTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task EditSettingsAsync()
+    {
+        var dialog = await Dialogs.ShowAsync<TrackedPartSettingsDialog>(StockTexts.Settings,
+            new DialogParameters<TrackedPartSettingsDialog> { { d => d.Part, _part! } }, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task EditSourceAsync(BlankSourceView? source)
+    {
+        var dialog = await Dialogs.ShowAsync<BlankSourceDialog>(source is null ? StockTexts.AddSource : StockTexts.EditSource,
+            new DialogParameters<BlankSourceDialog>
+            {
+                { d => d.PartId, _part!.PartId },
+                { d => d.Source, source },
+                { d => d.Revisions, _part.Revisions },
+                { d => d.Hint, _part.Hint },
+            },
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false })
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task RemoveSourceAsync(BlankSourceView source)
+    {
+        if (await Dialogs.ConfirmAsync(StockTexts.RemoveSourceTitle, string.Format(CultureInfo.CurrentCulture, StockTexts.RemoveSourceText, source.SourceCode), StockTexts.Remove, danger: true)
+            && Notifier.Handle(await TrackedParts.RemoveSourceAsync(_part!.PartId, source.Id), StockTexts.Saved))
+        {
+            await LoadAsync();
+        }
+    }
+}

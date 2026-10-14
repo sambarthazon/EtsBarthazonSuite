@@ -26,4 +26,8 @@ Choix faits pendant la réalisation lorsque la spécification laissait une marge
 | 20 | Motif « Stock initial » | Ajouté aux motifs de correction (`StockReason.InitialStock`) pour la reprise du stock existant (import, saisie). | Section 10.10. |
 | 21 | Annulation refusée | Si l'annulation rendrait une case négative, le message désigne le dernier mouvement non annulé qui a retiré des quantités de cette case (« annulez d'abord le mouvement M-000145 »). | Section 8.7. |
 | 22 | Texte barré | Classe générique `bz-struck` ajoutée à la feuille de style du socle (ajout seulement). | Mouvement annulé « visible, barré ». |
+| 23 | Quantité par pièce d'une source | Six décimales au plus (1 brut donne 3 pièces = 0,333333) ; la consommation proposée au lancement reste arrondie à trois décimales. L'aide de saisie calcule (longueur de débit + trait de scie) / 1000 pour une matière en mètres, ou 1 / N pour « 1 brut donne N pièces ». | Section 7.4. |
+| 24 | Source « pièce après l'opération n° » | Le numéro est contrôlé dans la gamme de l'indice **en vigueur** de la pièce source au moment de la saisie ; s'il s'agit de sa dernière opération, la source est enregistrée comme « pièce finie ». | Section 7.4. |
+| 25 | Suppression d'une source | Une source de brut se supprime (paramètre, tracé dans le journal comme enfant de la pièce suivie) ; si c'était la source par défaut de sa portée, la suivante le devient. | Pas de données dépendantes : les lancements gardent leur propre copie. |
+| 26 | Pastille « couverte par les en-cours » | Variante « contour » générique de la pastille de statut (`bz-status-outlined`) ajoutée à la feuille de style du socle. | Section 12 : « Warning en style contour ». |
 

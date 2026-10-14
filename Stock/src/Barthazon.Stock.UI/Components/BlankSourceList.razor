@@ -1,0 +1,63 @@
+@* Sources de brut d'une pièce : tableau sur ordinateur, cartes sur téléphone. *@
+<MudHidden Breakpoint="Breakpoint.SmAndDown">
+    <MudSimpleTable Dense="true" Elevation="0">
+        <thead><tr><th>@StockTexts.Source</th><th>@StockTexts.SourceScope</th><th style="text-align:right">@StockTexts.QuantityPerPart</th><th style="text-align:right">@StockTexts.Available</th><th style="text-align:right">@StockTexts.Launchable</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var source in Sources)
+            {
+                <tr>
+                    <td>@SourceTitle(source)</td>
+                    <td>@Scope(source)</td>
+                    <td style="text-align:right;white-space:nowrap">@StockFormat.Quantity(source.QuantityPerPart) @source.Unit.Symbol()</td>
+                    <td style="text-align:right;white-space:nowrap">@StockLabels.Quantity(source.Available, source.Unit)</td>
+                    <td style="text-align:right"><b>@source.Launchable</b></td>
+                    <td style="white-space:nowrap;width:1%">@Actions(source)</td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+</MudHidden>
+<MudHidden Breakpoint="Breakpoint.MdAndUp">
+    <div class="d-flex flex-column gap-2" role="list">
+        @foreach (var source in Sources)
+        {
+            <div class="bz-card pa-3" role="listitem">
+                <div class="d-flex justify-space-between align-start gap-2">
+                    <div style="min-width:0">@SourceTitle(source)</div>
+                    <div class="d-flex">@Actions(source)</div>
+                </div>
+                <MudText Typo="Typo.body2" Class="bz-muted">@Scope(source) · @StockFormat.Quantity(source.QuantityPerPart) @source.Unit.Symbol() / @StockTexts.PerPart</MudText>
+                <MudText Typo="Typo.body2">@StockTexts.Available : @StockLabels.Quantity(source.Available, source.Unit) · @StockTexts.Launchable : <b>@source.Launchable</b></MudText>
+            </div>
+        }
+    </div>
+</MudHidden>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<BlankSourceView> Sources { get; set; } = [];
+
+    [Parameter] public bool CanEdit { get; set; }
+
+    [Parameter] public EventCallback<BlankSourceView> OnEdit { get; set; }
+
+    [Parameter] public EventCallback<BlankSourceView> OnRemove { get; set; }
+
+    private static string Scope(BlankSourceView source) =>
+        source.RevisionIndex is null ? StockTexts.AllRevisions : string.Format(CultureInfo.CurrentCulture, StockTexts.RevisionOnly, source.RevisionIndex);
+
+    private RenderFragment SourceTitle(BlankSourceView source) => @<text>
+        <a href="@(source.Kind == BlankSourceKind.Item ? $"stock/articles/{Uri.EscapeDataString(source.SourceCode)}" : $"stock/pieces/{Uri.EscapeDataString(source.SourceCode)}")"><b>@source.SourceCode</b></a>
+        <span> @source.SourceLabel</span>
+        @if (source.SourceAfterOperation is { } op) { <span class="bz-muted"> · @string.Format(CultureInfo.CurrentCulture, StockTexts.AfterOperationShort, op)</span> }
+        @if (source.IsDefault) { <StatusChip Text="@StockTexts.Default" Tone="StatusTone.Info" Class="ml-1" /> }
+        @if (source.Note is not null) { <div class="bz-muted" style="font-size:.85em">@source.Note</div> }
+    </text>;
+
+    private RenderFragment Actions(BlankSourceView source) => @<text>
+        @if (CanEdit)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => OnEdit.InvokeAsync(source)" aria-label="@StockTexts.EditSource" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="() => OnRemove.InvokeAsync(source)" aria-label="@StockTexts.Remove" />
+        }
+    </text>;
+}

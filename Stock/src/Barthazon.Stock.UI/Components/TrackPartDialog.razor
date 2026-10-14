@@ -1,0 +1,33 @@
+@inject ITrackedPartService TrackedParts
+@inject Notifier Notifier
+
+@* « Suivre une pièce » : choix d'une pièce de l'annuaire. *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <PartPicker Value="_partId" ValueChanged="v => _partId = v" Required="true" AutoFocus="true" />
+        <MudText Typo="Typo.body2" Class="bz-muted mt-2">@StockTexts.TrackPartHelp</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="TrackAsync" Disabled="@(_partId is null)">@StockTexts.TrackPart</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private Guid? _partId;
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    private async Task TrackAsync()
+    {
+        var result = await TrackedParts.TrackAsync(_partId!.Value);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(StockTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(result.Value.Reference));
+        }
+    }
+}

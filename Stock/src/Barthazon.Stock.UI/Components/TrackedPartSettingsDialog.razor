@@ -1,0 +1,45 @@
+@inject ITrackedPartService TrackedParts
+@inject Notifier Notifier
+
+@* Paramètres de stock d'une pièce suivie : seuil, emplacement de rangement, consignes. *@
+<MudDialog>
+    <DialogContent>
+        <FormErrors State="_form" />
+        <MudNumericField T="int?" @bind-Value="_input.MinimumThreshold" Label="@StockTexts.PartThreshold" Variant="Variant.Outlined" Min="0" HideSpinButtons="true"
+                         InputMode="InputMode.numeric" HelperText="@StockTexts.PartThresholdHelp"
+                         Error="_form.HasError(nameof(TrackedPartSettingsInput.MinimumThreshold))" ErrorText="@_form.ErrorFor(nameof(TrackedPartSettingsInput.MinimumThreshold))" />
+        <div class="mt-3">
+            <LocationSelect Value="_input.DefaultLocationId" ValueChanged="v => _input.DefaultLocationId = v" Label="@StockTexts.FinishedLocation" Clearable="true" />
+        </div>
+        <MudTextField @bind-Value="_input.Notes" Label="@StockTexts.StorageNotes" Variant="Variant.Outlined" Lines="3" Class="mt-3" MaxLength="4000" Placeholder="@StockTexts.StorageNotesExample" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog!.Cancel()">@SharedTexts.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@SharedTexts.Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly FormState _form = new();
+    private TrackedPartSettingsInput _input = new();
+
+    [CascadingParameter] private IMudDialogInstance? Dialog { get; set; }
+
+    [Parameter, EditorRequired] public TrackedPartDetails Part { get; set; } = default!;
+
+    protected override void OnInitialized() => _input = new TrackedPartSettingsInput
+    {
+        MinimumThreshold = Part.MinimumThreshold, DefaultLocationId = Part.DefaultLocationId, Notes = Part.Notes, Version = Part.Version,
+    };
+
+    private async Task SaveAsync()
+    {
+        var result = await TrackedParts.SaveSettingsAsync(Part.PartId, _input);
+        _form.Apply(result);
+        if (result.IsSuccess)
+        {
+            Notifier.Success(StockTexts.Saved);
+            Dialog!.Close(DialogResult.Ok(true));
+        }
+    }
+}

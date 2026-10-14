@@ -224,4 +224,76 @@
   <data name="Unit" xml:space="preserve"><value>Unité</value></data>
   <data name="UpdatedOnBy" xml:space="preserve"><value>Modifié le {0} par {1}</value></data>
   <data name="UsualSupplier" xml:space="preserve"><value>Fournisseur habituel</value></data>
+  <data name="AddSource" xml:space="preserve"><value>Ajouter une source</value></data>
+  <data name="AfterOperation" xml:space="preserve"><value>Après l'opération {0} — {1}</value></data>
+  <data name="AfterOperationShort" xml:space="preserve"><value>après l'op {0}</value></data>
+  <data name="AllRevisions" xml:space="preserve"><value>Tous les indices</value></data>
+  <data name="Available" xml:space="preserve"><value>Disponible</value></data>
+  <data name="BlankHintText" xml:space="preserve"><value>Annuaire, indice en vigueur : matière {0}, brut {1}, dimensions {2}.</value></data>
+  <data name="BlankSources" xml:space="preserve"><value>Sources de brut</value></data>
+  <data name="CommonBlankSummary" xml:space="preserve"><value>{0} en stock = {1}.</value></data>
+  <data name="CoveredByWip" xml:space="preserve"><value>Sous le seuil — {0} en cours</value></data>
+  <data name="CutLength" xml:space="preserve"><value>Longueur de débit (mm)</value></data>
+  <data name="Default" xml:space="preserve"><value>Par défaut</value></data>
+  <data name="DefaultSource" xml:space="preserve"><value>Source proposée par défaut au lancement</value></data>
+  <data name="EditSource" xml:space="preserve"><value>Modifier la source</value></data>
+  <data name="Finished" xml:space="preserve"><value>Finies</value></data>
+  <data name="FinishedLocation" xml:space="preserve"><value>Rangement des pièces finies</value></data>
+  <data name="FinishedParts" xml:space="preserve"><value>Pièces finies</value></data>
+  <data name="InProgressShort" xml:space="preserve"><value>en cours</value></data>
+  <data name="IndexInForce" xml:space="preserve"><value>Indice {0} en vigueur</value></data>
+  <data name="Kerf" xml:space="preserve"><value>Trait de scie (mm)</value></data>
+  <data name="Launchable" xml:space="preserve"><value>Permet de lancer</value></data>
+  <data name="LotBatch" xml:space="preserve"><value>Lot (lancement)</value></data>
+  <data name="NoFinishedParts" xml:space="preserve"><value>Aucune pièce finie en stock.</value></data>
+  <data name="NoSources" xml:space="preserve"><value>Aucune source de brut : déclarez ce que consomme le lancement de cette pièce.</value></data>
+  <data name="NoTrackedParts" xml:space="preserve"><value>Aucune pièce suivie.</value></data>
+  <data name="NoTrackedPartsText" xml:space="preserve"><value>« Suivre une pièce » pour gérer son stock ; une pièce est aussi suivie automatiquement à son premier mouvement.</value></data>
+  <data name="NotTracked" xml:space="preserve"><value>Non suivie</value></data>
+  <data name="Note" xml:space="preserve"><value>Note</value></data>
+  <data name="OpenInCatalog" xml:space="preserve"><value>Ouvrir dans l'annuaire</value></data>
+  <data name="Or" xml:space="preserve"><value> ou </value></data>
+  <data name="OutOfStock" xml:space="preserve"><value>Rupture</value></data>
+  <data name="Part" xml:space="preserve"><value>Pièce</value></data>
+  <data name="PartNotFound" xml:space="preserve"><value>Pièce introuvable</value></data>
+  <data name="PartThreshold" xml:space="preserve"><value>Seuil de pièces finies</value></data>
+  <data name="PartThresholdHelp" xml:space="preserve"><value>Alerte quand les pièces finies (tous indices) passent en dessous.</value></data>
+  <data name="PartsCount" xml:space="preserve"><value>{0} pièce(s) suivie(s)</value></data>
+  <data name="PartsMadeFromThisItem" xml:space="preserve"><value>Pièces issues de cet article</value></data>
+  <data name="PartsMadeFromThisPart" xml:space="preserve"><value>Pièces issues de cette pièce</value></data>
+  <data name="PartsPerBlank" xml:space="preserve"><value>1 brut donne N pièces</value></data>
+  <data name="PartsTitle" xml:space="preserve"><value>Pièces suivies</value></data>
+  <data name="PerPart" xml:space="preserve"><value>pièce</value></data>
+  <data name="QuantityPerPart" xml:space="preserve"><value>Quantité par pièce</value></data>
+  <data name="QuantityPerPartHelp" xml:space="preserve"><value>Dans l'unité de la source : 1 brut, 0,128 m de barre, 0,25 tôle…</value></data>
+  <data name="Remove" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="RemoveSourceText" xml:space="preserve"><value>La source {0} ne sera plus proposée au lancement de cette pièce.</value></data>
+  <data name="RemoveSourceTitle" xml:space="preserve"><value>Supprimer cette source ?</value></data>
+  <data name="Revision" xml:space="preserve"><value>Indice</value></data>
+  <data name="RevisionInForce" xml:space="preserve"><value>Indice</value></data>
+  <data name="RevisionOnly" xml:space="preserve"><value>Indice {0} seulement</value></data>
+  <data name="SearchPart" xml:space="preserve"><value>Rechercher une pièce (référence, désignation)</value></data>
+  <data name="Settings" xml:space="preserve"><value>Paramètres</value></data>
+  <data name="Source" xml:space="preserve"><value>Source</value></data>
+  <data name="SourceFinished" xml:space="preserve"><value>Pièce finie</value></data>
+  <data name="SourceKindItem" xml:space="preserve"><value>Un article (matière, brut)</value></data>
+  <data name="SourceKindPart" xml:space="preserve"><value>Une autre pièce de l'annuaire</value></data>
+  <data name="SourceNoteExample" xml:space="preserve"><value>Ex. débit 125 + 3 mm de trait de scie</value></data>
+  <data name="SourceScope" xml:space="preserve"><value>Portée</value></data>
+  <data name="SourceStage" xml:space="preserve"><value>Prise à l'étape</value></data>
+  <data name="State" xml:space="preserve"><value>État</value></data>
+  <data name="StateOk" xml:space="preserve"><value>OK</value></data>
+  <data name="StorageNotes" xml:space="preserve"><value>Consignes de stockage</value></data>
+  <data name="StorageNotesExample" xml:space="preserve"><value>Ex. graisser avant rangement</value></data>
+  <data name="StoredIn" xml:space="preserve"><value>Rangées en {0}</value></data>
+  <data name="Superseded" xml:space="preserve"><value>remplacé</value></data>
+  <data name="SupersededRevisionStock" xml:space="preserve"><value>Indice remplacé en stock</value></data>
+  <data name="ThresholdAndCoverage" xml:space="preserve"><value>Seuil {0} · couverture (finies + en cours) {1}</value></data>
+  <data name="TrackPart" xml:space="preserve"><value>Suivre une pièce</value></data>
+  <data name="TrackPartHelp" xml:space="preserve"><value>La pièce reste dans l'annuaire ; le stock enregistre seulement ses paramètres (seuil, rangement, sources).</value></data>
+  <data name="TrackThisPart" xml:space="preserve"><value>Suivre cette pièce en stock</value></data>
+  <data name="UnknownPart" xml:space="preserve"><value>Pièce inconnue</value></data>
+  <data name="UnknownPartHelp" xml:space="preserve"><value>Introuvable dans l'annuaire : la dernière référence connue est affichée.</value></data>
+  <data name="WithWorkInProgressOnly" xml:space="preserve"><value>Avec des en-cours</value></data>
+  <data name="WorkInProgress" xml:space="preserve"><value>En cours</value></data>
 </root>

@@ -1,0 +1,29 @@
+@* États d'une pièce suivie (section 12) : rupture, sous le seuil (ou couverte par les en-cours), indice remplacé. *@
+@if (Item.IsUnknownPart)
+{
+    <StatusChip Text="@StockTexts.UnknownPart" Tone="StatusTone.Disabled" Class="mr-1" />
+}
+@if (Item.IsOutOfStock && Item.MinimumThreshold is not null)
+{
+    <StatusChip Text="@StockTexts.OutOfStock" Tone="StatusTone.Error" Class="mr-1" />
+}
+else if (Item.IsCoveredByWorkInProgress)
+{
+    <StatusChip Text="@string.Format(CultureInfo.CurrentCulture, StockTexts.CoveredByWip, Item.WorkInProgress)" Tone="StatusTone.Warning" Class="mr-1 bz-status-outlined" />
+}
+else if (Item.IsBelowThreshold)
+{
+    <StatusChip Text="@StockTexts.BelowThreshold" Tone="StatusTone.Warning" Class="mr-1" />
+}
+@if (Item.HasSupersededStock)
+{
+    <StatusChip Text="@StockTexts.SupersededRevisionStock" Tone="StatusTone.Warning" Class="mr-1" />
+}
+@if (!Item.IsUnknownPart && !Item.IsBelowThreshold && !Item.HasSupersededStock && !(Item.IsOutOfStock && Item.MinimumThreshold is not null))
+{
+    <StatusChip Text="@StockTexts.StateOk" Tone="StatusTone.Success" />
+}
+
+@code {
+    [Parameter, EditorRequired] public TrackedPartListItem Item { get; set; } = default!;
+}

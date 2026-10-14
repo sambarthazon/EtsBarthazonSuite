@@ -232,6 +232,39 @@ internal sealed class StockBalanceRepository(StockDbContext context) : IStockBal
     public void Remove(StockBalance balance) => Set.Remove(balance);
 }
 
+internal sealed class TrackedPartRepository(StockDbContext context) : EfRepository<TrackedPart>(context), ITrackedPartRepository
+{
+    public Task<TrackedPart?> GetByPartIdAsync(Guid partId, CancellationToken cancellationToken = default) =>
+        Set.Include(t => t.Sources).FirstOrDefaultAsync(t => t.PartId == partId, cancellationToken);
+
+    public async Task<IReadOnlyList<TrackedPart>> ListAsync(CancellationToken cancellationToken = default) =>
+        await Set.AsNoTracking().Include(t => t.Sources).ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<TrackedPart>> GetManyAsync(IEnumerable<Guid> partIds, CancellationToken cancellationToken = default)
+    {
+        var list = partIds.Distinct().ToList();
+        return await Set.AsNoTracking().Include(t => t.Sources).Where(t => list.Contains(t.PartId)).ToListAsync(cancellationToken);
+    }
+
+    public async Task<TrackedPart?> FindByLastKnownReferenceAsync(string reference, CancellationToken cancellationToken = default)
+    {
+        var candidates = await Set.AsNoTracking().Where(t => t.LastKnownReference == reference.Trim()).ToListAsync(cancellationToken);
+        return candidates.FirstOrDefault();
+    }
+
+    public void AddSource(BlankSource source) => Context.Set<BlankSource>().Add(source);
+
+    public void RemoveSource(BlankSource source) => Context.Set<BlankSource>().Remove(source);
+
+    public async Task<IReadOnlyList<(Guid PartId, BlankSource Source)>> ListSourcesAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await Context.Set<BlankSource>().AsNoTracking()
+            .Join(Set.AsNoTracking(), s => s.TrackedPartId, t => t.Id, (s, t) => new { t.PartId, Source = s })
+            .ToListAsync(cancellationToken);
+        return rows.Select(r => (r.PartId, r.Source)).ToList();
+    }
+}
+
 internal sealed class StockUnitOfWork : EfUnitOfWork, IStockUnitOfWork
 {
     public StockUnitOfWork(StockDbContext context, string? userName)
@@ -241,6 +274,7 @@ internal sealed class StockUnitOfWork : EfUnitOfWork, IStockUnitOfWork
         Items = new StockItemRepository(context);
         Transactions = new StockTransactionRepository(context);
         Balances = new StockBalanceRepository(context);
+        TrackedParts = new TrackedPartRepository(context);
     }
 
     public IStockLocationRepository Locations { get; }
@@ -250,6 +284,8 @@ internal sealed class StockUnitOfWork : EfUnitOfWork, IStockUnitOfWork
     public IStockTransactionRepository Transactions { get; }
 
     public IStockBalanceRepository Balances { get; }
+
+    public ITrackedPartRepository TrackedParts { get; }
 }
 
 /// <summary>Fabrique d'unités de travail du stock (une par opération applicative).</summary>

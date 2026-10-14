@@ -72,6 +72,55 @@ namespace Barthazon.Stock.Migrations.Postgres.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.BlankSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("QuantityPerPart")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid?>("RevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SourceAfterOperation")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("SourcePartId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TrackedPartId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("SourcePartId");
+
+                    b.HasIndex("TrackedPartId");
+
+                    b.ToTable("stk_blank_sources", (string)null);
+                });
+
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.StockBalance", b =>
                 {
                     b.Property<Guid>("Id")
@@ -411,6 +460,72 @@ namespace Barthazon.Stock.Migrations.Postgres.Migrations
                     b.ToTable("stk_transaction_lines", (string)null);
                 });
 
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.TrackedPart", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("DefaultLocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastKnownDesignation")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("LastKnownReference")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("MinimumThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("PartId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartId")
+                        .IsUnique();
+
+                    b.ToTable("stk_tracked_parts", (string)null);
+                });
+
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.BlankSource", b =>
+                {
+                    b.HasOne("Barthazon.Stock.Core.Domain.TrackedPart", null)
+                        .WithMany("Sources")
+                        .HasForeignKey("TrackedPartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.StockTransactionLine", b =>
                 {
                     b.HasOne("Barthazon.Stock.Core.Domain.StockTransaction", null)
@@ -423,6 +538,11 @@ namespace Barthazon.Stock.Migrations.Postgres.Migrations
             modelBuilder.Entity("Barthazon.Stock.Core.Domain.StockTransaction", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Barthazon.Stock.Core.Domain.TrackedPart", b =>
+                {
+                    b.Navigation("Sources");
                 });
 #pragma warning restore 612, 618
         }

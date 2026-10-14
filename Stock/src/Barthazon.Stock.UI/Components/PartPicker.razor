@@ -1,0 +1,48 @@
+@inject IPartLookup Parts
+
+@* Recherche d'une pièce de l'annuaire (par ses contrats). *@
+<MudAutocomplete T="PartSummary" Value="_selected" ValueChanged="OnChangedAsync" SearchFunc="SearchAsync"
+                 ToStringFunc="@(p => p is null ? string.Empty : $"{p.InternalReference} — {p.Designation}")" Label="@(Label ?? StockTexts.Part)"
+                 Placeholder="@StockTexts.SearchPart" Variant="Variant.Outlined" Required="Required" RequiredError="@SharedTexts.RequiredField"
+                 Clearable="true" ResetValueOnEmptyText="true" DebounceInterval="200" MaxItems="30" OpenOnFocus="true"
+                 Error="Error" ErrorText="@ErrorText" Margin="Margin" AutoFocus="AutoFocus" />
+
+@code {
+    private PartSummary? _selected;
+
+    [Parameter] public Guid? Value { get; set; }
+
+    [Parameter] public EventCallback<Guid?> ValueChanged { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+
+    [Parameter] public bool Required { get; set; }
+
+    [Parameter] public bool AutoFocus { get; set; }
+
+    [Parameter] public bool Error { get; set; }
+
+    [Parameter] public string? ErrorText { get; set; }
+
+    [Parameter] public Margin Margin { get; set; } = Margin.Normal;
+
+    /// <summary>Pièces à ne pas proposer (ex. la pièce elle-même).</summary>
+    [Parameter] public IReadOnlyCollection<Guid> Exclude { get; set; } = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Value != _selected?.Id)
+        {
+            _selected = Value is { } id ? await Parts.GetAsync(id) : null;
+        }
+    }
+
+    private async Task<IEnumerable<PartSummary>> SearchAsync(string? text, CancellationToken cancellationToken) =>
+        (await Parts.SearchAsync(text, 30, cancellationToken)).Where(p => !Exclude.Contains(p.Id));
+
+    private async Task OnChangedAsync(PartSummary? part)
+    {
+        _selected = part;
+        await ValueChanged.InvokeAsync(part?.Id);
+    }
+}

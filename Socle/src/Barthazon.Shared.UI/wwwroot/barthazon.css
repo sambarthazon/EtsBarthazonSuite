@@ -165,6 +165,9 @@ h1:focus, [tabindex="-1"]:focus { outline: none !important; }
     border-radius: 50%;
     background: currentColor;
 }
+/* Variante « contour » : état atténué (ex. sous le seuil mais couvert par les en-cours). */
+.bz-status.bz-status-outlined { border-style: dashed; }
+.bz-status.bz-status-outlined::before { background: transparent; border: 2px solid currentColor; width: 6px; height: 6px; }
 .bz-tone-success { color: var(--bz-success); }
 .bz-tone-warning { color: var(--bz-warning); }
 .bz-tone-error { color: var(--bz-error); }
