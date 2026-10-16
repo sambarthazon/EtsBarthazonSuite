@@ -1,0 +1,95 @@
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject CatalogueModules Catalogue
+@inject IServiceProvider Services
+@inject SignauxApplication Signaux
+@* Onglets de l'application courante (deuxième et dernier niveau de navigation). *@
+@if (Courant is { } module && module.Onglets.Count > 0)
+{
+    <nav class="onglets-appli" aria-label="@module.Nom">
+        @foreach (var onglet in module.Onglets.Where(o => !o.Secondaire))
+        {
+            <NavLink href="@onglet.Chemin" Match="@(onglet.Chemin == module.CheminAccueil ? NavLinkMatch.All : NavLinkMatch.Prefix)" ActiveClass="active" class="@(EstActif(onglet, module) ? "active" : null)">
+                @onglet.Titre
+                @if (_pastilles.GetValueOrDefault(onglet.Chemin) is > 0 and var nombre)
+                {
+                    <span class="pastille">@nombre</span>
+                }
+            </NavLink>
+        }
+        @if (module.Onglets.Any(o => o.Secondaire))
+        {
+            <Menu ClasseBouton="" Titre="Plus" Gauche="true">
+                <Declencheur><span aria-hidden="true">⋯</span><span class="sr-only">Plus</span></Declencheur>
+                <ChildContent>
+                    @foreach (var onglet in module.Onglets.Where(o => o.Secondaire))
+                    {
+                        <a class="menu__element" href="@onglet.Chemin">@onglet.Titre</a>
+                    }
+                </ChildContent>
+            </Menu>
+        }
+    </nav>
+}
+
+@code {
+    private readonly Dictionary<string, int> _pastilles = [];
+    private string? _moduleCharge;
+
+    private string Chemin => "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+
+    private ModuleApplication? Courant => Catalogue.DepuisChemin(Chemin);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += SurNavigation;
+        Signaux.Signal += SurSignal;
+        await ChargerPastilles(force: true);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= SurNavigation;
+        Signaux.Signal -= SurSignal;
+    }
+
+    /// <summary>L'accueil (ex. « Pièces finies ») reste actif sur ses fiches : /stock/pieces/3.</summary>
+    private bool EstActif(OngletApplication onglet, ModuleApplication module)
+    {
+        if (onglet.Chemin != module.CheminAccueil)
+        {
+            return false;
+        }
+
+        var reste = Chemin.Split('?')[0];
+        return module.Onglets.Where(o => o.Chemin != module.CheminAccueil).All(o => !reste.StartsWith(o.Chemin, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void SurNavigation(object? sender, LocationChangedEventArgs e) => _ = InvokeAsync(async () =>
+    {
+        await ChargerPastilles(force: false);
+        StateHasChanged();
+    });
+
+    private void SurSignal(string sujet) => _ = InvokeAsync(async () =>
+    {
+        await ChargerPastilles(force: true);
+        StateHasChanged();
+    });
+
+    private async Task ChargerPastilles(bool force)
+    {
+        var module = Courant;
+        if (module is null || (!force && module.Cle == _moduleCharge))
+        {
+            return;
+        }
+
+        _moduleCharge = module.Cle;
+        _pastilles.Clear();
+        foreach (var onglet in module.Onglets.Where(o => o.Pastille is not null))
+        {
+            _pastilles[onglet.Chemin] = await onglet.Pastille!(Services);
+        }
+    }
+}

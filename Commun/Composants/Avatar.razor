@@ -1,0 +1,9 @@
+<span class="avatar avatar--@Couleur @(Grand ? "avatar--grand" : null)" aria-hidden="true">@Initiales</span>
+
+@code {
+    [Parameter] public string Initiales { get; set; } = string.Empty;
+
+    [Parameter] public int Couleur { get; set; }
+
+    [Parameter] public bool Grand { get; set; }
+}

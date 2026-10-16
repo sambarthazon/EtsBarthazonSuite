@@ -1,0 +1,64 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject CatalogueModules Catalogue
+@inject IUtilisateurCourant Utilisateur
+@inject ServiceUtilisateurs Utilisateurs
+@inject OptionsBarthazon Options
+@inject IJSRuntime JS
+@* Mise en page de toutes les applications : barre du haut toujours visible, puis onglets de l'application courante. *@
+<div class="appli">
+    <header class="barre-haut">
+        <a class="barre-haut__marque" href="/" aria-label="Accueil">
+            <Logo />
+            <span class="barre-haut__nom">BARTHAZON</span>
+        </a>
+        <SelecteurApplication />
+        <RechercheGlobale />
+        <div class="barre-haut__actions">
+            <Cloche />
+            <MenuUtilisateur />
+        </div>
+    </header>
+    <OngletsApplication />
+    <main class="contenu">
+        @Body
+    </main>
+</div>
+<ZoneToasts />
+<HoteConfirmation />
+
+@code {
+    private string? _derniereMemorisee;
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += SurNavigation;
+        _ = MemoriserApplication();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Utilisateur.EstConnecte)
+        {
+            await JS.InvokeVoidAsync("barthazon.surveillerActivite", Utilisateur.AppareilPartage, Options.DureeInactiviteMinutes);
+        }
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= SurNavigation;
+
+    private void SurNavigation(object? sender, LocationChangedEventArgs e) => _ = MemoriserApplication();
+
+    /// <summary>Retient la dernière application utilisée : elle s'ouvre directement à la prochaine connexion.</summary>
+    private async Task MemoriserApplication()
+    {
+        var module = Catalogue.DepuisChemin("/" + Navigation.ToBaseRelativePath(Navigation.Uri));
+        if (module is null || !Utilisateur.EstConnecte || module.Cle == _derniereMemorisee)
+        {
+            return;
+        }
+
+        _derniereMemorisee = module.Cle;
+        await Utilisateurs.MemoriserApplication(Utilisateur.Id, module.Cle);
+    }
+}

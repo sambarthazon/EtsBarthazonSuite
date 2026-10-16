@@ -1,0 +1,33 @@
+@* Dépôt de fichier (glisser ou toucher), et photo prise avec la tablette ou le téléphone. *@
+<div class="pile">
+    <div class="champ-fichier">
+        <InputFile OnChange="Choisir" accept="@Accept" multiple="@Multiple" aria-label="Choisir un fichier" />
+        <Icone Nom="deposer" />
+        <strong>@Texte</strong>
+        <span class="doux petit">@Aide</span>
+    </div>
+    @if (Photo)
+    {
+        <label class="bouton bouton--secondaire bouton-photo">
+            <Icone Nom="photo" /> Prendre une photo
+            <InputFile OnChange="Choisir" accept="image/*" capture="environment" aria-label="Prendre une photo" />
+        </label>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<IReadOnlyList<IBrowserFile>> OnFichiers { get; set; }
+
+    [Parameter] public string Accept { get; set; } = "application/pdf,image/png,image/jpeg";
+
+    [Parameter] public bool Multiple { get; set; } = true;
+
+    [Parameter] public bool Photo { get; set; } = true;
+
+    [Parameter] public string Texte { get; set; } = "Déposer un plan ici, ou toucher pour choisir";
+
+    [Parameter] public string Aide { get; set; } = "PDF, PNG ou JPG";
+
+    private Task Choisir(InputFileChangeEventArgs e) =>
+        OnFichiers.InvokeAsync(e.FileCount > 1 ? e.GetMultipleFiles(20) : [e.File]);
+}

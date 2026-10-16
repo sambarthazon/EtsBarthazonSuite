@@ -1,0 +1,26 @@
+<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="Assemblages" NotFoundPage="typeof(PageIntrouvable)">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MiseEnPage)">
+            <NotAuthorized>
+                @if (context.User.Identity?.IsAuthenticated == true)
+                {
+                    <AccesRefuse />
+                }
+                else
+                {
+                    <RedirectionConnexion />
+                }
+            </NotAuthorized>
+            <Authorizing>
+                <div class="vide">Chargement…</div>
+            </Authorizing>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+
+@code {
+    [Inject] private IServiceProvider Services { get; set; } = default!;
+
+    private System.Reflection.Assembly[] Assemblages => Modules.Assemblages(Services).Where(a => a != typeof(Program).Assembly).ToArray();
+}

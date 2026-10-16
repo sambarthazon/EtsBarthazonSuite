@@ -18,3 +18,5 @@ logs/
 node_modules/
 # Tests d'approbation d'API : fichiers produits en cas d'écart (à relire, puis renommer en .approved.txt)
 *.received.txt
+# Données locales de développement (base SQLite et plans)
+donnees/

@@ -1,0 +1,65 @@
+@* Bouton d'action : « principal » pour l'action principale de l'écran (un seul par écran). *@
+@if (Href is not null)
+{
+    <a href="@Href" class="@Classes" target="@Cible" aria-disabled="@(Desactive ? "true" : null)">@Contenu()</a>
+}
+else
+{
+    <button type="@Type" class="@Classes" disabled="@Desactive" @onclick="OnClick" title="@Titre" aria-label="@Titre">@Contenu()</button>
+}
+
+@code {
+    [Parameter] public string? Texte { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Nom d'une icône (<see cref="Icone"/>).</summary>
+    [Parameter] public string? Icone { get; set; }
+
+    /// <summary>Emoji affiché avant le texte (📦, ⚙, 🚚…).</summary>
+    [Parameter] public string? Emoji { get; set; }
+
+    /// <summary>principal, secondaire, discret, danger.</summary>
+    [Parameter] public string Style { get; set; } = "secondaire";
+
+    /// <summary>Gros bouton (60 px).</summary>
+    [Parameter] public bool Gros { get; set; }
+
+    [Parameter] public bool Plein { get; set; }
+
+    [Parameter] public bool Desactive { get; set; }
+
+    [Parameter] public string Type { get; set; } = "button";
+
+    [Parameter] public string? Href { get; set; }
+
+    [Parameter] public string? Cible { get; set; }
+
+    [Parameter] public string? Titre { get; set; }
+
+    [Parameter] public string? Classe { get; set; }
+
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    private bool IconeSeule => Texte is null && ChildContent is null && Emoji is null;
+
+    private string Classes =>
+        $"bouton bouton--{Style}{(Gros ? " gros-bouton" : string.Empty)}{(Plein ? " bouton--plein" : string.Empty)}{(IconeSeule ? " bouton--icone" : string.Empty)} {Classe}".TrimEnd();
+
+    private RenderFragment Contenu() => __builder =>
+    {
+        if (Emoji is not null)
+        {
+            <span class="emoji" aria-hidden="true">@Emoji</span>
+        }
+        if (Icone is not null)
+        {
+            <Icone Nom="@Icone" />
+        }
+        if (Texte is not null)
+        {
+            <span>@Texte</span>
+        }
+        @ChildContent
+    };
+}

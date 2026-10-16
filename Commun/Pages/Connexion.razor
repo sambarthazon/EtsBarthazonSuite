@@ -1,0 +1,226 @@
+@page "/connexion"
+@layout MiseEnPageSimple
+@attribute [AllowAnonymous]
+@implements IAsyncDisposable
+@inject ServiceUtilisateurs Utilisateurs
+@inject GuichetConnexion Guichet
+@inject CatalogueModules Catalogue
+@inject IUtilisateurCourant Courant
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject OptionsBarthazon Options
+<PageTitle>Connexion — Barthazon</PageTitle>
+
+<div class="page-simple__carte @(_choisi is null ? null : "page-simple__carte--etroite")">
+    @if (_choisi is null)
+    {
+        <h1>Qui êtes-vous ?</h1>
+        @if (Motif == "inactivite")
+        {
+            <p class="information">Vous avez été déconnecté après @Options.DureeInactiviteMinutes minutes sans activité.</p>
+        }
+        @if (_tuiles is null)
+        {
+            <p class="doux">Chargement…</p>
+        }
+        else
+        {
+            @if (_tuiles.Count > 12)
+            {
+                <div class="liste__recherche" style="margin-bottom: .9rem">
+                    <Icone Nom="recherche" />
+                    <input type="search" placeholder="Rechercher votre nom…" value="@_recherche" @oninput="e => _recherche = e.Value?.ToString() ?? string.Empty" aria-label="Rechercher votre nom" />
+                </div>
+            }
+            <div class="tuiles">
+                @foreach (var tuile in _tuiles.Where(t => Recherche.Correspond(_recherche, t.Prenom, t.Nom)))
+                {
+                    <button type="button" class="tuile" @onclick="() => Choisir(tuile)">
+                        <Avatar Initiales="@tuile.Initiales" Couleur="@tuile.Couleur" Grand="true" />
+                        <span>@tuile.Prenom</span>
+                    </button>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="ligne">
+            <button type="button" class="bouton bouton--discret" @onclick="Retour"><Icone Nom="retour" /> Changer</button>
+        </div>
+        <div class="pile" style="align-items: center; text-align: center">
+            <Avatar Initiales="@_choisi.Initiales" Couleur="@_choisi.Couleur" Grand="true" />
+            <h1 style="margin: 0">@_choisi.Prenom</h1>
+            <div class="doux">Tapez votre code PIN</div>
+        </div>
+        <div class="pin-points" aria-label="@_pin.Length chiffres saisis">
+            @for (var i = 0; i < Math.Max(4, _pin.Length); i++)
+            {
+                <span class="@(i < _pin.Length ? "rempli" : null)"></span>
+            }
+        </div>
+        @if (_erreur is not null)
+        {
+            <p class="erreur-formulaire" role="alert" style="text-align: center">@_erreur</p>
+        }
+        <div class="pave">
+            @foreach (var chiffre in new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9" })
+            {
+                <button type="button" @onclick="() => Taper(chiffre)">@chiffre</button>
+            }
+            <button type="button" class="pave__action" @onclick="Effacer" aria-label="Effacer"><Icone Nom="effacer" /></button>
+            <button type="button" @onclick='() => Taper("0")'>0</button>
+            <button type="button" class="pave__action pave__valider" @onclick="Valider" disabled="@(_pin.Length < 4 || _enCours)">OK</button>
+        </div>
+        <div class="ligne" style="justify-content: center; margin-top: 1rem">
+            <label class="case">
+                <input type="checkbox" @bind="_partage" />
+                Appareil partagé <span class="doux petit">(déconnexion après @Options.DureeInactiviteMinutes min sans activité)</span>
+            </label>
+        </div>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<TuileUtilisateur>? _tuiles;
+    private TuileUtilisateur? _choisi;
+    private string _pin = string.Empty;
+    private string _recherche = string.Empty;
+    private string? _erreur;
+    private bool _partage;
+    private bool _enCours;
+    private DotNetObjectReference<Connexion>? _reference;
+    private IJSObjectReference? _clavier;
+
+    [SupplyParameterFromQuery(Name = "retour")] private string? RetourDemande { get; set; }
+
+    [SupplyParameterFromQuery(Name = "motif")] private string? Motif { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Courant.EstConnecte)
+        {
+            Navigation.NavigateTo(Authentification.RetourSur(RetourDemande));
+            return;
+        }
+
+        _tuiles = await Utilisateurs.ListerTuiles();
+        if (_tuiles.Count == 0 && !await Utilisateurs.ExisteUtilisateur())
+        {
+            Navigation.NavigateTo(Authentification.CheminPremiereUtilisation);
+        }
+        else if (_tuiles.Count == 1)
+        {
+            _choisi = _tuiles[0];
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _partage = await JS.InvokeAsync<bool>("barthazon.estTactile");
+            _reference = DotNetObjectReference.Create(this);
+            _clavier = await JS.InvokeAsync<IJSObjectReference>("barthazon.ecouterClavierPin", _reference);
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>Clavier physique : chiffres, retour arrière, Entrée, Échap.</summary>
+    [JSInvokable]
+    public async Task Touche(string touche)
+    {
+        if (_choisi is null)
+        {
+            return;
+        }
+
+        switch (touche)
+        {
+            case "Backspace": Effacer(); break;
+            case "Enter": await Valider(); break;
+            case "Escape": Retour(); break;
+            default: Taper(touche); break;
+        }
+
+        StateHasChanged();
+    }
+
+    private void Choisir(TuileUtilisateur tuile)
+    {
+        _choisi = tuile;
+        _pin = string.Empty;
+        _erreur = null;
+    }
+
+    private void Retour()
+    {
+        _choisi = null;
+        _pin = string.Empty;
+        _erreur = null;
+    }
+
+    private void Taper(string chiffre)
+    {
+        if (_pin.Length < 6)
+        {
+            _pin += chiffre;
+            _erreur = null;
+        }
+    }
+
+    private void Effacer()
+    {
+        if (_pin.Length > 0)
+        {
+            _pin = _pin[..^1];
+        }
+    }
+
+    private async Task Valider()
+    {
+        if (_choisi is null || _pin.Length < 4 || _enCours)
+        {
+            return;
+        }
+
+        _enCours = true;
+        var resultat = await Utilisateurs.VerifierPin(_choisi.Id, _pin);
+        _enCours = false;
+        _pin = string.Empty;
+        if (!resultat.Reussi || resultat.Valeur is null)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        // Ouvre la page demandée, sinon la dernière application utilisée.
+        var retour = Authentification.RetourSur(RetourDemande);
+        if (retour == "/")
+        {
+            retour = Catalogue.Trouver(resultat.Valeur.DerniereApplication)?.CheminAccueil
+                ?? Catalogue.Modules.FirstOrDefault()?.CheminAccueil ?? "/";
+        }
+
+        var ticket = Guichet.Emettre(resultat.Valeur, _partage);
+        Navigation.NavigateTo($"{Authentification.CheminEntrer}?ticket={ticket}&retour={Uri.EscapeDataString(retour)}", forceLoad: true);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_clavier is not null)
+            {
+                await _clavier.InvokeVoidAsync("arreter");
+                await _clavier.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+            // Page déjà fermée.
+        }
+
+        _reference?.Dispose();
+    }
+}

@@ -4,37 +4,14 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Framework / accès aux données -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Identity.Core" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Systemd" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+    <!-- Accès aux données -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-    <!-- Interface -->
-    <PackageVersion Include="MudBlazor" Version="9.11.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.12" />
-    <!-- Outils -->
-    <PackageVersion Include="ClosedXML" Version="0.105.0" />
-    <PackageVersion Include="QRCoder" Version="1.8.0" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
-    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <!-- Hébergement (service systemd sur la Raspberry Pi) -->
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Systemd" Version="10.0.12" />
     <!-- Tests -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
-    <!-- FluentAssertions 7.x : dernière version sous licence Apache 2.0 (la 8.x est commerciale). -->
-    <PackageVersion Include="FluentAssertions" Version="7.2.2" />
-    <!-- Tests d'approbation de l'API publique des contrats et du socle (licence MIT). -->
-    <PackageVersion Include="PublicApiGenerator" Version="11.5.4" />
-    <PackageVersion Include="bunit" Version="2.11.3" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,33 @@
+@* Fenêtre courte au-dessus de la page (actions de stock, création rapide). *@
+@if (Ouverte)
+{
+    <div class="voile">
+        <div class="fenetre @(Large ? "fenetre--large" : null)" role="dialog" aria-modal="true" aria-label="@Titre">
+            <div class="fenetre__entete">
+                <h2>@Titre</h2>
+                <button type="button" class="bouton bouton--discret bouton--icone" @onclick="Fermer" aria-label="Fermer"><Icone Nom="fermer" /></button>
+            </div>
+            <div class="fenetre__corps">@ChildContent</div>
+            @if (Pied is not null)
+            {
+                <div class="fenetre__pied">@Pied</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Ouverte { get; set; }
+
+    [Parameter] public EventCallback OnFermer { get; set; }
+
+    [Parameter] public string Titre { get; set; } = string.Empty;
+
+    [Parameter] public bool Large { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public RenderFragment? Pied { get; set; }
+
+    private Task Fermer() => OnFermer.InvokeAsync();
+}

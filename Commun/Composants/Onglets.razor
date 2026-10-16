@@ -1,0 +1,29 @@
+@* Onglets d'une fiche (Résumé, Plans, Gamme…). *@
+<div class="onglets" role="tablist">
+    @foreach (var onglet in Elements)
+    {
+        <button type="button" role="tab" class="@(onglet.Cle == Actif ? "actif" : null)" aria-selected="@(onglet.Cle == Actif ? "true" : "false")" @onclick="() => Choisir(onglet.Cle)">
+            @onglet.Titre
+            @if (onglet.Pastille is > 0)
+            {
+                <span class="pastille">@onglet.Pastille</span>
+            }
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<Onglet> Elements { get; set; } = [];
+
+    [Parameter] public string? Actif { get; set; }
+
+    [Parameter] public EventCallback<string> ActifChanged { get; set; }
+
+    private Task Choisir(string cle)
+    {
+        Actif = cle;
+        return ActifChanged.InvokeAsync(cle);
+    }
+
+    public sealed record Onglet(string Cle, string Titre, int? Pastille = null);
+}

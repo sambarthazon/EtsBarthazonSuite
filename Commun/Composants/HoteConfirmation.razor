@@ -1,0 +1,24 @@
+@implements IDisposable
+@inject ServiceConfirmation Confirmation
+@if (Confirmation.EnCours is { } demande)
+{
+    <div class="voile">
+        <div class="fenetre" role="alertdialog" aria-modal="true">
+            <div class="fenetre__corps">
+                <p class="confirmation__question">@demande.Question</p>
+            </div>
+            <div class="fenetre__pied">
+                <button type="button" class="bouton bouton--secondaire" @onclick="() => Confirmation.Repondre(false)">@demande.Annuler</button>
+                <button type="button" class="bouton @(demande.Danger ? "bouton--danger" : "bouton--principal")" @onclick="() => Confirmation.Repondre(true)">@demande.Valider</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized() => Confirmation.Change += Rafraichir;
+
+    public void Dispose() => Confirmation.Change -= Rafraichir;
+
+    private void Rafraichir() => _ = InvokeAsync(StateHasChanged);
+}

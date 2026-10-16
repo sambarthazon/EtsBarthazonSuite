@@ -1,19 +1,3 @@
 <Project>
-  <!--
-    Textes d'interface : chaque fichier Resources/*.resx génère automatiquement une classe C#
-    fortement typée (ex. Resources/CatalogTexts.resx => Barthazon.Catalog.UI.Resources.CatalogTexts).
-    Langue neutre = français : aucun assembly satellite n'est produit.
-  -->
-  <PropertyGroup>
-    <NeutralLanguage>fr</NeutralLanguage>
-  </PropertyGroup>
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\*.resx">
-      <StronglyTypedFileName>$(IntermediateOutputPath)%(Filename).Designer.cs</StronglyTypedFileName>
-      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
-      <StronglyTypedNamespace>$(RootNamespace).Resources</StronglyTypedNamespace>
-      <StronglyTypedClassName>%(Filename)</StronglyTypedClassName>
-      <PublicClass>true</PublicClass>
-    </EmbeddedResource>
-  </ItemGroup>
+  <!-- Réservé aux réglages communs appliqués après les projets. -->
 </Project>

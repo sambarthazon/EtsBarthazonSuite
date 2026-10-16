@@ -1,0 +1,91 @@
+/*
+  Thème Ets BARTHAZON — SEUL fichier où sont définies les couleurs, rayons, ombres et polices.
+  Les couleurs sont nommées par rôle, jamais par teinte.
+  La couleur principale peut être changée dans Paramètres → Apparence (injectée au chargement de la page).
+*/
+:root {
+    /* Couleur principale (remplacée par la valeur enregistrée en base) */
+    --couleur-principale: #d9631e;
+    --texte-sur-principale: #ffffff;
+    --couleur-principale-foncee: color-mix(in srgb, var(--couleur-principale) 82%, #000000);
+    --couleur-principale-claire: color-mix(in srgb, var(--couleur-principale) 13%, var(--surface));
+
+    /* États */
+    --couleur-succes: #2e7d32;
+    --couleur-succes-claire: color-mix(in srgb, var(--couleur-succes) 14%, var(--surface));
+    --couleur-alerte: #c77700;
+    --couleur-alerte-claire: color-mix(in srgb, var(--couleur-alerte) 16%, var(--surface));
+    --couleur-danger: #c62828;
+    --couleur-danger-claire: color-mix(in srgb, var(--couleur-danger) 12%, var(--surface));
+    --couleur-neutre: #7c8491;
+    --couleur-neutre-claire: color-mix(in srgb, var(--couleur-neutre) 14%, var(--surface));
+    --couleur-info: #1f6fb2;
+    --couleur-favori: #e0a100;
+
+    /* Fonds et textes */
+    --fond: #f3f4f6;
+    --surface: #ffffff;
+    --surface-2: #eceef2;
+    --bordure: #d6dae1;
+    --texte: #1b2130;
+    --texte-doux: #5a6273;
+    --voile: rgba(15, 18, 25, 0.45);
+    --barre-haut: #1f2430;
+    --texte-barre-haut: #ffffff;
+    --texte-barre-haut-doux: #b9c0cc;
+    --texte-inverse: #ffffff;
+    --noir: #000000;
+
+    /* Impression */
+    --papier: #ffffff;
+    --encre: #000000;
+    --encre-claire: #999999;
+
+    /* Avatars (initiales colorées) */
+    --avatar-0: #3b6fb6;
+    --avatar-1: #2f8f5b;
+    --avatar-2: #9c4fb0;
+    --avatar-3: #c2571a;
+    --avatar-4: #0f8a8a;
+    --avatar-5: #b23b5a;
+    --avatar-6: #6b7a1f;
+    --avatar-7: #5a5fc7;
+
+    /* Formes */
+    --rayon: 10px;
+    --rayon-petit: 6px;
+    --rayon-rond: 999px;
+    --ombre: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.05);
+    --ombre-forte: 0 8px 30px rgba(0, 0, 0, 0.22);
+
+    /* Typographie */
+    --police: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --police-chiffres: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    --taille-texte: 16px;
+
+    /* Tactile : taille minimale d'une cible */
+    --cible: 44px;
+
+    color-scheme: light dark;
+}
+
+/* Mode sombre : suit le réglage de l'appareil */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --couleur-succes: #5cbf64;
+        --couleur-alerte: #f0a530;
+        --couleur-danger: #ef5b5b;
+        --couleur-neutre: #8d95a3;
+        --couleur-info: #5aa7e6;
+        --fond: #13161c;
+        --surface: #1c2028;
+        --surface-2: #262b35;
+        --bordure: #363c48;
+        --texte: #e8ebf0;
+        --texte-doux: #a3abb9;
+        --voile: rgba(0, 0, 0, 0.6);
+        --barre-haut: #0c0e12;
+        --ombre: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --couleur-principale-claire: color-mix(in srgb, var(--couleur-principale) 22%, var(--surface));
+    }
+}

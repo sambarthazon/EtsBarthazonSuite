@@ -1,0 +1,35 @@
+@inject ServiceHistorique Historique
+@* Historique d'une fiche (journal des modifications). *@
+@if (_lignes is null)
+{
+    <div class="doux">Chargement…</div>
+}
+else if (_lignes.Count == 0)
+{
+    <div class="doux">Aucune modification enregistrée.</div>
+}
+else
+{
+    <ul class="lignes-simples">
+        @foreach (var ligne in _lignes)
+        {
+            <li>
+                <span class="doux nombre">@Format.DateHeure(ligne.Date)</span>
+                <span>@ligne.Phrase</span>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private IReadOnlyList<LigneHistorique>? _lignes;
+
+    [Parameter, EditorRequired] public string TypeObjet { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired] public int ObjetId { get; set; }
+
+    /// <summary>Change pour forcer le rechargement après une modification.</summary>
+    [Parameter] public int Version { get; set; }
+
+    protected override async Task OnParametersSetAsync() => _lignes = await Historique.Lister(TypeObjet, ObjetId);
+}

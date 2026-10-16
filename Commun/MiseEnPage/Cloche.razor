@@ -1,0 +1,42 @@
+@implements IDisposable
+@inject CatalogueModules Catalogue
+@inject IServiceProvider Services
+@inject SignauxApplication Signaux
+@* 🔔 : nombre d'alertes en cours. Masquée si aucune application ne fournit d'alertes (Stock non chargé). *@
+@foreach (var module in Catalogue.Modules.Where(m => m.CompteurAlertes is not null))
+{
+    var nombre = _nombres.GetValueOrDefault(module.Cle);
+    <a class="bouton-barre" href="@module.CheminAlertes" title="@(nombre == 0 ? "Aucune alerte" : $"{nombre} alerte(s)")" aria-label="Alertes : @nombre">
+        <Icone Nom="cloche" />
+        @if (nombre > 0)
+        {
+            <span class="pastille">@nombre</span>
+        }
+    </a>
+}
+
+@code {
+    private readonly Dictionary<string, int> _nombres = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Signaux.Signal += SurSignal;
+        await Charger();
+    }
+
+    public void Dispose() => Signaux.Signal -= SurSignal;
+
+    private void SurSignal(string sujet) => _ = InvokeAsync(async () =>
+    {
+        await Charger();
+        StateHasChanged();
+    });
+
+    private async Task Charger()
+    {
+        foreach (var module in Catalogue.Modules.Where(m => m.CompteurAlertes is not null))
+        {
+            _nombres[module.Cle] = await module.CompteurAlertes!(Services);
+        }
+    }
+}

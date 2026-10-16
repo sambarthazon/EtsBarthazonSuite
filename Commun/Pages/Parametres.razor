@@ -1,0 +1,50 @@
+@page "/parametres"
+@page "/parametres/{Onglet}"
+@attribute [Authorize]
+@inject CatalogueModules Catalogue
+@inject IUtilisateurCourant Courant
+@inject NavigationManager Navigation
+<PageTitle>Paramètres — Barthazon</PageTitle>
+
+@if (!Courant.Peut(Role.Administrateur))
+{
+    <AccesRefuse />
+}
+else
+{
+    <EntetePage Titre="Paramètres" />
+    <Onglets Elements="_onglets" Actif="@Actif" ActifChanged="Choisir" />
+    @switch (Actif)
+    {
+        case "utilisateurs":
+            <ParametresUtilisateurs />
+            break;
+        case "apparence":
+            <ParametresApparence />
+            break;
+        default:
+            var module = _modules.FirstOrDefault(m => m.Cle == Actif);
+            if (module is not null)
+            {
+                <DynamicComponent Type="module.Composant" />
+            }
+            break;
+    }
+}
+
+@code {
+    private List<OngletParametres> _modules = [];
+    private List<Onglets.Onglet> _onglets = [];
+
+    [Parameter] public string? Onglet { get; set; }
+
+    private string Actif => Onglet ?? "utilisateurs";
+
+    protected override void OnInitialized()
+    {
+        _modules = Catalogue.Modules.SelectMany(m => m.Parametres).Where(p => Courant.Peut(p.RoleMinimum)).ToList();
+        _onglets = [new("utilisateurs", "Utilisateurs"), new("apparence", "Apparence"), .. _modules.Select(m => new Onglets.Onglet(m.Cle, m.Titre))];
+    }
+
+    private void Choisir(string cle) => Navigation.NavigateTo("/parametres/" + cle);
+}

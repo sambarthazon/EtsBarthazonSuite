@@ -1,0 +1,31 @@
+@* Titre de page et actions (l'action principale en premier). *@
+<div class="entete-page">
+    @if (Retour is not null)
+    {
+        <a class="bouton bouton--discret bouton--icone" href="@Retour" aria-label="Retour"><Icone Nom="retour" /></a>
+    }
+    <div>
+        <h1>@Titre</h1>
+        @if (SousTitre is not null)
+        {
+            <div class="doux">@SousTitre</div>
+        }
+        @Details
+    </div>
+    @if (Actions is not null)
+    {
+        <div class="entete-page__actions">@Actions</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Titre { get; set; } = string.Empty;
+
+    [Parameter] public string? SousTitre { get; set; }
+
+    [Parameter] public string? Retour { get; set; }
+
+    [Parameter] public RenderFragment? Details { get; set; }
+
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

@@ -1,0 +1,113 @@
+@typeparam T
+@inject NavigationManager Navigation
+@* Liste avec recherche au fil de la frappe : tableau sur ordinateur, cartes sous 768 px. *@
+<div class="liste">
+    <div class="liste__outils">
+        <div class="liste__recherche">
+            <Icone Nom="recherche" />
+            <input type="search" placeholder="@Placeholder" value="@_texte" @oninput="Saisir" aria-label="@Placeholder" autocomplete="off" />
+        </div>
+        @if (Filtres is not null)
+        {
+            <div class="liste__filtres">@Filtres</div>
+        }
+        @Actions
+    </div>
+
+    @if (Elements is null)
+    {
+        <div class="vide">Chargement…</div>
+    }
+    else if (_filtres.Count == 0)
+    {
+        <div class="vide">
+            <div class="vide__titre">@(string.IsNullOrWhiteSpace(_texte) ? MessageVide : "Aucun résultat")</div>
+            @if (!string.IsNullOrWhiteSpace(_texte))
+            {
+                <div>Rien ne correspond à « @_texte ».</div>
+            }
+            @Vide
+        </div>
+    }
+    else
+    {
+        <div class="liste__compte">@Compte</div>
+        <table class="tableau">
+            <thead><tr>@Entetes</tr></thead>
+            <tbody>
+                @foreach (var element in _filtres)
+                {
+                    var lien = Lien?.Invoke(element);
+                    <tr class="@(lien is null ? null : "cliquable")" @onclick="() => Ouvrir(lien)">@Ligne(element)</tr>
+                }
+            </tbody>
+        </table>
+        <div class="cartes">
+            @foreach (var element in _filtres)
+            {
+                var lien = Lien?.Invoke(element);
+                if (lien is null)
+                {
+                    <div class="carte">@Carte(element)</div>
+                }
+                else
+                {
+                    <a class="carte" href="@lien">@Carte(element)</a>
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private string _texte = string.Empty;
+    private List<T> _filtres = [];
+
+    [Parameter] public IEnumerable<T>? Elements { get; set; }
+
+    /// <summary>Texte dans lequel chercher (référence, désignation, client, matière…).</summary>
+    [Parameter, EditorRequired] public Func<T, string> TexteRecherche { get; set; } = default!;
+
+    [Parameter, EditorRequired] public RenderFragment Entetes { get; set; } = default!;
+
+    [Parameter, EditorRequired] public RenderFragment<T> Ligne { get; set; } = default!;
+
+    [Parameter, EditorRequired] public RenderFragment<T> Carte { get; set; } = default!;
+
+    [Parameter] public Func<T, string?>? Lien { get; set; }
+
+    [Parameter] public string Placeholder { get; set; } = "Rechercher…";
+
+    [Parameter] public string MessageVide { get; set; } = "Aucun élément pour l'instant";
+
+    [Parameter] public string Singulier { get; set; } = "élément";
+
+    [Parameter] public string Pluriel { get; set; } = "éléments";
+
+    [Parameter] public RenderFragment? Filtres { get; set; }
+
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    [Parameter] public RenderFragment? Vide { get; set; }
+
+    private string Compte => _filtres.Count == 1 ? $"1 {Singulier}" : $"{_filtres.Count} {Pluriel}";
+
+    protected override void OnParametersSet() => Filtrer();
+
+    private void Saisir(ChangeEventArgs e)
+    {
+        _texte = e.Value?.ToString() ?? string.Empty;
+        Filtrer();
+    }
+
+    private void Filtrer() =>
+        _filtres = Elements is null ? [] : Elements.Where(e => Recherche.Correspond(_texte, TexteRecherche(e))).ToList();
+
+    private void Ouvrir(string? lien)
+    {
+        if (lien is not null)
+        {
+            Navigation.NavigateTo(lien);
+        }
+    }
+}

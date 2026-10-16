@@ -1,0 +1,15 @@
+@* Section repliable (« Plus de détails ») : élément natif, utilisable au doigt et au clavier. *@
+<details class="repliable @Classe" open="@Ouverte">
+    <summary>@Titre</summary>
+    <div class="repliable__contenu">@ChildContent</div>
+</details>
+
+@code {
+    [Parameter] public string Titre { get; set; } = "Plus de détails";
+
+    [Parameter] public bool Ouverte { get; set; }
+
+    [Parameter] public string? Classe { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

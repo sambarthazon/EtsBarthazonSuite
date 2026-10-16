@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Tests des règles métier (xUnit), sur SQLite en mémoire. -->
+  <PropertyGroup>
+    <RootNamespace>Barthazon.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Commun\Barthazon.Commun.csproj" />
+    <ProjectReference Include="..\Annuaire\Barthazon.Annuaire.csproj" />
+    <ProjectReference Include="..\Stock\Barthazon.Stock.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

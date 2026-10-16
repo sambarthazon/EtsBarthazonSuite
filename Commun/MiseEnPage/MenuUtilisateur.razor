@@ -1,0 +1,24 @@
+@inject IUtilisateurCourant Utilisateur
+@inject NavigationManager Navigation
+@* Avatar : Paramètres (administrateur), Se déconnecter. *@
+@if (Utilisateur.EstConnecte)
+{
+    <Menu ClasseBouton="bouton-barre" Titre="@Utilisateur.Prenom">
+        <Declencheur><Avatar Initiales="@Utilisateur.Initiales" Couleur="@ServiceUtilisateurs.CouleurAvatar(Utilisateur.Id)" /></Declencheur>
+        <ChildContent>
+            <div class="menu__entete">
+                <strong>@Utilisateur.Prenom</strong>
+                <div class="doux petit">@Roles.Libelle(Utilisateur.Role)@(Utilisateur.AppareilPartage ? " · appareil partagé" : null)</div>
+            </div>
+            @if (Utilisateur.Peut(Role.Administrateur))
+            {
+                <a class="menu__element" href="/parametres"><Icone Nom="reglages" /> Paramètres</a>
+            }
+            <button type="button" class="menu__element" @onclick="SeDeconnecter"><Icone Nom="deconnexion" /> Se déconnecter</button>
+        </ChildContent>
+    </Menu>
+}
+
+@code {
+    private void SeDeconnecter() => Navigation.NavigateTo(Authentification.CheminDeconnexion, forceLoad: true);
+}

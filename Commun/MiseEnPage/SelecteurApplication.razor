@@ -1,0 +1,46 @@
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject CatalogueModules Catalogue
+@inject ServiceBascule Bascule
+@* Contrôle segmenté « Annuaire | Stock » : bascule sans rechargement, sur la même pièce si possible. Au-delà de 3 applications : liste déroulante. *@
+@if (Catalogue.Modules.Count > 3)
+{
+    <div class="selecteur">
+        <select aria-label="Application" value="@Courant?.Cle" @onchange="Changer">
+            @foreach (var module in Catalogue.Modules)
+            {
+                <option value="@module.Cle">@module.Nom</option>
+            }
+        </select>
+    </div>
+}
+else if (Catalogue.Modules.Count > 0)
+{
+    <nav class="selecteur" aria-label="Applications">
+        @foreach (var module in Catalogue.Modules)
+        {
+            <a href="@Bascule.Cible(Chemin, module)" class="@(module == Courant ? "actif" : null)" aria-current="@(module == Courant ? "page" : null)">@module.Nom</a>
+        }
+    </nav>
+}
+
+@code {
+    private string Chemin => "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+
+    private ModuleApplication? Courant => Catalogue.DepuisChemin(Chemin);
+
+    protected override void OnInitialized() => Navigation.LocationChanged += Rafraichir;
+
+    public void Dispose() => Navigation.LocationChanged -= Rafraichir;
+
+    private void Rafraichir(object? sender, LocationChangedEventArgs e) => _ = InvokeAsync(StateHasChanged);
+
+    private void Changer(ChangeEventArgs e)
+    {
+        var module = Catalogue.Trouver(e.Value?.ToString());
+        if (module is not null)
+        {
+            Navigation.NavigateTo(Bascule.Cible(Chemin, module));
+        }
+    }
+}

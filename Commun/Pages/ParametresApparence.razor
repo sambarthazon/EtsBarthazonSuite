@@ -1,0 +1,50 @@
+@inject ServiceParametres Parametres
+@inject ServiceToast Toast
+@inject IJSRuntime JS
+@* Couleur principale : aperçu immédiat, enregistrée en base pour tous les postes. *@
+<div class="bloc" style="max-width: 560px">
+    <h2 class="bloc__titre">Couleur principale</h2>
+    <p class="doux">Elle colore les boutons principaux, l'onglet actif et le logo. Les autres postes la prennent à leur prochain chargement de page.</p>
+    <div class="ligne">
+        <input type="color" value="@_couleur" @oninput="Apercu" aria-label="Couleur principale" style="width: 72px; height: 52px; border: 0; background: none; cursor: pointer" />
+        <code>@_couleur</code>
+        <button type="button" class="bouton bouton--discret" @onclick="Reinitialiser">Couleur d'origine</button>
+    </div>
+    <div class="ligne" style="margin: 1rem 0">
+        <span class="bouton bouton--principal">Bouton principal</span>
+        <span class="badge-indice">C</span>
+    </div>
+    <GrosBouton Style="principal" Texte="Enregistrer" OnClick="Enregistrer" />
+</div>
+
+@code {
+    private string _couleur = ServiceParametres.CouleurParDefaut;
+
+    protected override async Task OnInitializedAsync() => _couleur = await Parametres.CouleurPrincipale();
+
+    private async Task Apercu(ChangeEventArgs e)
+    {
+        var couleur = e.Value?.ToString();
+        if (ServiceParametres.CouleurValide(couleur))
+        {
+            _couleur = couleur!;
+            await JS.InvokeVoidAsync("barthazon.definirCouleur", _couleur, ServiceParametres.TexteSurCouleur(_couleur));
+        }
+    }
+
+    private async Task Reinitialiser() =>
+        await Apercu(new ChangeEventArgs { Value = ServiceParametres.CouleurParDefaut });
+
+    private async Task Enregistrer()
+    {
+        var resultat = await Parametres.DefinirCouleurPrincipale(_couleur);
+        if (resultat.Reussi)
+        {
+            Toast.Succes("Couleur enregistrée");
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+}

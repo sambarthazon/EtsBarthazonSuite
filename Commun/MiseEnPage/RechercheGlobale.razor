@@ -1,0 +1,107 @@
+@inject IEnumerable<IRechercheGlobale> Fournisseurs
+@inject ServiceBascule Bascule
+@inject NavigationManager Navigation
+@* Recherche dans toute la suite ; un résultat s'ouvre dans l'application courante. Sur téléphone : repliée en icône. *@
+<button type="button" class="bouton-barre recherche-globale__ouvrir" aria-label="Rechercher" @onclick="Deplier"><Icone Nom="recherche" /></button>
+@if (Fournisseurs.Any())
+{
+    <div class="recherche-globale @(_depliee ? "ouverte" : null)" role="search">
+        <Icone Nom="recherche" />
+        <input @ref="_champ" type="search" placeholder="Rechercher une pièce, un brut, un client…" aria-label="Recherche globale"
+               value="@_texte" @oninput="Saisir" @onkeydown="Touche" @onfocus="() => _ouvert = true" autocomplete="off" />
+        @if (_ouvert && _texte.Trim().Length >= 1)
+        {
+            <div class="menu__fond" @onclick="Fermer"></div>
+            <div class="recherche-globale__resultats">
+                @if (_resultats.Count == 0)
+                {
+                    <div class="recherche-globale__resultat doux">@(_enCours ? "Recherche…" : "Aucun résultat")</div>
+                }
+                @foreach (var groupe in _resultats.GroupBy(r => (r.OrdreGroupe, r.Groupe)).OrderBy(g => g.Key.OrdreGroupe))
+                {
+                    <div class="recherche-globale__groupe">@groupe.Key.Groupe</div>
+                    @foreach (var resultat in groupe)
+                    {
+                        <a class="recherche-globale__resultat" href="@Lien(resultat)" @onclick="Fermer">
+                            <strong>@resultat.Titre</strong>
+                            @if (resultat.Detail is not null)
+                            {
+                                <span class="doux"> · @resultat.Detail</span>
+                            }
+                        </a>
+                    }
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private const int ParGroupe = 5;
+    private ElementReference _champ;
+    private string _texte = string.Empty;
+    private bool _ouvert;
+    private bool _depliee;
+    private bool _enCours;
+    private int _generation;
+    private List<ResultatRecherche> _resultats = [];
+
+    private string Lien(ResultatRecherche r) =>
+        Bascule.Lien(r.TypeObjet, r.Id, "/" + Navigation.ToBaseRelativePath(Navigation.Uri)) ?? "/";
+
+    private async Task Deplier()
+    {
+        _depliee = true;
+        _ouvert = true;
+        await Task.Yield();
+        await _champ.FocusAsync();
+    }
+
+    private void Fermer()
+    {
+        _ouvert = false;
+        _depliee = false;
+    }
+
+    private void Touche(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _texte = string.Empty;
+            _resultats = [];
+            Fermer();
+        }
+        else if (e.Key == "Enter" && _resultats.Count > 0)
+        {
+            var premier = _resultats.OrderBy(r => r.OrdreGroupe).First();
+            Fermer();
+            Navigation.NavigateTo(Lien(premier));
+        }
+    }
+
+    private async Task Saisir(ChangeEventArgs e)
+    {
+        _texte = e.Value?.ToString() ?? string.Empty;
+        _ouvert = true;
+        var generation = ++_generation;
+        if (string.IsNullOrWhiteSpace(_texte))
+        {
+            _resultats = [];
+            return;
+        }
+
+        _enCours = true;
+        var resultats = new List<ResultatRecherche>();
+        foreach (var fournisseur in Fournisseurs)
+        {
+            resultats.AddRange(await fournisseur.Rechercher(_texte, ParGroupe));
+        }
+
+        // Une frappe plus récente a pu lancer une autre recherche entre-temps.
+        if (generation == _generation)
+        {
+            _resultats = resultats;
+            _enCours = false;
+        }
+    }
+}

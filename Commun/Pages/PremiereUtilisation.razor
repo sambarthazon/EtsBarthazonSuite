@@ -1,0 +1,71 @@
+@page "/premiere-utilisation"
+@layout MiseEnPageSimple
+@attribute [AllowAnonymous]
+@inject ServiceUtilisateurs Utilisateurs
+@inject NavigationManager Navigation
+<PageTitle>Premier lancement — Barthazon</PageTitle>
+
+<div class="page-simple__carte page-simple__carte--etroite">
+    <h1>Bienvenue</h1>
+    <p class="doux">Première utilisation : créez le compte de l'administrateur. Il pourra ensuite ajouter les autres utilisateurs.</p>
+    <form class="pile" @onsubmit="Creer">
+        <div class="champ">
+            <label for="prenom">Prénom <span class="champ__obligatoire">*</span></label>
+            <input id="prenom" @bind="_prenom" autocomplete="off" />
+        </div>
+        <div class="champ">
+            <label for="nom">Nom</label>
+            <input id="nom" @bind="_nom" autocomplete="off" />
+        </div>
+        <div class="champ">
+            <label for="pin">Code PIN (4 à 6 chiffres) <span class="champ__obligatoire">*</span></label>
+            <input id="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" @bind="_pin" />
+        </div>
+        <div class="champ">
+            <label for="pin2">Retapez le code PIN <span class="champ__obligatoire">*</span></label>
+            <input id="pin2" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" @bind="_pin2" />
+        </div>
+        @if (_erreur is not null)
+        {
+            <p class="erreur-formulaire" role="alert">@_erreur</p>
+        }
+        <GrosBouton Type="submit" Style="principal" Gros="true" Plein="true" Texte="Créer l'administrateur" Desactive="_enCours" />
+    </form>
+</div>
+
+@code {
+    private string _prenom = string.Empty;
+    private string _nom = string.Empty;
+    private string _pin = string.Empty;
+    private string _pin2 = string.Empty;
+    private string? _erreur;
+    private bool _enCours;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await Utilisateurs.ExisteUtilisateur())
+        {
+            Navigation.NavigateTo(Authentification.CheminConnexion);
+        }
+    }
+
+    private async Task Creer()
+    {
+        if (_pin != _pin2)
+        {
+            _erreur = "Les deux codes PIN sont différents.";
+            return;
+        }
+
+        _enCours = true;
+        var resultat = await Utilisateurs.CreerPremierAdministrateur(_prenom, _nom, _pin);
+        _enCours = false;
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        Navigation.NavigateTo(Authentification.CheminConnexion, forceLoad: true);
+    }
+}

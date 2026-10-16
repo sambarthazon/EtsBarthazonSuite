@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Application hôte (l'exécutable) : assemble le socle commun et les applications. Seul projet qui les connaît toutes. -->
+  <PropertyGroup>
+    <RootNamespace>Barthazon.Portail</RootNamespace>
+    <AssemblyName>Barthazon.Portail</AssemblyName>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Retirer une application = retirer sa ligne ici et son appel dans Program.cs. -->
+    <ProjectReference Include="..\Commun\Barthazon.Commun.csproj" />
+    <ProjectReference Include="..\Annuaire\Barthazon.Annuaire.csproj" />
+    <ProjectReference Include="..\Stock\Barthazon.Stock.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Barthazon.Tests" />
+  </ItemGroup>
+</Project>

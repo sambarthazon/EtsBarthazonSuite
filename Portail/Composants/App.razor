@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1f2430" />
+    <base href="/" />
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["_content/Barthazon.Commun/theme.css"]" />
+    <link rel="stylesheet" href="@Assets["_content/Barthazon.Commun/commun.css"]" />
+    <link rel="stylesheet" href="@Assets["_content/Barthazon.Annuaire/annuaire.css"]" />
+    <link rel="stylesheet" href="@Assets["_content/Barthazon.Stock/stock.css"]" />
+    <StyleTheme />
+    <ImportMap />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <HeadOutlet @rendermode="ModeRendu" />
+</head>
+
+<body>
+    <Routes @rendermode="ModeRendu" />
+    <ReconnexionBlazor />
+    <script src="@Assets["_content/Barthazon.Commun/commun.js"]"></script>
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>
+
+@code {
+    /// <summary>Interactif côté serveur, sans prérendu (un seul chargement des données par page).</summary>
+    private static readonly IComponentRenderMode ModeRendu = new InteractiveServerRenderMode(prerender: false);
+}

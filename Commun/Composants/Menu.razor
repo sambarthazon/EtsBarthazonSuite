@@ -1,0 +1,31 @@
+@* Menu déroulant (« ⋯ », avatar) : s'ouvre au toucher, se ferme en touchant ailleurs. *@
+<div class="menu">
+    <button type="button" class="@ClasseBouton" aria-haspopup="menu" aria-expanded="@(_ouvert ? "true" : "false")" aria-label="@Titre" title="@Titre" @onclick="Basculer">
+        @Declencheur
+    </button>
+    @if (_ouvert)
+    {
+        <div class="menu__fond" @onclick="Fermer"></div>
+        <div class="menu__panneau @(Gauche ? "menu__panneau--gauche" : null)" role="menu" @onclick="Fermer">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    private bool _ouvert;
+
+    [Parameter] public RenderFragment? Declencheur { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public string ClasseBouton { get; set; } = "bouton bouton--secondaire bouton--icone";
+
+    [Parameter] public string? Titre { get; set; }
+
+    [Parameter] public bool Gauche { get; set; }
+
+    private void Basculer() => _ouvert = !_ouvert;
+
+    private void Fermer() => _ouvert = false;
+}

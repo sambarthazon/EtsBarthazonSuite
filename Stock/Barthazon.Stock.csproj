@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <!-- Application Stock : pages, services, entités et contexte EF Core. Ne référence que le socle commun. -->
+  <PropertyGroup>
+    <RootNamespace>Barthazon.Stock</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Commun\Barthazon.Commun.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Barthazon.Tests" />
+  </ItemGroup>
+</Project>

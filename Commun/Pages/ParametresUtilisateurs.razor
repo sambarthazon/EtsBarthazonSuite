@@ -1,0 +1,128 @@
+@inject ServiceUtilisateurs Utilisateurs
+@inject ServiceToast Toast
+@* Gestion des utilisateurs : prénom, rôle, PIN, actif. *@
+<div class="ligne ligne--espace" style="margin-bottom: .75rem">
+    <p class="doux" style="margin: 0">Chaque personne se connecte en touchant son nom puis en tapant son code PIN.</p>
+    <GrosBouton Style="principal" Icone="plus" Texte="Nouvel utilisateur" OnClick="Nouveau" />
+</div>
+
+@if (_liste is not null)
+{
+    <ListeRecherchable T="UtilisateurAdmin" Elements="_liste" TexteRecherche="@(u => $"{u.Prenom} {u.Nom} {Roles.Libelle(u.Role)}")"
+                       Placeholder="Rechercher un utilisateur…" Singulier="utilisateur" Pluriel="utilisateurs">
+        <Entetes>
+            <th></th><th>Nom</th><th>Rôle</th><th>État</th><th></th>
+        </Entetes>
+        <Ligne Context="u">
+            <td style="width: 56px"><Avatar Initiales="@u.Initiales" Couleur="@u.Couleur" /></td>
+            <td><strong>@u.Prenom</strong> @u.Nom</td>
+            <td>@Roles.Libelle(u.Role)</td>
+            <td>@Etat(u)</td>
+            <td class="droite">
+                @if (u.Bloque)
+                {
+                    <button type="button" class="bouton bouton--discret" @onclick="() => Debloquer(u)">Débloquer</button>
+                }
+                <button type="button" class="bouton bouton--secondaire" @onclick="() => Modifier(u)"><Icone Nom="modifier" /> Modifier</button>
+            </td>
+        </Ligne>
+        <Carte Context="u">
+            <div class="ligne">
+                <Avatar Initiales="@u.Initiales" Couleur="@u.Couleur" />
+                <div>
+                    <div class="carte__titre">@u.Prenom @u.Nom</div>
+                    <div class="carte__ligne">@Roles.Libelle(u.Role) · @Etat(u)</div>
+                </div>
+                <button type="button" class="bouton bouton--secondaire pousse" @onclick="() => Modifier(u)"><Icone Nom="modifier" /></button>
+            </div>
+        </Carte>
+    </ListeRecherchable>
+}
+
+<Fenetre Ouverte="_ouverte" OnFermer="() => _ouverte = false" Titre="@(_id is null ? "Nouvel utilisateur" : "Modifier l'utilisateur")">
+    <ChildContent>
+        <div class="grille-champs grille-champs--2">
+            <div class="champ">
+                <label for="u-prenom">Prénom <span class="champ__obligatoire">*</span></label>
+                <input id="u-prenom" @bind="_prenom" autocomplete="off" />
+            </div>
+            <div class="champ">
+                <label for="u-nom">Nom</label>
+                <input id="u-nom" @bind="_nom" autocomplete="off" />
+            </div>
+        </div>
+        <div class="champ">
+            <span class="champ__etiquette">Rôle</span>
+            <div class="choix-boutons">
+                @foreach (var role in Enum.GetValues<Role>())
+                {
+                    <button type="button" class="@(role == _role ? "actif" : null)" @onclick="() => _role = role">@Roles.Libelle(role)</button>
+                }
+            </div>
+            <span class="champ__aide">@Roles.Description(_role)</span>
+        </div>
+        <div class="champ">
+            <label for="u-pin">@(_id is null ? "Code PIN (4 à 6 chiffres)" : "Nouveau code PIN (laisser vide pour ne pas changer)")</label>
+            <input id="u-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" @bind="_pin" />
+        </div>
+        <label class="case"><input type="checkbox" @bind="_actif" /> Actif (apparaît sur l'écran de connexion)</label>
+        @if (_erreur is not null)
+        {
+            <p class="erreur-formulaire">@_erreur</p>
+        }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => _ouverte = false">Annuler</button>
+        <GrosBouton Style="principal" Texte="Enregistrer" OnClick="Enregistrer" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private IReadOnlyList<UtilisateurAdmin>? _liste;
+    private bool _ouverte;
+    private int? _id;
+    private string _prenom = string.Empty;
+    private string _nom = string.Empty;
+    private string _pin = string.Empty;
+    private Role _role = Role.Atelier;
+    private bool _actif = true;
+    private string? _erreur;
+
+    protected override async Task OnInitializedAsync() => _liste = await Utilisateurs.Lister();
+
+    private static string Etat(UtilisateurAdmin u) => !u.Actif ? "Désactivé" : u.Bloque ? "Bloqué (PIN)" : "Actif";
+
+    private void Nouveau()
+    {
+        (_id, _prenom, _nom, _pin, _role, _actif, _erreur) = (null, string.Empty, string.Empty, string.Empty, Role.Atelier, true, null);
+        _ouverte = true;
+    }
+
+    private void Modifier(UtilisateurAdmin u)
+    {
+        (_id, _prenom, _nom, _pin, _role, _actif, _erreur) = (u.Id, u.Prenom, u.Nom, string.Empty, u.Role, u.Actif, null);
+        _ouverte = true;
+    }
+
+    private async Task Debloquer(UtilisateurAdmin u)
+    {
+        await Utilisateurs.Debloquer(u.Id);
+        _liste = await Utilisateurs.Lister();
+        Toast.Succes($"{u.Prenom} est débloqué");
+    }
+
+    private async Task Enregistrer()
+    {
+        var saisie = new SaisieUtilisateur(_prenom, _nom, _role, _actif, string.IsNullOrEmpty(_pin) ? null : _pin);
+        var resultat = _id is null ? await Utilisateurs.Creer(saisie) : await Utilisateurs.Modifier(_id.Value, saisie);
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        _ouverte = false;
+        _liste = await Utilisateurs.Lister();
+        Toast.Succes(_id is null ? $"Utilisateur {_prenom} créé" : $"Utilisateur {_prenom} modifié");
+    }
+}

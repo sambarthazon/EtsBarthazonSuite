@@ -1,0 +1,126 @@
+@* Choix dans une liste, avec recherche et création à la volée (client, matière, fournisseur…). *@
+<div class="champ">
+    @if (Etiquette is not null)
+    {
+        <label for="@_id">@Etiquette @if (Obligatoire) { <span class="champ__obligatoire">*</span> }</label>
+    }
+    <div class="champ-choix">
+        <input id="@_id" class="saisie" type="text" autocomplete="off" placeholder="@Placeholder"
+               value="@(_ouvert ? _texte : LibelleChoisi)" @oninput="Saisir" @onfocus="Ouvrir" @onkeydown="Touche" />
+        @if (_ouvert)
+        {
+            <div class="menu__fond" @onclick="Fermer"></div>
+            <div class="champ-choix__liste" role="listbox">
+                @foreach (var option in Filtrees.Take(50))
+                {
+                    <button type="button" role="option" class="champ-choix__option @(option.Id == Valeur ? "actif" : null)" @onclick="() => Choisir(option.Id)">
+                        <span>@option.Libelle</span>
+                        @if (option.Detail is not null)
+                        {
+                            <span class="doux petit pousse">@option.Detail</span>
+                        }
+                    </button>
+                }
+                @if (PeutCreer)
+                {
+                    <button type="button" class="champ-choix__option champ-choix__creer" @onclick="CreerOption">
+                        <Icone Nom="plus" /> Créer « @_texte.Trim() »
+                    </button>
+                }
+                @if (!Filtrees.Any() && !PeutCreer)
+                {
+                    <div class="champ-choix__option doux">Aucun résultat</div>
+                }
+            </div>
+        }
+    </div>
+    @if (Aide is not null)
+    {
+        <span class="champ__aide">@Aide</span>
+    }
+</div>
+
+@code {
+    private readonly string _id = "c" + Guid.NewGuid().ToString("N")[..8];
+    private bool _ouvert;
+    private string _texte = string.Empty;
+
+    [Parameter, EditorRequired] public IReadOnlyList<OptionChoix> Options { get; set; } = [];
+
+    [Parameter] public int? Valeur { get; set; }
+
+    [Parameter] public EventCallback<int?> ValeurChanged { get; set; }
+
+    /// <summary>Crée un élément à partir du texte saisi et renvoie son identifiant (null si refusé).</summary>
+    [Parameter] public Func<string, Task<int?>>? Creer { get; set; }
+
+    [Parameter] public string? Etiquette { get; set; }
+
+    [Parameter] public string? Placeholder { get; set; } = "Rechercher ou créer…";
+
+    [Parameter] public string? Aide { get; set; }
+
+    [Parameter] public bool Obligatoire { get; set; }
+
+    private string LibelleChoisi => Options.FirstOrDefault(o => o.Id == Valeur)?.Libelle ?? string.Empty;
+
+    private IEnumerable<OptionChoix> Filtrees => Options.Where(o => Recherche.Correspond(_texte, o.Libelle, o.Detail));
+
+    private bool PeutCreer => Creer is not null && !string.IsNullOrWhiteSpace(_texte)
+        && !Options.Any(o => string.Equals(Recherche.Normaliser(o.Libelle).Trim(), Recherche.Normaliser(_texte).Trim(), StringComparison.Ordinal));
+
+    private void Ouvrir()
+    {
+        _texte = string.Empty;
+        _ouvert = true;
+    }
+
+    private void Fermer() => _ouvert = false;
+
+    private void Saisir(ChangeEventArgs e)
+    {
+        _texte = e.Value?.ToString() ?? string.Empty;
+        _ouvert = true;
+    }
+
+    private async Task Touche(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            Fermer();
+        }
+        else if (e.Key == "Enter" && _ouvert)
+        {
+            var premier = Filtrees.FirstOrDefault();
+            if (premier is not null)
+            {
+                await Choisir(premier.Id);
+            }
+            else if (PeutCreer)
+            {
+                await CreerOption();
+            }
+        }
+    }
+
+    private async Task Choisir(int id)
+    {
+        _ouvert = false;
+        Valeur = id;
+        await ValeurChanged.InvokeAsync(id);
+    }
+
+    private async Task CreerOption()
+    {
+        if (Creer is null)
+        {
+            return;
+        }
+
+        var id = await Creer(_texte.Trim());
+        if (id is not null)
+        {
+            await Choisir(id.Value);
+        }
+    }
+}

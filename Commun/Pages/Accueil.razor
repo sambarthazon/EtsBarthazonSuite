@@ -1,0 +1,24 @@
+@page "/"
+@attribute [Authorize]
+@inject CatalogueModules Catalogue
+@inject ServiceUtilisateurs Utilisateurs
+@inject IUtilisateurCourant Courant
+@inject NavigationManager Navigation
+@* Pas de page « Toutes les applications » : on ouvre directement la dernière application utilisée. *@
+<PageTitle>Barthazon</PageTitle>
+@if (Catalogue.Modules.Count == 0)
+{
+    <div class="vide"><div class="vide__titre">Aucune application n'est installée.</div></div>
+}
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var utilisateur = await Utilisateurs.ObtenirActif(Courant.Id);
+        var module = Catalogue.Trouver(utilisateur?.DerniereApplication) ?? Catalogue.Modules.FirstOrDefault();
+        if (module is not null)
+        {
+            Navigation.NavigateTo(module.CheminAccueil, replace: true);
+        }
+    }
+}

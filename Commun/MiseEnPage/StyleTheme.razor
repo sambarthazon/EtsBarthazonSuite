@@ -1,0 +1,22 @@
+@inject ServiceParametres Parametres
+@* Couleur principale enregistrée (Paramètres → Apparence), injectée au chargement de chaque page. *@
+<style>:root { --couleur-principale: @_couleur; --texte-sur-principale: @_texte; }</style>
+
+@code {
+    private string _couleur = ServiceParametres.CouleurParDefaut;
+    private string _texte = "#ffffff";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _couleur = await Parametres.CouleurPrincipale();
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException)
+        {
+            // Base pas encore créée : couleur par défaut.
+        }
+
+        _texte = ServiceParametres.TexteSurCouleur(_couleur);
+    }
+}

@@ -1,0 +1,14 @@
+@* Écran de reconnexion personnalisé : « Connexion perdue, reconnexion… » (Blazor Server a besoin du réseau). *@
+<script type="module" src="_content/Barthazon.Commun/reconnexion.js"></script>
+<dialog id="components-reconnect-modal" data-nosnippet class="reconnexion">
+    <div class="reconnexion__contenu">
+        <div class="reconnexion__animation" aria-hidden="true"></div>
+        <p class="components-reconnect-first-attempt-visible components-reconnect-repeated-attempt-visible"><strong>Connexion perdue, reconnexion…</strong></p>
+        <p class="components-reconnect-repeated-attempt-visible doux">Nouvel essai dans <span id="components-seconds-to-next-attempt"></span> s. Vérifiez le wifi.</p>
+        <p class="components-reconnect-failed-visible"><strong>Impossible de joindre le serveur.</strong></p>
+        <button id="components-reconnect-button" class="bouton bouton--principal components-reconnect-failed-visible">Réessayer</button>
+        <p class="components-pause-visible"><strong>Session mise en pause.</strong></p>
+        <p class="components-resume-failed-visible"><strong>Impossible de reprendre : rechargez la page.</strong></p>
+        <button id="components-resume-button" class="bouton bouton--principal components-pause-visible components-resume-failed-visible">Reprendre</button>
+    </div>
+</dialog>

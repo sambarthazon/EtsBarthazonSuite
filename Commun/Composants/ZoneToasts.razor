@@ -1,0 +1,20 @@
+@implements IDisposable
+@inject ServiceToast Toasts
+<div class="toasts" role="status" aria-live="polite">
+    @foreach (var message in Toasts.Messages)
+    {
+        <div class="toast toast--@message.Genre.ToString().ToLowerInvariant()">
+            <Icone Nom="@(message.Genre == GenreToast.Erreur ? "alerte" : "valider")" />
+            <span>@message.Texte</span>
+            <button type="button" @onclick="() => Toasts.Fermer(message.Id)" aria-label="Fermer">×</button>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized() => Toasts.Change += Rafraichir;
+
+    public void Dispose() => Toasts.Change -= Rafraichir;
+
+    private void Rafraichir() => _ = InvokeAsync(StateHasChanged);
+}

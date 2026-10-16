@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Annuaire/">
+    <Project Path="Annuaire/Barthazon.Annuaire.csproj" />
+  </Folder>
+  <Folder Name="/Commun/">
+    <Project Path="Commun/Barthazon.Commun.csproj" />
+  </Folder>
+  <Folder Name="/Portail/">
+    <Project Path="Portail/Barthazon.Portail.csproj" />
+  </Folder>
+  <Folder Name="/Stock/">
+    <Project Path="Stock/Barthazon.Stock.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Barthazon.Tests.csproj" />
+  </Folder>
+</Solution>

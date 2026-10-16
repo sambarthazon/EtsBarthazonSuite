@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <!--
+    Socle commun : connexion, rôles, mise en page (barre du haut, sélecteur d'application),
+    thème, composants, historique et contrats d'échange entre applications.
+    Ne référence aucune application.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Barthazon.Commun</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Barthazon.Tests" />
+  </ItemGroup>
+</Project>

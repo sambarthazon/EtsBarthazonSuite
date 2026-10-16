@@ -1,0 +1,14 @@
+@* État d'un stock : OK (vert), Sous le seuil (orange), Rupture (rouge), pas encore suivi (gris). *@
+<span class="badge badge--@Classe" title="@Format.LibelleEtat(Etat)">@Format.LibelleEtat(Etat)</span>
+
+@code {
+    [Parameter] public EtatStock Etat { get; set; }
+
+    private string Classe => Etat switch
+    {
+        EtatStock.Ok => "ok",
+        EtatStock.SousLeSeuil => "alerte",
+        EtatStock.Rupture => "rupture",
+        _ => "neutre",
+    };
+}
