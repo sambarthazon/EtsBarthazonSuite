@@ -33,6 +33,7 @@ public static class AnnuaireExtensions
             Cle = Cle,
             Nom = "Annuaire",
             Ordre = 10,
+            FeuilleDeStyle = "_content/Barthazon.Annuaire/annuaire.css",
             Assemblage = typeof(AnnuaireExtensions).Assembly,
             Onglets =
             [

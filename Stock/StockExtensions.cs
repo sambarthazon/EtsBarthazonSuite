@@ -29,6 +29,7 @@ public static class StockExtensions
             Cle = Cle,
             Nom = "Stock",
             Ordre = 20,
+            FeuilleDeStyle = "_content/Barthazon.Stock/stock.css",
             Assemblage = typeof(StockExtensions).Assembly,
             Onglets =
             [

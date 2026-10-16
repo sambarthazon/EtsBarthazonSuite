@@ -5,15 +5,22 @@
     <AssemblyName>Barthazon.Portail</AssemblyName>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
+  <!--
+    Retirer une application du portail : dotnet build Portail -p:SansStock=true (ou SansAnnuaire=true).
+    L'autre application compile et fonctionne seule (blocs de coopération masqués).
+  -->
+  <PropertyGroup>
+    <DefineConstants Condition="'$(SansStock)' == 'true'">$(DefineConstants);SANS_STOCK</DefineConstants>
+    <DefineConstants Condition="'$(SansAnnuaire)' == 'true'">$(DefineConstants);SANS_ANNUAIRE</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Retirer une application = retirer sa ligne ici et son appel dans Program.cs. -->
     <ProjectReference Include="..\Commun\Barthazon.Commun.csproj" />
-    <ProjectReference Include="..\Annuaire\Barthazon.Annuaire.csproj" />
-    <ProjectReference Include="..\Stock\Barthazon.Stock.csproj" />
+    <ProjectReference Include="..\Annuaire\Barthazon.Annuaire.csproj" Condition="'$(SansAnnuaire)' != 'true'" />
+    <ProjectReference Include="..\Stock\Barthazon.Stock.csproj" Condition="'$(SansStock)' != 'true'" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Barthazon.Tests" />

@@ -1,3 +1,4 @@
+@inject Barthazon.Commun.Modules.CatalogueModules Catalogue
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -9,8 +10,10 @@
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["_content/Barthazon.Commun/theme.css"]" />
     <link rel="stylesheet" href="@Assets["_content/Barthazon.Commun/commun.css"]" />
-    <link rel="stylesheet" href="@Assets["_content/Barthazon.Annuaire/annuaire.css"]" />
-    <link rel="stylesheet" href="@Assets["_content/Barthazon.Stock/stock.css"]" />
+    @foreach (var module in Catalogue.Modules.Where(m => m.FeuilleDeStyle is not null))
+    {
+        <link rel="stylesheet" href="@Assets[module.FeuilleDeStyle!]" />
+    }
     <StyleTheme />
     <ImportMap />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />

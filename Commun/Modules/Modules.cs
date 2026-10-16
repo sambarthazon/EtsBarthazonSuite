@@ -50,6 +50,9 @@ public sealed record ModuleApplication
 
     public IReadOnlyList<OngletParametres> Parametres { get; init; } = [];
 
+    /// <summary>Feuille de style propre à l'application (chargée par le portail), ex. « _content/Barthazon.Stock/stock.css ».</summary>
+    public string? FeuilleDeStyle { get; init; }
+
     /// <summary>Points d'accès HTTP propres à l'application (fichiers, exports…).</summary>
     public Action<IEndpointRouteBuilder>? PointsAcces { get; init; }
 }

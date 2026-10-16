@@ -1,10 +1,14 @@
 using System.Globalization;
+#if !SANS_ANNUAIRE
 using Barthazon.Annuaire;
+#endif
 using Barthazon.Commun;
 using Barthazon.Commun.Donnees;
 using Barthazon.Portail.Composants;
 using Barthazon.Portail.Demo;
+#if !SANS_STOCK
 using Barthazon.Stock;
+#endif
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,8 +25,12 @@ builder.Services.AddRazorComponents()
 
 // Socle commun, puis chaque application (retirer une ligne retire l'application).
 builder.Services.AjouterCommun(builder.Configuration, builder.Environment);
+#if !SANS_ANNUAIRE
 builder.Services.AjouterAnnuaire(builder.Configuration);
+#endif
+#if !SANS_STOCK
 builder.Services.AjouterStock(builder.Configuration);
+#endif
 
 builder.Services.AddScoped<DonneesDemonstration>();
 
