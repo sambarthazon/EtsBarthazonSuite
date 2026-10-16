@@ -1,0 +1,112 @@
+@inject ServiceMouvements Mouvements
+@inject ServiceConfirmation Confirmation
+@inject ServiceToast Toast
+@* Mouvements : quantité signée (+ vert, − rouge), stock après ; un mouvement annulé est barré, avec lien vers son annulation. *@
+@if (Lignes.Count == 0)
+{
+    <div class="vide">Aucun mouvement.</div>
+}
+else
+{
+    <div class="liste">
+        <table class="tableau">
+            <thead>
+                <tr>
+                    <th>Date</th><th>Qui</th><th>Type</th>@if (AvecReference) { <th>Brut / pièce finie</th> }
+                    <th class="droite">Quantité</th><th class="droite">Stock après</th><th>Fournisseur / client · BL</th><th>Commentaire</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Lignes)
+                {
+                    <tr id="mvt-@m.Id" class="@(m.Annule ? "barre" : null)">
+                        <td class="nombre">@Format.DateHeure(m.Date)</td>
+                        <td>@m.Utilisateur</td>
+                        <td>@m.TypeTexte</td>
+                        @if (AvecReference)
+                        {
+                            <td><a href="@Lien(m)"><strong>@m.Reference</strong></a> <span class="doux petit">@m.Designation</span></td>
+                        }
+                        <td class="droite nombre @(m.Quantite > 0 ? "positif" : "negatif")">@Format.QuantiteSignee(m.Quantite, m.Unite)</td>
+                        <td class="droite nombre">@Format.Nombre(m.QuantiteApres)</td>
+                        <td>@m.Tiers @if (m.NumeroBL is not null) { <span class="doux">BL @m.NumeroBL</span> }</td>
+                        <td>@m.Commentaire @Annulation(m)</td>
+                        <td class="droite">
+                            @if (m.PeutAnnuler)
+                            {
+                                <button type="button" class="bouton bouton--discret" title="Annuler ce mouvement" @onclick="() => Annuler(m)"><Icone Nom="annuler" /> Annuler</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="cartes">
+            @foreach (var m in Lignes)
+            {
+                <div class="carte @(m.Annule ? "barre" : null)">
+                    <div class="carte__titre">
+                        <span class="nombre @(m.Quantite > 0 ? "positif" : "negatif")">@Format.QuantiteSignee(m.Quantite, m.Unite)</span>
+                        <span>@m.TypeTexte</span>
+                        @if (AvecReference) { <a href="@Lien(m)">@m.Reference</a> }
+                    </div>
+                    <div class="carte__ligne">
+                        <span>@Format.DateHeure(m.Date) · @m.Utilisateur</span>
+                        <span>stock après : @Format.Nombre(m.QuantiteApres)</span>
+                        @if (m.Tiers is not null) { <span>@m.Tiers</span> }
+                        @if (m.NumeroBL is not null) { <span>BL @m.NumeroBL</span> }
+                    </div>
+                    @if (m.Commentaire is not null || m.Annule) { <div class="carte__ligne">@m.Commentaire @Annulation(m)</div> }
+                    @if (m.PeutAnnuler)
+                    {
+                        <button type="button" class="bouton bouton--discret" style="margin-top: .3rem" @onclick="() => Annuler(m)"><Icone Nom="annuler" /> Annuler</button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<LigneMouvement> Lignes { get; set; } = [];
+
+    [Parameter] public bool AvecReference { get; set; } = true;
+
+    [Parameter] public EventCallback OnChange { get; set; }
+
+    private static string Lien(LigneMouvement m) => m.TypeReference == TypeReference.Brut ? $"/stock/bruts/{m.ReferenceId}" : $"/stock/pieces/{m.ReferenceId}";
+
+    private static RenderFragment Annulation(LigneMouvement m) => __builder =>
+    {
+        if (m.AnnuleParId is { } par)
+        {
+            <a class="petit" href="/stock/mouvements?periode=Tout#mvt-@par">annulé</a>
+        }
+        else if (m.AnnuleId is { } annule)
+        {
+            <a class="petit" href="/stock/mouvements?periode=Tout#mvt-@annule">voir le mouvement annulé</a>
+        }
+    };
+
+    private async Task Annuler(LigneMouvement m)
+    {
+        var question = m.Type == TypeMouvement.Fabrication
+            ? "Annuler cette fabrication ? Les deux mouvements (brut et pièce finie) seront annulés."
+            : $"Annuler ce mouvement ({m.TypeTexte.ToLowerInvariant()} {Format.QuantiteSignee(m.Quantite, m.Unite)} {m.Reference}) ?";
+        if (!await Confirmation.Demander(question, "Annuler le mouvement", "Garder"))
+        {
+            return;
+        }
+
+        var resultat = await Mouvements.Annuler(m.Id);
+        if (resultat.Reussi)
+        {
+            Toast.Succes(resultat.Valeur!.Message);
+            await OnChange.InvokeAsync();
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+}

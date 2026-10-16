@@ -1,0 +1,113 @@
+@page "/stock/mouvements"
+@inject ServiceStock Stock
+@inject ServiceUtilisateurs Utilisateurs
+@inject IUtilisateurCourant Courant
+@inject IJSRuntime JS
+<PageTitle>Mouvements — Stock</PageTitle>
+
+<EntetePage Titre="Mouvements" SousTitre="Journal de tous les mouvements, du plus récent au plus ancien">
+    <Actions>
+        @if (Courant.Peut(Role.Gestion))
+        {
+            <GrosBouton Icone="telecharger" Texte="Export CSV" OnClick="Exporter" />
+        }
+    </Actions>
+</EntetePage>
+
+<div class="liste__outils">
+    <div class="liste__recherche">
+        <Icone Nom="recherche" />
+        <input type="search" placeholder="Rechercher : référence, BL, fournisseur, commentaire…" value="@_filtre.Texte" @oninput="Saisir" aria-label="Rechercher" />
+    </div>
+    <div class="liste__filtres">
+        <select aria-label="Période" @bind="_filtre.Periode" @bind:after="Charger">
+            <option value="@PeriodeJournal.Aujourdhui">Aujourd'hui</option>
+            <option value="@PeriodeJournal.SeptJours">7 jours</option>
+            <option value="@PeriodeJournal.TrenteJours">30 jours</option>
+            <option value="@PeriodeJournal.Tout">Tout</option>
+        </select>
+        <select aria-label="Type" @bind="_filtre.Type" @bind:after="Charger">
+            <option value="">Tous les types</option>
+            @foreach (var type in Enum.GetValues<TypeMouvement>())
+            {
+                <option value="@type">@ReglesStock.Libelle(type)</option>
+            }
+        </select>
+        <select aria-label="Bruts ou pièces finies" @bind="_filtre.TypeReference" @bind:after="Charger">
+            <option value="">Bruts et pièces finies</option>
+            <option value="@TypeReference.Brut">Bruts</option>
+            <option value="@TypeReference.PieceFinie">Pièces finies</option>
+        </select>
+        <select aria-label="Utilisateur" @bind="_filtre.UtilisateurId" @bind:after="Charger">
+            <option value="">Tout le monde</option>
+            @foreach (var (id, prenom) in _utilisateurs)
+            {
+                <option value="@id">@prenom</option>
+            }
+        </select>
+        @if (_filtre.ReferenceId is not null)
+        {
+            <button type="button" class="bouton bouton--secondaire" @onclick="ToutesReferences"><Icone Nom="fermer" /> @(_lignes?.FirstOrDefault()?.Reference ?? "Une référence")</button>
+        }
+    </div>
+</div>
+
+@if (_lignes is null)
+{
+    <div class="vide">Chargement…</div>
+}
+else
+{
+    <div class="liste__compte">@(_lignes.Count == 1 ? "1 mouvement" : $"{_lignes.Count} mouvements")</div>
+    <TableauMouvements Lignes="_lignes" OnChange="Charger" />
+}
+
+@code {
+    private readonly FiltreJournal _filtre = new();
+    private IReadOnlyList<LigneMouvement>? _lignes;
+    private IReadOnlyList<(int, string)> _utilisateurs = [];
+
+    [SupplyParameterFromQuery(Name = "periode")] private string? Periode { get; set; }
+
+    [SupplyParameterFromQuery(Name = "piece")] private int? Piece { get; set; }
+
+    [SupplyParameterFromQuery(Name = "brut")] private int? Brut { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _utilisateurs = (await Utilisateurs.Prenoms()).OrderBy(u => u.Value, StringComparer.Ordinal).Select(u => (u.Key, u.Value)).ToList();
+        if (Enum.TryParse<PeriodeJournal>(Periode, out var periode))
+        {
+            _filtre.Periode = periode;
+        }
+
+        if (Piece is not null || Brut is not null)
+        {
+            (_filtre.TypeReference, _filtre.ReferenceId) = Piece is not null ? (TypeReference.PieceFinie, Piece) : (TypeReference.Brut, Brut);
+        }
+
+        await Charger();
+    }
+
+    private async Task Charger() => _lignes = await Stock.Journal(_filtre);
+
+    private async Task Saisir(ChangeEventArgs e)
+    {
+        _filtre.Texte = e.Value?.ToString();
+        await Charger();
+    }
+
+    private async Task ToutesReferences()
+    {
+        (_filtre.TypeReference, _filtre.ReferenceId) = (null, null);
+        await Charger();
+    }
+
+    private async Task Exporter()
+    {
+        var contenu = ServiceStock.Csv(_lignes ?? []);
+        using var flux = new MemoryStream(contenu);
+        using var reference = new DotNetStreamReference(flux);
+        await JS.InvokeVoidAsync("barthazon.telecharger", $"mouvements-stock-{DateTime.Now:yyyy-MM-dd}.csv", reference);
+    }
+}

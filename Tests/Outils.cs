@@ -36,6 +36,8 @@ internal sealed class FabriqueTest<T>(Func<T> creer) : IDbContextFactory<T>
     where T : DbContext
 {
     public T CreateDbContext() => creer();
+
+    public Task<T> CreateDbContextAsync(CancellationToken annulation = default) => Task.FromResult(creer());
 }
 
 /// <summary>Horloge réglable.</summary>

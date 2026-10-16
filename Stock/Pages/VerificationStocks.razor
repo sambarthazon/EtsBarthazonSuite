@@ -1,0 +1,55 @@
+@inject ServiceMouvements Mouvements
+@inject ServiceToast Toast
+@inject ServiceConfirmation Confirmation
+@* Paramètres → Vérifier les stocks : recalcule les quantités à partir des mouvements et signale les écarts. *@
+<div class="bloc" style="max-width: 760px">
+    <h2 class="bloc__titre">Vérifier les stocks</h2>
+    <p class="doux">Chaque quantité en stock est recalculée à partir de tous les mouvements. Normalement, aucun écart n'apparaît.</p>
+    <GrosBouton Style="principal" Icone="valider" Texte="Lancer la vérification" OnClick="Verifier" />
+    @if (_ecarts is not null)
+    {
+        @if (_ecarts.Count == 0)
+        {
+            <p class="information" style="margin-top: 1rem">Aucun écart : tous les stocks correspondent aux mouvements.</p>
+        }
+        else
+        {
+            <p class="avertissement" style="margin-top: 1rem">@_ecarts.Count écart(s) trouvé(s).</p>
+            <table class="tableau">
+                <thead><tr><th>Référence</th><th class="droite">Enregistré</th><th class="droite">Calculé</th></tr></thead>
+                <tbody>
+                    @foreach (var e in _ecarts)
+                    {
+                        <tr><td>@e.Reference</td><td class="droite nombre">@Format.Nombre(e.Enregistre)</td><td class="droite nombre">@Format.Nombre(e.Calcule)</td></tr>
+                    }
+                </tbody>
+            </table>
+            <p><GrosBouton Style="danger" Texte="Corriger d'après les mouvements" OnClick="Corriger" /></p>
+        }
+    }
+</div>
+
+@code {
+    private IReadOnlyList<EcartStock>? _ecarts;
+
+    private async Task Verifier() => _ecarts = await Mouvements.Verifier();
+
+    private async Task Corriger()
+    {
+        if (!await Confirmation.Demander("Remplacer les quantités enregistrées par les quantités calculées ?", "Corriger"))
+        {
+            return;
+        }
+
+        var resultat = await Mouvements.Corriger();
+        if (resultat.Reussi)
+        {
+            Toast.Succes($"{resultat.Valeur} stock(s) corrigé(s)");
+            await Verifier();
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+}

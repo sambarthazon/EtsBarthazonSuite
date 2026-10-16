@@ -1,0 +1,79 @@
+@inject IAnnuaireLecture Annuaire
+@inject ServiceStock Stock
+@inject ServiceMouvements Mouvements
+@* Ajuster (inventaire) : on saisit la quantité réellement comptée ; l'écart est calculé. Sert aussi au stock de départ. *@
+<Fenetre Ouverte="true" OnFermer="() => OnFermer.InvokeAsync()" Titre="Ajuster le stock (inventaire)">
+    <ChildContent>
+        @if (_reference is null)
+        {
+            <p class="doux">Chargement…</p>
+        }
+        else
+        {
+            <p><strong>@_reference</strong> · @_designation</p>
+            <p>Stock enregistré : <strong>@Format.Quantite(_stock, _unite)</strong></p>
+            <ChampQuantite Etiquette="Quantité réellement comptée" Obligatoire="true" Unite="@Format.Unite(_unite, _compte ?? 0)" @bind-Valeur="_compte" />
+            @if (_compte is { } compte)
+            {
+                var ecart = compte - _stock;
+                <p class="@(ecart == 0 ? "information" : "avertissement")">Écart : <strong class="@(ecart > 0 ? "positif" : ecart < 0 ? "negatif" : null)">@(ecart == 0 ? "aucun" : Format.QuantiteSignee(ecart, _unite))</strong></p>
+            }
+            <div class="champ"><label for="aj-com">Commentaire</label><input id="aj-com" @bind="_commentaire" placeholder="ex. inventaire annuel, stock de départ" /></div>
+            @if (_erreur is not null) { <p class="erreur-formulaire">@_erreur</p> }
+        }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => OnFermer.InvokeAsync()">Annuler</button>
+        <GrosBouton Style="principal" Gros="true" Texte="Enregistrer l'inventaire" Desactive="@(_compte is null || _compte == _stock || _enCours)" OnClick="Enregistrer" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private string? _reference;
+    private string? _designation;
+    private Unite _unite = Unite.Piece;
+    private decimal _stock;
+    private decimal? _compte;
+    private string? _commentaire;
+    private string? _erreur;
+    private bool _enCours;
+
+    [Parameter] public TypeReference Type { get; set; }
+
+    [Parameter] public int Id { get; set; }
+
+    [Parameter] public EventCallback OnFermer { get; set; }
+
+    [Parameter] public EventCallback<string> OnEnregistre { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Type == TypeReference.PieceFinie)
+        {
+            var piece = await Annuaire.ObtenirPieceFinie(Id);
+            (_reference, _designation) = (piece?.Reference, piece?.Designation);
+        }
+        else
+        {
+            var brut = await Annuaire.ObtenirBrut(Id);
+            (_reference, _designation, _unite) = (brut?.Reference, brut?.Libelle, brut?.Unite ?? Unite.Piece);
+        }
+
+        _stock = (await Stock.Niveau(Type, Id))?.Quantite ?? 0;
+        _compte = Math.Max(0, _stock);
+    }
+
+    private async Task Enregistrer()
+    {
+        _enCours = true;
+        var resultat = await Mouvements.EnregistrerAjustement(new DemandeAjustement(Type, Id, _compte ?? 0, _commentaire));
+        _enCours = false;
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        await OnEnregistre.InvokeAsync(resultat.Valeur!.Message);
+    }
+}

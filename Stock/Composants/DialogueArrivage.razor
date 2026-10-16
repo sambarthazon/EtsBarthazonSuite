@@ -1,0 +1,127 @@
+@inject IAnnuaireLecture Annuaire
+@inject ServiceMouvements Mouvements
+@* 📦 Arrivage brut : + quantité sur le stock du brut. Depuis une pièce finie, le brut principal est présélectionné. *@
+<Fenetre Ouverte="true" OnFermer="() => OnFermer.InvokeAsync()" Titre="📦 Arrivage brut">
+    <ChildContent>
+        @if (_bruts.Count == 0)
+        {
+            <p class="doux">Chargement…</p>
+        }
+        else
+        {
+            @if (_bruts.Count > 1)
+            {
+                <div class="champ">
+                    <span class="champ__etiquette">Brut</span>
+                    <div class="pile" style="gap: .4rem">
+                        @foreach (var b in _bruts)
+                        {
+                            <button type="button" class="choix-brut @(b.Brut.Id == _brutId ? "choisi" : null)" style="text-align: left; font: inherit; cursor: pointer" @onclick="() => ChoisirBrut(b.Brut.Id)">
+                                @if (b.Principal) { <span class="etoile"><Icone Nom="etoile" /></span> }
+                                <span class="etiquette">@b.Brut.Reference</span>
+                                <span class="choix-brut__libelle">@b.Brut.Libelle</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p><span class="etiquette">@Brut?.Reference</span> @Brut?.Libelle</p>
+            }
+            <ChampQuantite Etiquette="Quantité reçue" Obligatoire="true" Unite="@Format.Unite(Brut?.Unite ?? Unite.Piece, _quantite ?? 0)" @bind-Valeur="_quantite" />
+            <div class="champ">
+                <label for="a-fourn">Fournisseur</label>
+                <select id="a-fourn" @bind="_fournisseurId">
+                    @foreach (var f in _fournisseurs)
+                    {
+                        <option value="@f.FournisseurId">@f.Nom@(f.Principal ? " ★" : null)@(f.ReferenceFournisseur is null ? null : $" (réf. {f.ReferenceFournisseur})")</option>
+                    }
+                    <option value="0">Autre / non précisé</option>
+                </select>
+            </div>
+            <SectionRepliable Titre="Plus de détails : date, n° de bon de livraison, commentaire">
+                <div class="pile">
+                    <div class="champ"><label for="a-date">Date</label><input id="a-date" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" @bind="_date" /></div>
+                    <div class="champ"><label for="a-bl">N° de bon de livraison</label><input id="a-bl" @bind="_bl" /></div>
+                    <div class="champ"><label for="a-com">Commentaire</label><input id="a-com" @bind="_commentaire" /></div>
+                </div>
+            </SectionRepliable>
+            @if (_erreur is not null) { <p class="erreur-formulaire">@_erreur</p> }
+        }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => OnFermer.InvokeAsync()">Annuler</button>
+        <GrosBouton Style="principal" Gros="true" Texte="@TexteBouton" Desactive="@(_quantite is not > 0 || Brut is null || _enCours)" OnClick="Enregistrer" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private IReadOnlyList<BrutAssocie> _bruts = [];
+    private IReadOnlyList<FournisseurBrut> _fournisseurs = [];
+    private int _brutId;
+    private int _fournisseurId;
+    private decimal? _quantite;
+    private DateTime _date = DateTime.Today;
+    private string? _bl;
+    private string? _commentaire;
+    private string? _erreur;
+    private bool _enCours;
+
+    /// <summary>Brut, ou pièce finie (choix parmi ses bruts).</summary>
+    [Parameter] public TypeReference Type { get; set; }
+
+    [Parameter] public int Id { get; set; }
+
+    [Parameter] public EventCallback OnFermer { get; set; }
+
+    [Parameter] public EventCallback<string> OnEnregistre { get; set; }
+
+    private BrutResume? Brut => _bruts.FirstOrDefault(b => b.Brut.Id == _brutId)?.Brut;
+
+    private string TexteBouton => Brut is null || _quantite is not > 0
+        ? "Enregistrer"
+        : $"Enregistrer : {Format.QuantiteSignee(_quantite.Value, Brut.Unite)} de {Brut.Reference}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Type == TypeReference.PieceFinie)
+        {
+            _bruts = await Annuaire.BrutsDeLaPiece(Id);
+        }
+        else if (await Annuaire.ObtenirBrut(Id) is { } brut)
+        {
+            _bruts = [new BrutAssocie(0, brut, true, 1)];
+        }
+
+        if (_bruts.Count > 0)
+        {
+            await ChoisirBrut((_bruts.FirstOrDefault(b => b.Principal) ?? _bruts[0]).Brut.Id);
+        }
+        else
+        {
+            _erreur = "Cette pièce n'a aucun brut associé.";
+        }
+    }
+
+    private async Task ChoisirBrut(int brutId)
+    {
+        _brutId = brutId;
+        _fournisseurs = await Annuaire.FournisseursDuBrut(brutId);
+        _fournisseurId = (_fournisseurs.FirstOrDefault(f => f.Principal) ?? _fournisseurs.FirstOrDefault())?.FournisseurId ?? 0;
+    }
+
+    private async Task Enregistrer()
+    {
+        _enCours = true;
+        var resultat = await Mouvements.EnregistrerArrivage(new DemandeArrivage(_brutId, _quantite ?? 0, _fournisseurId == 0 ? null : _fournisseurId, _date, _bl, _commentaire));
+        _enCours = false;
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        await OnEnregistre.InvokeAsync(resultat.Valeur!.Message);
+    }
+}

@@ -1,0 +1,157 @@
+@inject IAnnuaireLecture Annuaire
+@inject ServiceStock Stock
+@inject ServiceMouvements Mouvements
+@inject ServiceConfirmation Confirmation
+@* ⚙ Fabriquer : − bruts consommés, + pièces obtenues (calculées avec « pièces obtenues par brut », modifiables dans les deux sens). *@
+<Fenetre Ouverte="true" OnFermer="() => OnFermer.InvokeAsync()" Titre="⚙ Fabriquer">
+    <ChildContent>
+        @if (_piece is null)
+        {
+            <p class="doux">Chargement…</p>
+        }
+        else
+        {
+            <p><strong>@_piece.Reference</strong> · @_piece.Designation</p>
+            @if (!_sansBrut && _bruts.Count > 1)
+            {
+                <div class="champ">
+                    <span class="champ__etiquette">Brut utilisé</span>
+                    <div class="pile" style="gap: .4rem">
+                        @foreach (var b in _bruts)
+                        {
+                            <button type="button" class="choix-brut @(b.Brut.Id == _brutId ? "choisi" : null)" style="text-align: left; font: inherit; cursor: pointer" @onclick="() => ChoisirBrut(b)">
+                                @if (b.Principal) { <span class="etoile"><Icone Nom="etoile" /></span> }
+                                <span class="etiquette">@b.Brut.Reference</span>
+                                <span class="choix-brut__libelle">@b.Brut.Libelle</span>
+                                <span class="doux petit">stock : @Format.Quantite(_stocks.GetValueOrDefault(b.Brut.Id), b.Brut.Unite)</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+            else if (!_sansBrut && Choisi is not null)
+            {
+                <p class="doux">Brut : <span class="etiquette">@Choisi.Brut.Reference</span> @Choisi.Brut.Libelle — stock : @Format.Quantite(_stocks.GetValueOrDefault(Choisi.Brut.Id), Choisi.Brut.Unite)</p>
+            }
+            <div class="grille-champs grille-champs--2">
+                @if (!_sansBrut)
+                {
+                    <ChampQuantite Etiquette="Bruts consommés" Unite="@Format.Unite(Choisi?.Brut.Unite ?? Unite.Piece, _brutsConsommes ?? 0)" Valeur="_brutsConsommes" ValeurChanged="ChangerBruts" />
+                }
+                <ChampQuantite Etiquette="Pièces obtenues" Obligatoire="true" Unite="@Format.Unite(Unite.Piece, _pieces ?? 0)" Valeur="_pieces" ValeurChanged="ChangerPieces"
+                               Aide="@(Choisi is { PiecesParBrut: > 1 } c && !_sansBrut ? $"1 brut → {c.PiecesParBrut} pièces" : null)" />
+            </div>
+            <label class="case"><input type="checkbox" @bind="_sansBrut" /> Ne pas déduire de brut <span class="doux petit">(brut non suivi en stock)</span></label>
+            <SectionRepliable Titre="Plus de détails : date, commentaire">
+                <div class="pile">
+                    <div class="champ"><label for="f-date">Date</label><input id="f-date" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" @bind="_date" /></div>
+                    <div class="champ"><label for="f-com">Commentaire</label><input id="f-com" @bind="_commentaire" /></div>
+                </div>
+            </SectionRepliable>
+            @if (_erreur is not null) { <p class="erreur-formulaire">@_erreur</p> }
+        }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => OnFermer.InvokeAsync()">Annuler</button>
+        <GrosBouton Style="principal" Gros="true" Texte="@TexteBouton" Desactive="@(_pieces is not > 0 || _enCours)" OnClick="Enregistrer" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private PieceFinieResume? _piece;
+    private IReadOnlyList<BrutAssocie> _bruts = [];
+    private Dictionary<int, decimal> _stocks = [];
+    private int _brutId;
+    private decimal? _brutsConsommes;
+    private decimal? _pieces;
+    private bool _sansBrut;
+    private DateTime _date = DateTime.Today;
+    private string? _commentaire;
+    private string? _erreur;
+    private bool _enCours;
+
+    [Parameter] public int PieceFinieId { get; set; }
+
+    [Parameter] public EventCallback OnFermer { get; set; }
+
+    [Parameter] public EventCallback<string> OnEnregistre { get; set; }
+
+    private BrutAssocie? Choisi => _bruts.FirstOrDefault(b => b.Brut.Id == _brutId);
+
+    private string TexteBouton
+    {
+        get
+        {
+            if (_pieces is not > 0)
+            {
+                return "Enregistrer";
+            }
+
+            var texte = $"Enregistrer : {Format.QuantiteSignee(_pieces.Value, Unite.Piece)}";
+            return !_sansBrut && Choisi is not null && _brutsConsommes is > 0 ? $"{texte} ({Format.Signe(-_brutsConsommes.Value)} {Choisi.Brut.Reference})" : texte;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _piece = await Annuaire.ObtenirPieceFinie(PieceFinieId);
+        _bruts = await Annuaire.BrutsDeLaPiece(PieceFinieId);
+        var ligne = await Stock.ObtenirPiece(PieceFinieId);
+        _stocks = ligne?.Bruts.ToDictionary(b => b.Brut.Id, b => b.Quantite) ?? [];
+        _sansBrut = _bruts.Count == 0;
+        if (_bruts.Count > 0)
+        {
+            ChoisirBrut(_bruts.FirstOrDefault(b => b.Principal) ?? _bruts[0]);
+        }
+    }
+
+    private void ChoisirBrut(BrutAssocie brut)
+    {
+        _brutId = brut.Brut.Id;
+        if (_brutsConsommes is > 0)
+        {
+            _pieces = ReglesStock.PiecesPourBruts(_brutsConsommes.Value, brut.PiecesParBrut);
+        }
+    }
+
+    private void ChangerBruts(decimal? valeur)
+    {
+        _brutsConsommes = valeur;
+        if (valeur is > 0 && Choisi is not null)
+        {
+            _pieces = ReglesStock.PiecesPourBruts(valeur.Value, Choisi.PiecesParBrut);
+        }
+    }
+
+    private void ChangerPieces(decimal? valeur)
+    {
+        _pieces = valeur;
+        if (valeur is > 0 && Choisi is not null)
+        {
+            _brutsConsommes = ReglesStock.BrutsPourPieces(valeur.Value, Choisi.PiecesParBrut);
+        }
+    }
+
+    private async Task Enregistrer()
+    {
+        if (!_sansBrut && Choisi is not null && _brutsConsommes is > 0)
+        {
+            var apres = _stocks.GetValueOrDefault(Choisi.Brut.Id) - _brutsConsommes.Value;
+            if (apres < 0 && !await Confirmation.Demander($"Le stock de {Choisi.Brut.Reference} passera à {Format.Quantite(apres, Choisi.Brut.Unite)}. Continuer ?"))
+            {
+                return;
+            }
+        }
+
+        _enCours = true;
+        var resultat = await Mouvements.EnregistrerFabrication(new DemandeFabrication(PieceFinieId, _sansBrut ? null : _brutId, _brutsConsommes ?? 0, _pieces ?? 0, _sansBrut, _date, _commentaire));
+        _enCours = false;
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        await OnEnregistre.InvokeAsync(resultat.Valeur!.Message);
+    }
+}

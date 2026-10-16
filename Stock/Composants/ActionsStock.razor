@@ -1,0 +1,44 @@
+@inject ServiceToast Toast
+@* Héberge les fenêtres d'action ; une page les ouvre avec Ouvrir(action, type, id). *@
+@switch (_action)
+{
+    case ActionStock.Arrivage:
+        <DialogueArrivage Type="_type" Id="_id" OnFermer="Fermer" OnEnregistre="Enregistre" />
+        break;
+    case ActionStock.Fabrication:
+        <DialogueFabrication PieceFinieId="_id" OnFermer="Fermer" OnEnregistre="Enregistre" />
+        break;
+    case ActionStock.Sortie:
+        <DialogueSortie Type="_type" Id="_id" OnFermer="Fermer" OnEnregistre="Enregistre" />
+        break;
+    case ActionStock.Ajustement:
+        <DialogueAjustement Type="_type" Id="_id" OnFermer="Fermer" OnEnregistre="Enregistre" />
+        break;
+    case ActionStock.Seuil:
+        <DialogueSeuil Type="_type" Id="_id" OnFermer="Fermer" OnEnregistre="Enregistre" />
+        break;
+}
+
+@code {
+    private ActionStock? _action;
+    private TypeReference _type;
+    private int _id;
+
+    /// <summary>Après un enregistrement réussi (pour recharger la page).</summary>
+    [Parameter] public EventCallback OnEnregistre { get; set; }
+
+    public void Ouvrir(ActionStock action, TypeReference type, int id)
+    {
+        (_action, _type, _id) = (action, type, id);
+        StateHasChanged();
+    }
+
+    private void Fermer() => _action = null;
+
+    private async Task Enregistre(string message)
+    {
+        _action = null;
+        Toast.Succes(message);
+        await OnEnregistre.InvokeAsync();
+    }
+}

@@ -1,0 +1,67 @@
+@page "/stock"
+@inject ServiceStock Stock
+@inject IAnnuaireLecture Annuaire
+@inject ServiceBascule Bascule
+@inject IUtilisateurCourant Courant
+<PageTitle>Stock des pièces finies — Barthazon</PageTitle>
+
+<EntetePage Titre="Stock des pièces finies">
+    <Actions>
+        @if (Courant.Peut(Role.Gestion) && Bascule.LienCreation(TypesObjet.PieceFinie, "/stock") is { } lien)
+        {
+            <GrosBouton Style="secondaire" Icone="plus" Texte="Nouvelle pièce finie" Href="@lien" />
+        }
+    </Actions>
+</EntetePage>
+
+<ListeRecherchable T="LignePieceStock" Elements="Filtrees" TexteRecherche="l => l.TexteRecherche" Lien='l => $"/stock/pieces/{l.Piece.Id}"'
+                   Placeholder="Rechercher : référence, désignation, client, brut…" Singulier="pièce finie" Pluriel="pièces finies"
+                   MessageVide="Aucune pièce finie dans l'annuaire">
+    <Filtres>
+        <select aria-label="Client" @bind="_client">
+            <option value="0">Tous les clients</option>
+            @foreach (var c in _clients)
+            {
+                <option value="@c.Id">@c.Nom</option>
+            }
+        </select>
+        <label class="case"><input type="checkbox" @bind="_alertes" /> Seulement les alertes</label>
+    </Filtres>
+    <Entetes>
+        <th>Référence</th><th>Désignation</th><th>Client</th><th class="droite">En stock</th><th class="droite">Brut disponible</th><th>État</th>
+    </Entetes>
+    <Ligne Context="l">
+        <td><a class="lien-ligne" href="/stock/pieces/@l.Piece.Id">@l.Piece.Reference</a></td>
+        <td>@l.Piece.Designation @if (l.Piece.Archive) { <span class="etiquette">archivée</span> }</td>
+        <td>@l.Piece.Client</td>
+        <td class="droite nombre"><strong>@Format.Nombre(l.Quantite)</strong></td>
+        <td class="droite nombre">@Format.Quantite(l.BrutDisponible, l.UniteBrut)</td>
+        <td><BadgeEtat Etat="l.Etat" /></td>
+    </Ligne>
+    <Carte Context="l">
+        <div class="carte__titre"><span>@l.Piece.Reference</span> <BadgeEtat Etat="l.Etat" /> @if (l.Piece.Archive) { <span class="etiquette">archivée</span> }</div>
+        <div>@l.Piece.Designation</div>
+        <div class="carte__ligne">
+            <span>En stock : <strong>@Format.Quantite(l.Quantite, Unite.Piece)</strong></span>
+            <span>Brut : @Format.Quantite(l.BrutDisponible, l.UniteBrut)</span>
+            <span>@l.Piece.Client</span>
+        </div>
+    </Carte>
+</ListeRecherchable>
+
+@code {
+    private IReadOnlyList<LignePieceStock>? _lignes;
+    private IReadOnlyList<TiersResume> _clients = [];
+    private int _client;
+    private bool _alertes;
+
+    private IEnumerable<LignePieceStock>? Filtrees => _lignes?.Where(l =>
+        (_client == 0 || l.Piece.ClientId == _client)
+        && (!_alertes || l.Etat is EtatStock.Rupture or EtatStock.SousLeSeuil));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _clients = await Annuaire.ListerClients();
+        _lignes = await Stock.ListerPieces();
+    }
+}

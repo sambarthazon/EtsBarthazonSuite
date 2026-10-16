@@ -1,0 +1,59 @@
+@inject IAnnuaireLecture Annuaire
+@inject ServiceStock Stock
+@inject ServiceMouvements Mouvements
+@* Seuil d'alerte : « Sous le seuil » quand la quantité est inférieure ou égale au seuil. Vide = pas de seuil. *@
+<Fenetre Ouverte="true" OnFermer="() => OnFermer.InvokeAsync()" Titre="Seuil d'alerte">
+    <ChildContent>
+        <p><strong>@_reference</strong></p>
+        <ChampQuantite Etiquette="Seuil d'alerte" Unite="@Format.Unite(_unite, _seuil ?? 0)" @bind-Valeur="_seuil"
+                       Aide="Alerte « Sous le seuil » quand le stock descend à ce niveau. Laisser vide : alerte seulement en rupture." />
+        @if (_erreur is not null) { <p class="erreur-formulaire">@_erreur</p> }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--discret" @onclick="() => _seuil = null">Pas de seuil</button>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => OnFermer.InvokeAsync()">Annuler</button>
+        <GrosBouton Style="principal" Texte="Enregistrer" OnClick="Enregistrer" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private string? _reference;
+    private Unite _unite = Unite.Piece;
+    private decimal? _seuil;
+    private string? _erreur;
+
+    [Parameter] public TypeReference Type { get; set; }
+
+    [Parameter] public int Id { get; set; }
+
+    [Parameter] public EventCallback OnFermer { get; set; }
+
+    [Parameter] public EventCallback<string> OnEnregistre { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Type == TypeReference.PieceFinie)
+        {
+            _reference = (await Annuaire.ObtenirPieceFinie(Id))?.Reference;
+        }
+        else
+        {
+            var brut = await Annuaire.ObtenirBrut(Id);
+            (_reference, _unite) = (brut?.Reference, brut?.Unite ?? Unite.Piece);
+        }
+
+        _seuil = (await Stock.Niveau(Type, Id))?.SeuilAlerte;
+    }
+
+    private async Task Enregistrer()
+    {
+        var resultat = await Mouvements.ModifierSeuil(Type, Id, _seuil);
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        await OnEnregistre.InvokeAsync(_seuil is null ? $"Seuil retiré pour {_reference}" : $"Seuil de {_reference} : {Format.Quantite(_seuil.Value, _unite)}");
+    }
+}

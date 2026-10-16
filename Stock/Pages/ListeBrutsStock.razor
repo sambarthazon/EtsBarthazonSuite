@@ -1,0 +1,86 @@
+@page "/stock/bruts"
+@inject ServiceStock Stock
+@inject IAnnuaireLecture Annuaire
+@inject ServiceBascule Bascule
+@inject IUtilisateurCourant Courant
+<PageTitle>Stock des bruts — Barthazon</PageTitle>
+
+<EntetePage Titre="Stock des bruts">
+    <Actions>
+        @if (Courant.Peut(Role.Gestion) && Bascule.LienCreation(TypesObjet.Brut, "/stock/bruts") is { } lien)
+        {
+            <GrosBouton Style="secondaire" Icone="plus" Texte="Nouveau brut" Href="@lien" />
+        }
+    </Actions>
+</EntetePage>
+
+<ListeRecherchable T="LigneBrutStock" Elements="Filtrees" TexteRecherche="l => l.TexteRecherche" Lien='l => $"/stock/bruts/{l.Brut.Id}"'
+                   Placeholder="Rechercher : 40, 42Cr, rond, fournisseur…" Singulier="brut" Pluriel="bruts" MessageVide="Aucun brut dans l'annuaire">
+    <Filtres>
+        <select aria-label="Forme" @bind="_forme">
+            <option value="">Toutes les formes</option>
+            @foreach (var forme in Enum.GetValues<FormeBrut>())
+            {
+                <option value="@forme">@Format.LibelleForme(forme)</option>
+            }
+        </select>
+        <select aria-label="Matière" @bind="_matiere">
+            <option value="">Toutes les matières</option>
+            @foreach (var m in _matieres)
+            {
+                <option value="@m">@m</option>
+            }
+        </select>
+        <select aria-label="Fournisseur" @bind="_fournisseur">
+            <option value="0">Tous les fournisseurs</option>
+            @foreach (var f in _fournisseurs)
+            {
+                <option value="@f.Id">@f.Nom</option>
+            }
+        </select>
+        <label class="case"><input type="checkbox" @bind="_alertes" /> Seulement les alertes</label>
+    </Filtres>
+    <Entetes>
+        <th>Référence</th><th>Libellé</th><th class="droite">En stock</th><th class="droite">Seuil</th><th>Fournisseur principal</th><th>État</th>
+    </Entetes>
+    <Ligne Context="l">
+        <td><a class="lien-ligne" href="/stock/bruts/@l.Brut.Id">@l.Brut.Reference</a></td>
+        <td>@l.Brut.Libelle @if (l.Brut.Archive) { <span class="etiquette">archivé</span> }</td>
+        <td class="droite nombre"><strong>@Format.Quantite(l.Quantite, l.Brut.Unite)</strong></td>
+        <td class="droite nombre">@Format.Nombre(l.Seuil)</td>
+        <td>@l.Brut.FournisseurPrincipal</td>
+        <td><BadgeEtat Etat="l.Etat" /></td>
+    </Ligne>
+    <Carte Context="l">
+        <div class="carte__titre"><span>@l.Brut.Reference</span> <BadgeEtat Etat="l.Etat" /> @if (l.Brut.Archive) { <span class="etiquette">archivé</span> }</div>
+        <div>@l.Brut.Libelle</div>
+        <div class="carte__ligne">
+            <span>En stock : <strong>@Format.Quantite(l.Quantite, l.Brut.Unite)</strong></span>
+            @if (l.Seuil is not null) { <span>seuil @Format.Nombre(l.Seuil)</span> }
+            @if (l.Brut.FournisseurPrincipal is not null) { <span>@l.Brut.FournisseurPrincipal</span> }
+        </div>
+    </Carte>
+</ListeRecherchable>
+
+@code {
+    private IReadOnlyList<LigneBrutStock>? _lignes;
+    private List<string> _matieres = [];
+    private IReadOnlyList<TiersResume> _fournisseurs = [];
+    private FormeBrut? _forme;
+    private string _matiere = string.Empty;
+    private int _fournisseur;
+    private bool _alertes;
+
+    private IEnumerable<LigneBrutStock>? Filtrees => _lignes?.Where(l =>
+        (_forme is null || l.Brut.Forme == _forme)
+        && (_matiere.Length == 0 || l.Brut.Matiere == _matiere)
+        && (_fournisseur == 0 || l.Brut.FournisseurPrincipalId == _fournisseur)
+        && (!_alertes || l.Etat is EtatStock.Rupture or EtatStock.SousLeSeuil));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _lignes = await Stock.ListerBruts();
+        _matieres = _lignes.Select(l => l.Brut.Matiere).Distinct().Order(StringComparer.Ordinal).ToList();
+        _fournisseurs = await Annuaire.ListerFournisseurs();
+    }
+}

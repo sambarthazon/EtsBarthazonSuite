@@ -1,0 +1,27 @@
+@inject IUtilisateurCourant Courant
+@* Gros boutons d'action d'une fiche stock (2 × 2 sur téléphone). Masqués si le rôle ne le permet pas. *@
+@if (Courant.Peut(Role.Atelier))
+{
+    <div class="actions-stock @(Type == TypeReference.Brut ? "actions-stock--3" : null)">
+        @if (Type == TypeReference.PieceFinie)
+        {
+            <GrosBouton Gros="true" Emoji="📦" Texte="Arrivage brut" OnClick="() => OnAction.InvokeAsync(ActionStock.Arrivage)" />
+            <GrosBouton Gros="true" Style="principal" Emoji="⚙" Texte="Fabriquer" OnClick="() => OnAction.InvokeAsync(ActionStock.Fabrication)" />
+        }
+        else
+        {
+            <GrosBouton Gros="true" Style="principal" Emoji="📦" Texte="Arrivage" OnClick="() => OnAction.InvokeAsync(ActionStock.Arrivage)" />
+        }
+        <GrosBouton Gros="true" Emoji="🚚" Texte="Sortie" OnClick="() => OnAction.InvokeAsync(ActionStock.Sortie)" />
+        @if (Courant.Peut(Role.Gestion))
+        {
+            <GrosBouton Gros="true" Emoji="🧮" Texte="Ajuster" OnClick="() => OnAction.InvokeAsync(ActionStock.Ajustement)" />
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public TypeReference Type { get; set; }
+
+    [Parameter] public EventCallback<ActionStock> OnAction { get; set; }
+}

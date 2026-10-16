@@ -1,0 +1,97 @@
+@page "/stock/pieces/{Id:int}"
+@inject ServiceStock Stock
+@inject ServiceBascule Bascule
+@inject IUtilisateurCourant Courant
+<PageTitle>@(_ligne?.Piece.Reference ?? "Pièce finie") — Stock</PageTitle>
+
+@if (_charge && _ligne is null)
+{
+    <div class="vide"><div class="vide__titre">Pièce introuvable</div><a href="/stock">Retour au stock</a></div>
+}
+else if (_ligne is not null)
+{
+    var p = _ligne.Piece;
+    <div class="entete-page">
+        <div>
+            <h1>@p.Reference <span style="font-weight: 500">· @p.Designation</span> @if (p.Archive) { <span class="etiquette">archivée</span> }</h1>
+            <div class="doux">@p.Client · Ind. <span class="badge-indice">@p.Indice</span></div>
+        </div>
+        @if (Bascule.Ailleurs(TypesObjet.PieceFinie, Id, StockExtensions.Cle) is { } annuaire)
+        {
+            <div class="entete-page__actions"><a class="bouton bouton--secondaire" href="@annuaire.Chemin"><Icone Nom="droite" /> Fiche annuaire</a></div>
+        }
+    </div>
+
+    <div class="grille-blocs">
+        <section class="bloc chiffre-cle">
+            <span class="chiffre-cle__titre">En stock</span>
+            <div class="ligne"><span class="chiffre-cle__valeur nombre">@Format.Nombre(_ligne.Quantite)</span> <span class="chiffre-cle__unite">@Format.Unite(Unite.Piece, _ligne.Quantite)</span> <BadgeEtat Etat="_ligne.Etat" /></div>
+            <div class="ligne doux">
+                Seuil d'alerte : @(_ligne.Seuil is { } s ? Format.Quantite(s, Unite.Piece) : "aucun")
+                @if (Courant.Peut(Role.Gestion))
+                {
+                    <button type="button" class="bouton bouton--discret" @onclick="() => _actions.Ouvrir(ActionStock.Seuil, TypeReference.PieceFinie, Id)">modifier</button>
+                }
+            </div>
+        </section>
+        <section class="bloc">
+            <span class="chiffre-cle__titre">Brut disponible</span>
+            <ul class="lignes-simples">
+                @foreach (var b in _ligne.Bruts)
+                {
+                    <li>
+                        @if (b.Principal) { <span class="etoile" title="Brut principal"><Icone Nom="etoile" /></span> }
+                        <a href="/stock/bruts/@b.Brut.Id"><strong>@b.Brut.Reference</strong></a>
+                        <span class="doux">@b.Brut.Libelle</span>
+                        <strong class="pousse nombre">@Format.Quantite(b.Quantite, b.Brut.Unite)</strong>
+                    </li>
+                }
+            </ul>
+            @if (_ligne.PlusDeBrut)
+            {
+                <p class="avertissement">Plus de brut disponible.</p>
+            }
+        </section>
+    </div>
+
+    <BoutonsActions Type="TypeReference.PieceFinie" OnAction="a => _actions.Ouvrir(a, TypeReference.PieceFinie, Id)" />
+
+    <section class="bloc">
+        <h2 class="bloc__titre">Derniers mouvements
+            <a class="bouton bouton--discret pousse" href="/stock/mouvements?periode=Tout&piece=@Id">Voir tous les mouvements</a>
+        </h2>
+        <TableauMouvements Lignes="_mouvements" AvecReference="true" OnChange="Charger" />
+    </section>
+}
+
+<ActionsStock @ref="_actions" OnEnregistre="Charger" />
+
+@code {
+    private ActionsStock _actions = default!;
+    private LignePieceStock? _ligne;
+    private IReadOnlyList<LigneMouvement> _mouvements = [];
+    private bool _charge;
+
+    [Parameter] public int Id { get; set; }
+
+    protected override Task OnParametersSetAsync() => Charger();
+
+    private async Task Charger()
+    {
+        _ligne = await Stock.ObtenirPiece(Id);
+        _mouvements = await DerniersMouvementsDeLaPiece();
+        _charge = true;
+    }
+
+    /// <summary>Mouvements de la pièce et de ses bruts (ex. « Fabrication +10 pièces (−10 BR-0003) », arrivages de brut).</summary>
+    private async Task<IReadOnlyList<LigneMouvement>> DerniersMouvementsDeLaPiece()
+    {
+        var lignes = new List<LigneMouvement>(await Stock.DerniersMouvements(TypeReference.PieceFinie, Id, 10));
+        foreach (var b in _ligne?.Bruts ?? [])
+        {
+            lignes.AddRange(await Stock.DerniersMouvements(TypeReference.Brut, b.Brut.Id, 10));
+        }
+
+        return lignes.DistinctBy(l => l.Id).OrderByDescending(l => l.Date).ThenByDescending(l => l.Id).Take(10).ToList();
+    }
+}

@@ -1,0 +1,84 @@
+@page "/stock/bruts/{Id:int}"
+@inject ServiceStock Stock
+@inject ServiceBascule Bascule
+@inject IUtilisateurCourant Courant
+<PageTitle>@(_ligne?.Brut.Reference ?? "Brut") — Stock</PageTitle>
+
+@if (_charge && _ligne is null)
+{
+    <div class="vide"><div class="vide__titre">Brut introuvable</div><a href="/stock/bruts">Retour au stock des bruts</a></div>
+}
+else if (_ligne is not null)
+{
+    var b = _ligne.Brut;
+    <div class="entete-page">
+        <div>
+            <h1>@b.Reference <span style="font-weight: 500">· @b.Libelle</span> @if (b.Archive) { <span class="etiquette">archivé</span> }</h1>
+            @if (b.FournisseurPrincipal is not null) { <div class="doux">Fournisseur principal : @b.FournisseurPrincipal</div> }
+        </div>
+        @if (Bascule.Ailleurs(TypesObjet.Brut, Id, StockExtensions.Cle) is { } annuaire)
+        {
+            <div class="entete-page__actions"><a class="bouton bouton--secondaire" href="@annuaire.Chemin"><Icone Nom="droite" /> Fiche annuaire</a></div>
+        }
+    </div>
+
+    <section class="bloc chiffre-cle">
+        <span class="chiffre-cle__titre">En stock</span>
+        <div class="ligne"><span class="chiffre-cle__valeur nombre">@Format.Nombre(_ligne.Quantite)</span> <span class="chiffre-cle__unite">@Format.Unite(b.Unite, _ligne.Quantite)</span> <BadgeEtat Etat="_ligne.Etat" /></div>
+        <div class="ligne doux">
+            Seuil d'alerte : @(_ligne.Seuil is { } s ? Format.Quantite(s, b.Unite) : "aucun")
+            @if (Courant.Peut(Role.Gestion))
+            {
+                <button type="button" class="bouton bouton--discret" @onclick="() => _actions.Ouvrir(ActionStock.Seuil, TypeReference.Brut, Id)">modifier</button>
+            }
+        </div>
+    </section>
+
+    <BoutonsActions Type="TypeReference.Brut" OnAction="a => _actions.Ouvrir(a, TypeReference.Brut, Id)" />
+
+    <div class="grille-blocs">
+        <section class="bloc">
+            <h2 class="bloc__titre">Pièces finies qui utilisent ce brut</h2>
+            @if (_pieces.Count == 0) { <p class="doux">Aucune.</p> }
+            <ul class="lignes-simples">
+                @foreach (var p in _pieces)
+                {
+                    <li>
+                        <a href="/stock/pieces/@p.Piece.Id"><strong>@p.Piece.Reference</strong></a>
+                        <span class="doux">@p.Piece.Designation</span>
+                        <span class="pousse nombre">@Format.Quantite(p.Quantite, Unite.Piece)</span>
+                        <BadgeEtat Etat="p.Etat" />
+                    </li>
+                }
+            </ul>
+        </section>
+        <section class="bloc">
+            <h2 class="bloc__titre">Derniers mouvements
+                <a class="bouton bouton--discret pousse" href="/stock/mouvements?periode=Tout&brut=@Id">Tous</a>
+            </h2>
+            <TableauMouvements Lignes="_mouvements" AvecReference="false" OnChange="Charger" />
+        </section>
+    </div>
+}
+
+<ActionsStock @ref="_actions" OnEnregistre="Charger" />
+
+@code {
+    private ActionsStock _actions = default!;
+    private LigneBrutStock? _ligne;
+    private IReadOnlyList<PieceUtilisantBrut> _pieces = [];
+    private IReadOnlyList<LigneMouvement> _mouvements = [];
+    private bool _charge;
+
+    [Parameter] public int Id { get; set; }
+
+    protected override Task OnParametersSetAsync() => Charger();
+
+    private async Task Charger()
+    {
+        _ligne = await Stock.ObtenirBrut(Id);
+        _pieces = await Stock.PiecesDuBrut(Id);
+        _mouvements = await Stock.DerniersMouvements(TypeReference.Brut, Id, 10);
+        _charge = true;
+    }
+}

@@ -1,0 +1,86 @@
+@page "/stock/alertes"
+@inject ServiceStock Stock
+@inject IUtilisateurCourant Courant
+<PageTitle>Alertes — Stock</PageTitle>
+
+<EntetePage Titre="Alertes" SousTitre="Ruptures d'abord, puis sous le seuil" />
+
+@if (_alertes is null)
+{
+    <div class="vide">Chargement…</div>
+}
+else if (_alertes.Count == 0)
+{
+    <div class="vide">
+        <div class="vide__titre">Aucune alerte</div>
+        <div>Tout est au-dessus des seuils. Les seuils se règlent sur chaque fiche stock.</div>
+    </div>
+}
+else
+{
+    <div class="liste">
+        <table class="tableau">
+            <thead><tr><th>État</th><th>Référence</th><th>Libellé</th><th class="droite">Quantité</th><th class="droite">Seuil</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var a in _alertes)
+                {
+                    <tr>
+                        <td><BadgeEtat Etat="a.Etat" /></td>
+                        <td><a class="lien-ligne" href="@Lien(a)">@a.Reference</a> <span class="etiquette">@(a.Type == TypeReference.Brut ? "brut" : "pièce finie")</span></td>
+                        <td>@a.Libelle @if (a.PlusDeBrut) { <span class="badge badge--rupture badge--sans-point">Plus de brut disponible</span> }</td>
+                        <td class="droite nombre"><strong>@Format.Quantite(a.Quantite, a.Unite)</strong></td>
+                        <td class="droite nombre">@Format.Nombre(a.Seuil)</td>
+                        <td class="droite" style="white-space: nowrap">@Actions(a)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="cartes">
+            @foreach (var a in _alertes)
+            {
+                <div class="carte">
+                    <div class="carte__titre"><a href="@Lien(a)">@a.Reference</a> <BadgeEtat Etat="a.Etat" /></div>
+                    <div>@a.Libelle</div>
+                    <div class="carte__ligne">
+                        <span>Stock : <strong>@Format.Quantite(a.Quantite, a.Unite)</strong></span>
+                        @if (a.Seuil is not null) { <span>seuil @Format.Nombre(a.Seuil)</span> }
+                        @if (a.PlusDeBrut) { <span class="badge badge--rupture badge--sans-point">Plus de brut disponible</span> }
+                    </div>
+                    <div class="ligne" style="margin-top: .5rem">@Actions(a)</div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<ActionsStock @ref="_actions" OnEnregistre="Charger" />
+
+@code {
+    private ActionsStock _actions = default!;
+    private IReadOnlyList<Alerte>? _alertes;
+
+    protected override Task OnInitializedAsync() => Charger();
+
+    private async Task Charger() => _alertes = await Stock.Alertes();
+
+    private static string Lien(Alerte a) => a.Type == TypeReference.Brut ? $"/stock/bruts/{a.Id}" : $"/stock/pieces/{a.Id}";
+
+    /// <summary>Bouton d'action direct : « Arrivage » pour un brut, « Fabriquer » ou « Arrivage brut » pour une pièce finie.</summary>
+    private RenderFragment Actions(Alerte a) => __builder =>
+    {
+        if (!Courant.Peut(Role.Atelier))
+        {
+            return;
+        }
+
+        if (a.Type == TypeReference.Brut)
+        {
+            <GrosBouton Style="principal" Emoji="📦" Texte="Arrivage" OnClick="() => _actions.Ouvrir(ActionStock.Arrivage, TypeReference.Brut, a.Id)" />
+        }
+        else
+        {
+            <GrosBouton Style="@(a.PlusDeBrut ? "secondaire" : "principal")" Emoji="⚙" Texte="Fabriquer" OnClick="() => _actions.Ouvrir(ActionStock.Fabrication, TypeReference.PieceFinie, a.Id)" />
+            <GrosBouton Style="@(a.PlusDeBrut ? "principal" : "secondaire")" Emoji="📦" Texte="Arrivage brut" OnClick="() => _actions.Ouvrir(ActionStock.Arrivage, TypeReference.PieceFinie, a.Id)" />
+        }
+    };
+}

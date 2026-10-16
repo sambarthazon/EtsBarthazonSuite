@@ -1,0 +1,115 @@
+@inject IAnnuaireLecture Annuaire
+@inject ServiceStock Stock
+@inject ServiceMouvements Mouvements
+@inject ServiceConfirmation Confirmation
+@* 🚚 Sortie : livraison client (pièce finie, par défaut), rebut, retour fournisseur… *@
+<Fenetre Ouverte="true" OnFermer="() => OnFermer.InvokeAsync()" Titre="🚚 Sortie">
+    <ChildContent>
+        @if (_reference is null)
+        {
+            <p class="doux">Chargement…</p>
+        }
+        else
+        {
+            <p><strong>@_reference</strong> · @_designation <span class="doux">— en stock : @Format.Quantite(_stock, _unite)</span></p>
+            <div class="champ">
+                <span class="champ__etiquette">Motif</span>
+                <div class="choix-boutons">
+                    @foreach (var motif in ReglesStock.Motifs(Type))
+                    {
+                        <button type="button" class="@(motif == _motif ? "actif" : null)" @onclick="() => _motif = motif">@ReglesStock.Libelle(motif)</button>
+                    }
+                </div>
+            </div>
+            <ChampQuantite Etiquette="Quantité" Obligatoire="true" Unite="@Format.Unite(_unite, _quantite ?? 0)" @bind-Valeur="_quantite" />
+            @if (_motif == MotifSortie.LivraisonClient)
+            {
+                <div class="grille-champs grille-champs--2">
+                    <div class="champ">
+                        <label for="s-client">Client</label>
+                        <select id="s-client" @bind="_clientId">
+                            @foreach (var c in _clients)
+                            {
+                                <option value="@c.Id">@c.Nom</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="champ"><label for="s-bl">N° de BL</label><input id="s-bl" @bind="_bl" /></div>
+                </div>
+            }
+            <SectionRepliable Titre="Plus de détails : date, commentaire">
+                <div class="pile">
+                    <div class="champ"><label for="s-date">Date</label><input id="s-date" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" @bind="_date" /></div>
+                    <div class="champ"><label for="s-com">Commentaire</label><input id="s-com" @bind="_commentaire" /></div>
+                </div>
+            </SectionRepliable>
+            @if (_erreur is not null) { <p class="erreur-formulaire">@_erreur</p> }
+        }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => OnFermer.InvokeAsync()">Annuler</button>
+        <GrosBouton Style="principal" Gros="true" Texte="@(_quantite is > 0 ? $"Enregistrer : {Format.QuantiteSignee(-_quantite.Value, _unite)}" : "Enregistrer")" Desactive="@(_quantite is not > 0 || _enCours)" OnClick="Enregistrer" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private string? _reference;
+    private string? _designation;
+    private Unite _unite = Unite.Piece;
+    private decimal _stock;
+    private MotifSortie _motif;
+    private decimal? _quantite;
+    private int _clientId;
+    private IReadOnlyList<TiersResume> _clients = [];
+    private DateTime _date = DateTime.Today;
+    private string? _bl;
+    private string? _commentaire;
+    private string? _erreur;
+    private bool _enCours;
+
+    [Parameter] public TypeReference Type { get; set; }
+
+    [Parameter] public int Id { get; set; }
+
+    [Parameter] public EventCallback OnFermer { get; set; }
+
+    [Parameter] public EventCallback<string> OnEnregistre { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _motif = ReglesStock.Motifs(Type)[0];
+        if (Type == TypeReference.PieceFinie)
+        {
+            var piece = await Annuaire.ObtenirPieceFinie(Id);
+            (_reference, _designation, _clientId) = (piece?.Reference, piece?.Designation, piece?.ClientId ?? 0);
+            _clients = await Annuaire.ListerClients();
+        }
+        else
+        {
+            var brut = await Annuaire.ObtenirBrut(Id);
+            (_reference, _designation, _unite) = (brut?.Reference, brut?.Libelle, brut?.Unite ?? Unite.Piece);
+        }
+
+        _stock = (await Stock.Niveau(Type, Id))?.Quantite ?? 0;
+    }
+
+    private async Task Enregistrer()
+    {
+        var apres = _stock - (_quantite ?? 0);
+        if (apres < 0 && !await Confirmation.Demander($"Le stock passera à {Format.Quantite(apres, _unite)}. Continuer ?"))
+        {
+            return;
+        }
+
+        _enCours = true;
+        var resultat = await Mouvements.EnregistrerSortie(new DemandeSortie(Type, Id, _quantite ?? 0, _motif, _clientId == 0 ? null : _clientId, _date, _bl, _commentaire));
+        _enCours = false;
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        await OnEnregistre.InvokeAsync(resultat.Valeur!.Message);
+    }
+}
