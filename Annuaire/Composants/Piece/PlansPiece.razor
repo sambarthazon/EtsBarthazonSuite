@@ -1,0 +1,86 @@
+@inject ServicePiecesFinies Pieces
+@inject StockagePlans Stockage
+@inject ServiceToast Toast
+@inject IUtilisateurCourant Courant
+@* Onglet Plans : indice courant en premier, puis indices précédents (repliés). *@
+<section class="bloc">
+    <h2 class="bloc__titre">Plans de l'indice <span class="badge-indice">@Fiche.IndiceCourant.Code</span></h2>
+    @if (Courants.Count == 0)
+    {
+        <p class="doux">Aucun plan numérique pour cet indice.</p>
+    }
+    <ListePlans Plans="Courants" Modifiable="true" OnChange="OnChange" />
+    @if (Courant.Peut(Role.Gestion))
+    {
+        <div style="margin-top: .75rem">
+            <ChampFichier OnFichiers="Deposer" Aide="@($"PDF, PNG ou JPG — {Stockage.TailleMaxMo} Mo maximum. Sur tablette : « Prendre une photo » pour numériser un plan papier.")" />
+        </div>
+        @if (_envoi)
+        {
+            <p class="doux">Envoi en cours…</p>
+        }
+    }
+</section>
+
+<section class="bloc">
+    <h2 class="bloc__titre">Plan papier</h2>
+    <p>Emplacement : <strong>@(Fiche.EmplacementPlanPapier ?? "non indiqué")</strong></p>
+    <p class="doux petit">Se modifie avec le bouton « Modifier » de la fiche.</p>
+</section>
+
+@if (Anciens.Count > 0)
+{
+    <SectionRepliable Titre="@($"Plans des indices précédents ({Anciens.Count})")" Classe="bloc-espace">
+        <ListePlans Plans="Anciens" />
+    </SectionRepliable>
+}
+
+@code {
+    private bool _envoi;
+
+    [Parameter, EditorRequired] public FichePiece Fiche { get; set; } = default!;
+
+    [Parameter] public EventCallback OnChange { get; set; }
+
+    private List<PlanAffiche> Courants => Fiche.Plans.Where(p => !p.AncienIndice).ToList();
+
+    private List<PlanAffiche> Anciens => Fiche.Plans.Where(p => p.AncienIndice).ToList();
+
+    private async Task Deposer(IReadOnlyList<IBrowserFile> fichiers)
+    {
+        _envoi = true;
+        var ajoutes = 0;
+        foreach (var fichier in fichiers)
+        {
+            if (fichier.Size > Stockage.TailleMax)
+            {
+                Toast.Erreur($"« {fichier.Name} » dépasse {Stockage.TailleMaxMo} Mo.");
+                continue;
+            }
+
+            if (StockagePlans.TypeAccepte(fichier.Name) is null)
+            {
+                Toast.Erreur($"« {fichier.Name} » : seuls les PDF, PNG et JPG sont acceptés.");
+                continue;
+            }
+
+            await using var flux = fichier.OpenReadStream(Stockage.TailleMax);
+            var resultat = await Pieces.AjouterPlan(Fiche.IndiceCourant.Id, fichier.Name, flux, fichier.Size);
+            if (resultat.Reussi)
+            {
+                ajoutes++;
+            }
+            else
+            {
+                Toast.Erreur(resultat.Erreur!);
+            }
+        }
+
+        _envoi = false;
+        if (ajoutes > 0)
+        {
+            Toast.Succes(ajoutes == 1 ? "Plan ajouté" : $"{ajoutes} plans ajoutés");
+            await OnChange.InvokeAsync();
+        }
+    }
+}

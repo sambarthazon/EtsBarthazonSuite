@@ -355,7 +355,7 @@ details.repliable > .repliable__contenu { padding: 0 1rem 1rem; }
 
 /* ---------- Messages ---------- */
 
-.toasts { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; gap: .5rem; width: min(92vw, 460px); }
+.toasts { position: fixed; left: 50%; top: 4.25rem; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; gap: .5rem; width: min(92vw, 460px); }
 .toast { display: flex; align-items: center; gap: .6rem; padding: .8rem 1rem; border-radius: var(--rayon); box-shadow: var(--ombre-forte); color: var(--texte-inverse); font-weight: 600; background: var(--couleur-succes); }
 .toast--info { background: var(--couleur-info); }
 .toast--erreur { background: var(--couleur-danger); }
@@ -440,3 +440,8 @@ details.repliable > .repliable__contenu { padding: 0 1rem 1rem; }
 #components-reconnect-modal.components-reconnect-failed .reconnexion__animation,
 #components-reconnect-modal.components-reconnect-paused .reconnexion__animation { display: none; }
 h1:focus { outline: none; }
+
+/* Champ nombre avec unité */
+.champ-nombre { position: relative; display: flex; align-items: center; }
+.champ-nombre input { padding-right: 2.6rem !important; }
+.champ-nombre__unite { position: absolute; right: .75rem; color: var(--texte-doux); pointer-events: none; }

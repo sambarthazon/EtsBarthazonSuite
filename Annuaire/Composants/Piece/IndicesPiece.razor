@@ -1,0 +1,57 @@
+@inject ServicePiecesFinies Pieces
+@inject IUtilisateurCourant Courant
+@* Onglet Indices : historique des indices ; les précédents sont consultables en lecture seule. *@
+<section class="bloc">
+    <h2 class="bloc__titre">Indices
+        @if (Courant.Peut(Role.Gestion))
+        {
+            <GrosBouton Classe="pousse" Style="principal" Icone="plus" Texte="Nouvel indice" OnClick="() => OnNouvelIndice.InvokeAsync()" />
+        }
+    </h2>
+    <ul class="lignes-simples">
+        @foreach (var indice in Fiche.Indices)
+        {
+            <li style="flex-direction: column; align-items: stretch">
+                <div class="ligne">
+                    <span class="badge-indice badge-indice--grand">@indice.Code</span>
+                    @if (indice.Courant) { <span class="etiquette">indice courant</span> }
+                    <span class="doux">@Format.Date(indice.Date)@(indice.Auteur is null ? null : " · " + indice.Auteur)</span>
+                    <span>@indice.DescriptionChangement</span>
+                    @if (!indice.Courant)
+                    {
+                        <button type="button" class="bouton bouton--secondaire pousse" @onclick="() => Basculer(indice.Id)">@(_ouverts.ContainsKey(indice.Id) ? "Masquer" : "Consulter")</button>
+                    }
+                </div>
+                @if (_ouverts.GetValueOrDefault(indice.Id) is { } detail)
+                {
+                    <div class="pile" style="margin-top: .75rem; padding-left: .75rem; border-left: 3px solid var(--bordure)">
+                        <p class="doux petit">Indice @detail.Code — lecture seule.</p>
+                        <h3>Spécifications</h3>
+                        <AffichageSpecification Specification="detail.Specification" />
+                        <h3>Plans</h3>
+                        @if (detail.Plans.Count == 0) { <p class="doux">Aucun plan.</p> }
+                        <ListePlans Plans="detail.Plans" />
+                        <h3>Gamme</h3>
+                        <TableauGamme Operations="detail.Operations" />
+                    </div>
+                }
+            </li>
+        }
+    </ul>
+</section>
+
+@code {
+    private readonly Dictionary<int, DetailIndice?> _ouverts = [];
+
+    [Parameter, EditorRequired] public FichePiece Fiche { get; set; } = default!;
+
+    [Parameter] public EventCallback OnNouvelIndice { get; set; }
+
+    private async Task Basculer(int indiceId)
+    {
+        if (!_ouverts.Remove(indiceId))
+        {
+            _ouverts[indiceId] = await Pieces.ObtenirIndice(indiceId);
+        }
+    }
+}

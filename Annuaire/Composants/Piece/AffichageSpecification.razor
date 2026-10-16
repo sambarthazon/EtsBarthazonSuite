@@ -1,0 +1,23 @@
+@* Spécifications d'un indice (lecture). *@
+@if (Specification.EstVide)
+{
+    <p class="doux">Aucune spécification.</p>
+}
+else
+{
+    <dl class="proprietes">
+        @if (Specification.TraitementThermique is not null) { <dt>Traitement thermique</dt><dd>@Specification.TraitementThermique</dd> }
+        @if (Specification.TraitementSurface is not null) { <dt>Traitement de surface</dt><dd>@Specification.TraitementSurface</dd> }
+        @if (Specification.ToleranceGenerale is not null) { <dt>Tolérance générale</dt><dd>@Specification.ToleranceGenerale</dd> }
+        @if (Specification.Masse is not null) { <dt>Masse</dt><dd>@Specification.Masse</dd> }
+        @foreach (var ligne in Specification.Lignes)
+        {
+            <dt>@ligne.Libelle</dt><dd>@ligne.Valeur</dd>
+        }
+        @if (Specification.Remarques is not null) { <dt>Remarques</dt><dd style="white-space: pre-line">@Specification.Remarques</dd> }
+    </dl>
+}
+
+@code {
+    [Parameter, EditorRequired] public SpecificationAffichee Specification { get; set; } = default!;
+}

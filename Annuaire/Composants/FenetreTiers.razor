@@ -1,0 +1,77 @@
+@inject ServiceReferentiels Referentiels
+@inject ServiceToast Toast
+@* Création ou modification d'un client / fournisseur : fiche volontairement minimale. *@
+<Fenetre Ouverte="Ouverte" OnFermer="Fermer" Titre="@TitreFenetre">
+    <ChildContent>
+        <div class="champ">
+            <label for="t-nom">Nom <span class="champ__obligatoire">*</span></label>
+            <input id="t-nom" @bind="_nom" />
+        </div>
+        <div class="grille-champs grille-champs--2">
+            <div class="champ"><label for="t-contact">Contact</label><input id="t-contact" @bind="_contact" /></div>
+            <div class="champ"><label for="t-tel">Téléphone</label><input id="t-tel" type="tel" inputmode="tel" @bind="_telephone" /></div>
+        </div>
+        <div class="champ"><label for="t-mail">E-mail</label><input id="t-mail" type="email" inputmode="email" @bind="_email" /></div>
+        <div class="champ"><label for="t-rem">Remarques</label><textarea id="t-rem" @bind="_remarques"></textarea></div>
+        @if (_erreur is not null)
+        {
+            <p class="erreur-formulaire">@_erreur</p>
+        }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--secondaire" @onclick="Fermer">Annuler</button>
+        <GrosBouton Style="principal" Texte="Enregistrer" OnClick="Enregistrer" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private string _nom = string.Empty;
+    private string? _contact;
+    private string? _telephone;
+    private string? _email;
+    private string? _remarques;
+    private string? _erreur;
+    private bool _etaitOuverte;
+
+    [Parameter] public bool Ouverte { get; set; }
+
+    [Parameter] public EventCallback<bool> OuverteChanged { get; set; }
+
+    [Parameter] public SorteTiers Sorte { get; set; }
+
+    /// <summary>Fiche à modifier ; null pour une création.</summary>
+    [Parameter] public LigneTiers? Tiers { get; set; }
+
+    [Parameter] public EventCallback<int> OnEnregistre { get; set; }
+
+    private string Nature => Sorte == SorteTiers.Client ? "client" : "fournisseur";
+
+    private string TitreFenetre => Tiers is null ? $"Nouveau {Nature}" : $"Modifier le {Nature}";
+
+    protected override void OnParametersSet()
+    {
+        // À chaque ouverture : champs remplis avec la fiche (ou vides pour une création).
+        if (Ouverte && !_etaitOuverte)
+        {
+            (_nom, _contact, _telephone, _email, _remarques, _erreur) = (Tiers?.Nom ?? string.Empty, Tiers?.Contact, Tiers?.Telephone, Tiers?.Email, Tiers?.Remarques, null);
+        }
+
+        _etaitOuverte = Ouverte;
+    }
+
+    private Task Fermer() => OuverteChanged.InvokeAsync(false);
+
+    private async Task Enregistrer()
+    {
+        var resultat = await Referentiels.EnregistrerTiers(Sorte, Tiers?.Id, new SaisieTiers(_nom, _contact, _telephone, _email, _remarques));
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        Toast.Succes(Tiers is null ? $"{(Sorte == SorteTiers.Client ? "Client" : "Fournisseur")} {_nom.Trim()} créé" : "Fiche enregistrée");
+        await Fermer();
+        await OnEnregistre.InvokeAsync(resultat.Valeur);
+    }
+}

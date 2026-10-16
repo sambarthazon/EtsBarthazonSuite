@@ -1,0 +1,83 @@
+@page "/annuaire/bruts"
+@inject ServiceBruts Bruts
+@inject ServiceReferentiels Referentiels
+@inject IUtilisateurCourant Courant
+<PageTitle>Bruts — Annuaire</PageTitle>
+
+<EntetePage Titre="Bruts" SousTitre="Matières et ébauches reçues des fournisseurs">
+    <Actions>
+        @if (Courant.Peut(Role.Gestion))
+        {
+            <GrosBouton Style="principal" Gros="true" Icone="plus" Texte="Nouveau brut" Href="/annuaire/bruts/nouveau" />
+        }
+    </Actions>
+</EntetePage>
+
+<ListeRecherchable T="LigneBrut" Elements="Filtres" TexteRecherche="b => b.TexteRecherche" Lien='b => $"/annuaire/bruts/{b.Id}"'
+                   Placeholder="Rechercher : 40, 42Cr, rond, fournisseur…" Singulier="brut" Pluriel="bruts" MessageVide="Aucun brut pour l'instant">
+    <Filtres>
+        <select aria-label="Forme" @bind="_forme">
+            <option value="">Toutes les formes</option>
+            @foreach (var forme in Enum.GetValues<FormeBrut>())
+            {
+                <option value="@forme">@Format.LibelleForme(forme)</option>
+            }
+        </select>
+        <select aria-label="Matière" @bind="_matiere">
+            <option value="0">Toutes les matières</option>
+            @foreach (var m in _matieres)
+            {
+                <option value="@m.Id">@m.Libelle</option>
+            }
+        </select>
+        <select aria-label="Fournisseur" @bind="_fournisseur">
+            <option value="0">Tous les fournisseurs</option>
+            @foreach (var f in _fournisseurs)
+            {
+                <option value="@f.Id">@f.Nom</option>
+            }
+        </select>
+        <label class="case"><input type="checkbox" @bind="_archives" @bind:after="Charger" /> Afficher les archivés</label>
+    </Filtres>
+    <Entetes>
+        <th>Référence</th><th>Libellé</th><th>Fournisseur principal</th><th class="droite">Pièces finies</th>
+    </Entetes>
+    <Ligne Context="b">
+        <td><a class="lien-ligne" href="/annuaire/bruts/@b.Id">@b.Reference</a></td>
+        <td>@b.Libelle @if (b.Archive) { <span class="etiquette">archivé</span> }</td>
+        <td>@b.FournisseurPrincipal</td>
+        <td class="droite nombre">@b.NombrePieces</td>
+    </Ligne>
+    <Carte Context="b">
+        <div class="carte__titre"><span>@b.Reference</span> @if (b.Archive) { <span class="etiquette">archivé</span> }</div>
+        <div>@b.Libelle</div>
+        <div class="carte__ligne">
+            @if (b.FournisseurPrincipal is not null) { <span>@b.FournisseurPrincipal</span> }
+            <span>@b.NombrePieces pièce(s) finie(s)</span>
+        </div>
+    </Carte>
+</ListeRecherchable>
+
+@code {
+    private IReadOnlyList<LigneBrut>? _bruts;
+    private IReadOnlyList<LigneListe> _matieres = [];
+    private IReadOnlyList<LigneTiers> _fournisseurs = [];
+    private FormeBrut? _forme;
+    private int _matiere;
+    private int _fournisseur;
+    private bool _archives;
+
+    private IEnumerable<LigneBrut>? Filtres => _bruts?.Where(b =>
+        (_forme is null || b.Forme == _forme)
+        && (_matiere == 0 || b.MatiereId == _matiere)
+        && (_fournisseur == 0 || b.FournisseursIds.Contains(_fournisseur)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _matieres = await Referentiels.ListerMatieres();
+        _fournisseurs = await Referentiels.ListerTiers(SorteTiers.Fournisseur);
+        await Charger();
+    }
+
+    private async Task Charger() => _bruts = await Bruts.Lister(_archives);
+}

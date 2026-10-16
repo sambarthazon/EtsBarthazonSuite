@@ -1,0 +1,66 @@
+@inject ServiceBruts Bruts
+@inject IUtilisateurCourant Courant
+@* Recherche d'un brut existant (libellé, matière, Ø…), ou création d'un nouveau brut sans quitter l'écran. *@
+<div class="pile">
+    <div class="ligne">
+        <div class="liste__recherche" style="flex: 1 1 240px">
+            <Icone Nom="recherche" />
+            <input type="search" placeholder="Rechercher un brut : 40, 42Cr, rond…" value="@_texte" @oninput="e => _texte = e.Value?.ToString() ?? string.Empty" aria-label="Rechercher un brut" />
+        </div>
+        @if (Courant.Peut(Role.Gestion))
+        {
+            <GrosBouton Style="secondaire" Icone="plus" Texte="Nouveau brut" OnClick="() => _creation = true" />
+        }
+    </div>
+    @if (_bruts is null)
+    {
+        <div class="doux">Chargement…</div>
+    }
+    else
+    {
+        var trouves = _bruts.Where(b => !Exclus.Contains(b.Id) && Recherche.Correspond(_texte, b.TexteRecherche)).Take(Maximum).ToList();
+        @if (trouves.Count == 0)
+        {
+            <div class="vide">
+                <div class="vide__titre">Aucun brut trouvé</div>
+                @if (Courant.Peut(Role.Gestion)) { <div>Créez-le avec « + Nouveau brut ».</div> }
+            </div>
+        }
+        @foreach (var brut in trouves)
+        {
+            <div class="choix-brut">
+                <span class="etiquette">@brut.Reference</span>
+                <span class="choix-brut__libelle">@brut.Libelle</span>
+                <button type="button" class="bouton bouton--secondaire" @onclick="() => OnChoisi.InvokeAsync(brut.Id)">@TexteChoisir</button>
+            </div>
+        }
+    }
+</div>
+
+<Fenetre Ouverte="_creation" OnFermer="() => _creation = false" Titre="Nouveau brut" Large="true">
+    <FormulaireBrut OnEnregistre="Cree" OnAnnuler="() => _creation = false" />
+</Fenetre>
+
+@code {
+    private IReadOnlyList<LigneBrut>? _bruts;
+    private string _texte = string.Empty;
+    private bool _creation;
+
+    /// <summary>Bruts déjà choisis (non proposés).</summary>
+    [Parameter] public IReadOnlyCollection<int> Exclus { get; set; } = [];
+
+    [Parameter] public EventCallback<int> OnChoisi { get; set; }
+
+    [Parameter] public string TexteChoisir { get; set; } = "Choisir";
+
+    [Parameter] public int Maximum { get; set; } = 25;
+
+    protected override async Task OnInitializedAsync() => _bruts = await Bruts.Lister();
+
+    private async Task Cree(int id)
+    {
+        _creation = false;
+        _bruts = await Bruts.Lister();
+        await OnChoisi.InvokeAsync(id);
+    }
+}

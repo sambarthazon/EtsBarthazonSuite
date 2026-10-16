@@ -1,0 +1,167 @@
+@inject ServicePiecesFinies Pieces
+@inject ServiceReferentiels Referentiels
+@inject ServiceToast Toast
+@inject ServiceConfirmation Confirmation
+@inject IUtilisateurCourant Courant
+@* Onglet Gamme : opérations de l'indice courant, réordonnables par ▲ / ▼. *@
+<section class="bloc">
+    <h2 class="bloc__titre">Gamme <span class="badge-indice">@Indice.Code</span>
+        @if (Courant.Peut(Role.Gestion))
+        {
+            <GrosBouton Classe="pousse" Style="principal" Icone="plus" Texte="Ajouter une opération" OnClick="Nouvelle" />
+        }
+    </h2>
+    @if (Indice.Operations.Count == 0)
+    {
+        <p class="doux">Aucune opération. @if (Courant.Peut(Role.Gestion)) { <text>Ajoutez la première : n° 10.</text> }</p>
+    }
+    else
+    {
+        <table class="tableau gamme">
+            <thead><tr><th>N°</th><th>Poste</th><th>Description</th><th class="droite">Temps</th><th>Remarque</th>@if (Courant.Peut(Role.Gestion)) { <th></th> }</tr></thead>
+            <tbody>
+                @for (var i = 0; i < Indice.Operations.Count; i++)
+                {
+                    var o = Indice.Operations[i];
+                    var premier = i == 0;
+                    var dernier = i == Indice.Operations.Count - 1;
+                    <tr>
+                        <td class="numero">@o.Numero</td>
+                        <td>@o.Poste</td>
+                        <td style="white-space: pre-line">@o.Description</td>
+                        <td class="droite nombre">@(o.TempsEstimeMin is { } t ? $"{t} min" : null)</td>
+                        <td>@o.Remarque</td>
+                        @if (Courant.Peut(Role.Gestion))
+                        {
+                            <td class="droite" style="white-space: nowrap">
+                                <span class="gamme__ordre">
+                                    <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Monter" title="Monter" disabled="@premier" @onclick="() => Deplacer(o, -1)"><Icone Nom="haut" /></button>
+                                    <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Descendre" title="Descendre" disabled="@dernier" @onclick="() => Deplacer(o, 1)"><Icone Nom="bas" /></button>
+                                </span>
+                                <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Modifier" title="Modifier" @onclick="() => Modifier(o)"><Icone Nom="modifier" /></button>
+                                <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Supprimer" title="Supprimer" @onclick="() => Supprimer(o)"><Icone Nom="corbeille" /></button>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (Indice.Operations.Any(o => o.TempsEstimeMin is not null))
+        {
+            <p class="doux petit">Temps total estimé : @Indice.Operations.Sum(o => o.TempsEstimeMin ?? 0) min</p>
+        }
+    }
+</section>
+
+<Fenetre Ouverte="_ouverte" OnFermer="() => _ouverte = false" Titre="@(_operationId is null ? "Nouvelle opération" : "Modifier l'opération")">
+    <ChildContent>
+        <div class="grille-champs grille-champs--2">
+            <div class="champ">
+                <label for="op-num">N°</label>
+                <input id="op-num" type="number" inputmode="numeric" @bind="_saisie.Numero" />
+            </div>
+            <div class="champ">
+                <label for="op-temps">Temps estimé (min)</label>
+                <input id="op-temps" type="number" inputmode="numeric" min="0" @bind="_saisie.TempsEstimeMin" />
+            </div>
+        </div>
+        <div class="champ">
+            <span class="champ__etiquette">Poste</span>
+            <div class="choix-boutons">
+                @foreach (var poste in _postes)
+                {
+                    <button type="button" class="@(poste.Id == _saisie.PosteId ? "actif" : null)" @onclick="() => _saisie.PosteId = poste.Id">@poste.Libelle</button>
+                }
+            </div>
+        </div>
+        <div class="champ">
+            <label for="op-desc">Description <span class="champ__obligatoire">*</span></label>
+            <textarea id="op-desc" @bind="_saisie.Description" placeholder="ex. Dressage, chariotage Ø40 h7"></textarea>
+        </div>
+        <div class="champ">
+            <label for="op-rem">Remarque</label>
+            <input id="op-rem" @bind="_saisie.Remarque" />
+        </div>
+        @if (_erreur is not null)
+        {
+            <p class="erreur-formulaire">@_erreur</p>
+        }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => _ouverte = false">Annuler</button>
+        <GrosBouton Style="principal" Texte="Enregistrer" OnClick="Enregistrer" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private IReadOnlyList<LigneListe> _postes = [];
+    private SaisieOperation _saisie = new();
+    private int? _operationId;
+    private bool _ouverte;
+    private string? _erreur;
+
+    [Parameter, EditorRequired] public DetailIndice Indice { get; set; } = default!;
+
+    [Parameter] public EventCallback OnChange { get; set; }
+
+    protected override async Task OnInitializedAsync() => _postes = await Referentiels.ListerPostes();
+
+    private void Nouvelle()
+    {
+        (_operationId, _saisie, _erreur) = (null, new SaisieOperation { Numero = ServicePiecesFinies.ProchainNumero(Indice.Operations) }, null);
+        _ouverte = true;
+    }
+
+    private void Modifier(OperationAffichee o)
+    {
+        (_operationId, _erreur) = (o.Id, null);
+        _saisie = new SaisieOperation { Numero = o.Numero, PosteId = o.PosteId, Description = o.Description, TempsEstimeMin = o.TempsEstimeMin, Remarque = o.Remarque };
+        _ouverte = true;
+    }
+
+    private async Task Enregistrer()
+    {
+        var resultat = await Pieces.EnregistrerOperation(Indice.Id, _operationId, _saisie);
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        _ouverte = false;
+        Toast.Succes(_operationId is null ? $"Opération {_saisie.Numero} ajoutée" : $"Opération {_saisie.Numero} modifiée");
+        await OnChange.InvokeAsync();
+    }
+
+    private async Task Deplacer(OperationAffichee o, int sens)
+    {
+        var resultat = await Pieces.DeplacerOperation(Indice.Id, o.Id, sens);
+        if (resultat.Reussi)
+        {
+            await OnChange.InvokeAsync();
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+
+    private async Task Supprimer(OperationAffichee o)
+    {
+        if (!await Confirmation.Demander($"Supprimer l'opération {o.Numero} ?", "Supprimer", danger: true))
+        {
+            return;
+        }
+
+        var resultat = await Pieces.SupprimerOperation(Indice.Id, o.Id);
+        if (resultat.Reussi)
+        {
+            Toast.Succes($"Opération {o.Numero} supprimée");
+            await OnChange.InvokeAsync();
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+}

@@ -1,0 +1,279 @@
+@page "/annuaire/pieces/nouveau"
+@inject ServicePiecesFinies Pieces
+@inject ServiceBruts Bruts
+@inject ServiceReferentiels Referentiels
+@inject StockagePlans Stockage
+@inject IUtilisateurCourant Courant
+@inject ServiceToast Toast
+@inject NavigationManager Navigation
+<PageTitle>Nouvelle pièce finie — Annuaire</PageTitle>
+
+@if (!Courant.Peut(Role.Gestion))
+{
+    <AccesRefuse />
+}
+else
+{
+    <div class="contenu--etroit" style="margin: 0 auto">
+        <EntetePage Titre="Nouvelle pièce finie" Retour="@CheminRetour" />
+        <div class="etapes" aria-hidden="true">
+            <div class="etapes__etape @Classe(1)">1. Identité</div>
+            <div class="etapes__etape @Classe(2)">2. Brut(s)</div>
+            <div class="etapes__etape @Classe(3)">3. Plan et détails</div>
+        </div>
+
+        <div class="bloc pile">
+            @switch (_etape)
+            {
+                case 1:
+                    <div class="grille-champs grille-champs--2">
+                        <div class="champ">
+                            <label for="p-ref">Référence (n° de plan client) <span class="champ__obligatoire">*</span></label>
+                            <input id="p-ref" @bind="_saisie.Reference" @bind:event="oninput" autocomplete="off" />
+                        </div>
+                        <div class="champ">
+                            <label for="p-ind">Indice <span class="champ__obligatoire">*</span></label>
+                            <input id="p-ind" @bind="_saisie.Indice" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="champ">
+                        <label for="p-des">Désignation <span class="champ__obligatoire">*</span></label>
+                        <input id="p-des" @bind="_saisie.Designation" @bind:event="oninput" placeholder="ex. Axe de pompe" autocomplete="off" />
+                    </div>
+                    <ChampChoix Etiquette="Client" Obligatoire="true" Options="_clients" @bind-Valeur="_saisie.ClientId" Creer="CreerClient" Placeholder="Rechercher ou créer un client…" />
+                    break;
+
+                case 2:
+                    <h2 style="margin: 0">Brut(s) de la pièce <span class="doux petit">— au moins un</span></h2>
+                    @if (_choisis.Count == 0)
+                    {
+                        <p class="avertissement">Choisissez le brut dans lequel la pièce est usinée (plusieurs si elle peut être réalisée dans différents bruts).</p>
+                    }
+                    @foreach (var choix in _choisis)
+                    {
+                        <div class="choix-brut choisi">
+                            <button type="button" class="bouton bouton--icone @(choix.Principal ? "bouton--principal" : "bouton--secondaire")" title="Brut principal" aria-label="Brut principal" @onclick="() => Principal(choix)">
+                                <Icone Nom="@(choix.Principal ? "etoile" : "etoile-vide")" />
+                            </button>
+                            <span class="etiquette">@choix.Reference</span>
+                            <span class="choix-brut__libelle">@choix.Libelle</span>
+                            <label class="ligne petit">1 brut →
+                                <input class="saisie choix-brut__nombre" type="number" inputmode="numeric" min="1" @bind="choix.PiecesParBrut" /> pièce(s)
+                            </label>
+                            <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Retirer" @onclick="() => Retirer(choix)"><Icone Nom="fermer" /></button>
+                        </div>
+                    }
+                    <SelecteurBrut Exclus="_choisis.Select(c => c.BrutId).ToList()" OnChoisi="Choisir" TexteChoisir="Ajouter" Maximum="12" />
+                    break;
+
+                case 3:
+                    <h2 style="margin: 0">Plan et détails <span class="doux petit">— facultatif, complétable plus tard</span></h2>
+                    <ChampFichier OnFichiers="Deposer" />
+                    @foreach (var fichier in _fichiers)
+                    {
+                        <div class="ligne"><Icone Nom="fichier" /> @fichier.Nom <span class="doux">@Format.Taille(fichier.Contenu.Length)</span>
+                            <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Retirer" @onclick="() => _fichiers.Remove(fichier)"><Icone Nom="fermer" /></button></div>
+                    }
+                    <div class="champ">
+                        <label for="p-papier">Emplacement du plan papier</label>
+                        <input id="p-papier" @bind="_saisie.EmplacementPlanPapier" placeholder="ex. classeur Dupont, chemise 12" />
+                    </div>
+                    <div class="grille-champs grille-champs--2">
+                        <div class="champ"><label for="s-tt">Traitement thermique</label><input id="s-tt" @bind="_specification.TraitementThermique" /></div>
+                        <div class="champ"><label for="s-ts">Traitement de surface</label><input id="s-ts" @bind="_specification.TraitementSurface" /></div>
+                        <div class="champ"><label for="s-tol">Tolérance générale</label><input id="s-tol" @bind="_specification.ToleranceGenerale" placeholder="ex. ISO 2768-m" /></div>
+                        <div class="champ"><label for="s-masse">Masse</label><input id="s-masse" @bind="_specification.Masse" placeholder="ex. 1,2 kg" /></div>
+                    </div>
+                    break;
+            }
+
+            @if (_erreur is not null)
+            {
+                <p class="erreur-formulaire" role="alert">@_erreur</p>
+            }
+
+            <div class="ligne" style="justify-content: flex-end">
+                @if (_etape > 1)
+                {
+                    <button type="button" class="bouton bouton--discret" @onclick="() => { _etape--; _erreur = null; }"><Icone Nom="retour" /> Retour</button>
+                }
+                @if (_etape == 1)
+                {
+                    <GrosBouton Style="principal" Gros="true" Texte="Suivant : brut(s)" Icone="droite" OnClick="VersEtape2" />
+                }
+                else if (_etape == 2)
+                {
+                    <button type="button" class="bouton bouton--secondaire" @onclick="VersEtape3">Suivant : plan (facultatif)</button>
+                    <GrosBouton Style="principal" Gros="true" Icone="valider" Texte="Créer la pièce" Desactive="_enCours" OnClick="Creer" />
+                }
+                else
+                {
+                    <button type="button" class="bouton bouton--secondaire" @onclick="Passer">Passer</button>
+                    <GrosBouton Style="principal" Gros="true" Icone="valider" Texte="Créer la pièce" Desactive="_enCours" OnClick="Creer" />
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private readonly SaisieCreationPiece _saisie = new();
+    private SaisieSpecification _specification = new();
+    private readonly List<BrutSelectionne> _choisis = [];
+    private readonly List<(string Nom, byte[] Contenu)> _fichiers = [];
+    private List<OptionChoix> _clients = [];
+    private int _etape = 1;
+    private string? _erreur;
+    private bool _enCours;
+
+    [SupplyParameterFromQuery(Name = "retour")] private string? Retour { get; set; }
+
+    [SupplyParameterFromQuery(Name = "client")] private int? ClientDemande { get; set; }
+
+    private string CheminRetour => Authentification.RetourSur(Retour) is var r && r != "/" ? r : "/annuaire";
+
+    private string Classe(int etape) => etape == _etape ? "active" : etape < _etape ? "faite" : string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ChargerClients();
+        _saisie.ClientId = ClientDemande;
+    }
+
+    private async Task ChargerClients() =>
+        _clients = (await Referentiels.ListerTiers(SorteTiers.Client)).Select(c => new OptionChoix(c.Id, c.Nom)).ToList();
+
+    private async Task<int?> CreerClient(string nom)
+    {
+        var resultat = await Referentiels.EnregistrerTiers(SorteTiers.Client, null, new SaisieTiers(nom, null, null, null, null));
+        if (!resultat.Reussi)
+        {
+            Toast.Erreur(resultat.Erreur!);
+            return null;
+        }
+
+        await ChargerClients();
+        Toast.Succes($"Client {nom} créé");
+        return resultat.Valeur;
+    }
+
+    private void VersEtape2()
+    {
+        _erreur = string.IsNullOrWhiteSpace(_saisie.Reference) || string.IsNullOrWhiteSpace(_saisie.Designation)
+            ? "La référence et la désignation sont obligatoires."
+            : _saisie.ClientId is null ? "Choisissez le client (ou créez-le en tapant son nom)."
+            : string.IsNullOrWhiteSpace(_saisie.Indice) ? "Indiquez l'indice (A par défaut)."
+            : null;
+        if (_erreur is null)
+        {
+            _etape = 2;
+        }
+    }
+
+    private void VersEtape3()
+    {
+        _erreur = _choisis.Count == 0 ? "Choisissez au moins un brut." : null;
+        if (_erreur is null)
+        {
+            _etape = 3;
+        }
+    }
+
+    private async Task Choisir(int brutId)
+    {
+        var brut = (await Bruts.Lister(true)).FirstOrDefault(b => b.Id == brutId);
+        if (brut is not null && _choisis.All(c => c.BrutId != brutId))
+        {
+            _choisis.Add(new BrutSelectionne { BrutId = brut.Id, Reference = brut.Reference, Libelle = brut.Libelle, Principal = _choisis.Count == 0 });
+            _erreur = null;
+        }
+    }
+
+    private void Principal(BrutSelectionne choix) => _choisis.ForEach(c => c.Principal = c == choix);
+
+    private void Retirer(BrutSelectionne choix)
+    {
+        _choisis.Remove(choix);
+        if (choix.Principal && _choisis.Count > 0)
+        {
+            _choisis[0].Principal = true;
+        }
+    }
+
+    private async Task Deposer(IReadOnlyList<IBrowserFile> fichiers)
+    {
+        foreach (var fichier in fichiers)
+        {
+            if (StockagePlans.TypeAccepte(fichier.Name) is null)
+            {
+                Toast.Erreur($"« {fichier.Name} » : seuls les PDF, PNG et JPG sont acceptés.");
+                continue;
+            }
+
+            if (fichier.Size > Stockage.TailleMax)
+            {
+                Toast.Erreur($"« {fichier.Name} » dépasse {Stockage.TailleMaxMo} Mo.");
+                continue;
+            }
+
+            using var memoire = new MemoryStream();
+            await using var flux = fichier.OpenReadStream(Stockage.TailleMax);
+            await flux.CopyToAsync(memoire);
+            _fichiers.Add((fichier.Name, memoire.ToArray()));
+        }
+    }
+
+    private Task Passer()
+    {
+        _fichiers.Clear();
+        _saisie.EmplacementPlanPapier = null;
+        _specification = new SaisieSpecification();
+        return Creer();
+    }
+
+    private async Task Creer()
+    {
+        if (_enCours)
+        {
+            return;
+        }
+
+        _saisie.Bruts = _choisis.Select(c => new BrutChoisi(c.BrutId, c.Principal, Math.Max(1, c.PiecesParBrut))).ToList();
+        _saisie.Specification = _specification;
+        _enCours = true;
+        var resultat = await Pieces.Creer(_saisie);
+        if (!resultat.Reussi)
+        {
+            _enCours = false;
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        var fiche = await Pieces.Obtenir(resultat.Valeur);
+        foreach (var (nom, contenu) in _fichiers)
+        {
+            using var flux = new MemoryStream(contenu);
+            var plan = await Pieces.AjouterPlan(fiche!.IndiceCourant.Id, nom, flux, contenu.Length);
+            if (!plan.Reussi)
+            {
+                Toast.Erreur(plan.Erreur!);
+            }
+        }
+
+        Toast.Succes($"Pièce {_saisie.Reference.Trim()} créée");
+        Navigation.NavigateTo(Authentification.RetourSur(Retour) is var r && r != "/" ? r : $"/annuaire/pieces/{resultat.Valeur}");
+    }
+
+    private sealed class BrutSelectionne
+    {
+        public int BrutId { get; init; }
+
+        public string Reference { get; init; } = string.Empty;
+
+        public string Libelle { get; init; } = string.Empty;
+
+        public bool Principal { get; set; }
+
+        public int PiecesParBrut { get; set; } = 1;
+    }
+}

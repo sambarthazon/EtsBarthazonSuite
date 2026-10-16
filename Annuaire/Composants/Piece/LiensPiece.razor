@@ -1,0 +1,127 @@
+@inject ServicePiecesFinies Pieces
+@inject ServiceToast Toast
+@inject ServiceConfirmation Confirmation
+@inject IUtilisateurCourant Courant
+@* Onglet Liens : remplace / remplacée par (réciproque), même famille, se monte avec, lien externe. *@
+<section class="bloc">
+    <h2 class="bloc__titre">Liens
+        @if (Courant.Peut(Role.Gestion))
+        {
+            <GrosBouton Classe="pousse" Style="principal" Icone="plus" Texte="Ajouter un lien" OnClick="Ouvrir" />
+        }
+    </h2>
+    @if (Fiche.Liens.Count == 0)
+    {
+        <p class="doux">Aucun lien.</p>
+    }
+    <ul class="lignes-simples">
+        @foreach (var lien in Fiche.Liens)
+        {
+            <li>
+                <span class="etiquette">@LibellesLien.Libelle(lien.Type)</span>
+                @if (lien.Type == TypeLien.Externe)
+                {
+                    <a href="@lien.Url" target="_blank" rel="noopener noreferrer"><Icone Nom="externe" /> @lien.Libelle</a>
+                }
+                else
+                {
+                    <a href="/annuaire/pieces/@lien.PieceCibleId"><strong>@lien.PieceCibleReference</strong></a>
+                    <span>@lien.PieceCibleDesignation</span>
+                }
+                @if (Courant.Peut(Role.Gestion))
+                {
+                    <button type="button" class="bouton bouton--discret bouton--icone pousse" aria-label="Supprimer le lien" @onclick="() => Supprimer(lien)"><Icone Nom="corbeille" /></button>
+                }
+            </li>
+        }
+    </ul>
+</section>
+
+<Fenetre Ouverte="_ouverte" OnFermer="() => _ouverte = false" Titre="Ajouter un lien">
+    <ChildContent>
+        <div class="champ">
+            <span class="champ__etiquette">Type de lien</span>
+            <div class="choix-boutons">
+                @foreach (var type in Enum.GetValues<TypeLien>())
+                {
+                    <button type="button" class="@(type == _type ? "actif" : null)" @onclick="() => _type = type">@LibellesLien.Libelle(type)</button>
+                }
+            </div>
+        </div>
+        @if (_type == TypeLien.Externe)
+        {
+            <div class="champ"><label for="l-url">Adresse <span class="champ__obligatoire">*</span></label><input id="l-url" type="url" inputmode="url" placeholder="https://…" @bind="_url" /></div>
+            <div class="champ"><label for="l-lib">Libellé</label><input id="l-lib" @bind="_libelle" placeholder="ex. Fiche technique du roulement" /></div>
+        }
+        else
+        {
+            <ChampChoix Etiquette="Pièce finie" Obligatoire="true" Options="_pieces" @bind-Valeur="_cible" Placeholder="Rechercher une pièce…" />
+            @if (_type is TypeLien.Remplace or TypeLien.RemplaceePar)
+            {
+                <p class="doux petit">Le lien inverse est ajouté automatiquement sur l'autre pièce.</p>
+            }
+        }
+        @if (_erreur is not null)
+        {
+            <p class="erreur-formulaire">@_erreur</p>
+        }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => _ouverte = false">Annuler</button>
+        <GrosBouton Style="principal" Texte="Ajouter" OnClick="Ajouter" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private List<OptionChoix> _pieces = [];
+    private TypeLien _type = TypeLien.MemeFamille;
+    private int? _cible;
+    private string? _url;
+    private string? _libelle;
+    private bool _ouverte;
+    private string? _erreur;
+
+    [Parameter, EditorRequired] public FichePiece Fiche { get; set; } = default!;
+
+    [Parameter] public EventCallback OnChange { get; set; }
+
+    private async Task Ouvrir()
+    {
+        _pieces = (await Pieces.Lister(true)).Where(p => p.Id != Fiche.Id).Select(p => new OptionChoix(p.Id, $"{p.Reference} · {p.Designation}", p.Client)).ToList();
+        (_cible, _url, _libelle, _erreur) = (null, null, null, null);
+        _ouverte = true;
+    }
+
+    private async Task Ajouter()
+    {
+        var resultat = await Pieces.AjouterLien(Fiche.Id, _type, _cible, _url, _libelle);
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        _ouverte = false;
+        Toast.Succes("Lien ajouté");
+        await OnChange.InvokeAsync();
+    }
+
+    private async Task Supprimer(LienAffiche lien)
+    {
+        if (!await Confirmation.Demander("Supprimer ce lien ?", "Supprimer", danger: true))
+        {
+            return;
+        }
+
+        var resultat = await Pieces.SupprimerLien(Fiche.Id, lien.Id);
+        if (resultat.Reussi)
+        {
+            Toast.Succes("Lien supprimé");
+            await OnChange.InvokeAsync();
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+}

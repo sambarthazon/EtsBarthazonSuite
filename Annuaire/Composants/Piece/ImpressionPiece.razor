@@ -1,0 +1,28 @@
+@* Version papier de la fiche (une page A4) : en-tête, brut(s), spécifications, gamme. *@
+<div class="impression-seule">
+    <div class="impression-entete">
+        <h1>@Fiche.Reference · @Fiche.Designation</h1>
+        <span>Indice <strong>@Fiche.IndiceCourant.Code</strong></span>
+    </div>
+    <dl class="proprietes">
+        <dt>Client</dt><dd>@Fiche.Client</dd>
+        <dt>Brut</dt>
+        <dd>
+            @foreach (var b in Fiche.Bruts)
+            {
+                <div>@(b.Principal ? "★ " : null)@b.Reference — @b.Libelle (1 brut → @b.PiecesParBrut pièce@(b.PiecesParBrut > 1 ? "s" : null))</div>
+            }
+        </dd>
+        <dt>Plan papier</dt><dd>@(Fiche.EmplacementPlanPapier ?? "—")</dd>
+        <dt>Plan numérique</dt><dd>@(Fiche.IndiceCourant.Plans.FirstOrDefault()?.NomFichier ?? "—")</dd>
+    </dl>
+    <h2 style="margin-top: 10px">Spécifications</h2>
+    <AffichageSpecification Specification="Fiche.IndiceCourant.Specification" />
+    <h2 style="margin-top: 10px">Gamme</h2>
+    <TableauGamme Operations="Fiche.IndiceCourant.Operations" />
+    <p class="petit" style="margin-top: 10px">Imprimé le @Format.DateHeure(DateTime.Now) — Ets BARTHAZON</p>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public FichePiece Fiche { get; set; } = default!;
+}

@@ -1,0 +1,39 @@
+@* Saisie d'un nombre décimal (virgule ou point), clavier numérique sur mobile. *@
+<div class="champ">
+    @if (Etiquette is not null)
+    {
+        <label for="@_id">@Etiquette @if (Obligatoire) { <span class="champ__obligatoire">*</span> }</label>
+    }
+    <div class="champ-nombre">
+        <input id="@_id" type="text" inputmode="decimal" autocomplete="off" value="@Texte" @onchange="Changer" placeholder="@Placeholder" />
+        @if (Unite is not null)
+        {
+            <span class="champ-nombre__unite">@Unite</span>
+        }
+    </div>
+</div>
+
+@code {
+    private readonly string _id = "n" + Guid.NewGuid().ToString("N")[..8];
+
+    [Parameter] public decimal? Valeur { get; set; }
+
+    [Parameter] public EventCallback<decimal?> ValeurChanged { get; set; }
+
+    [Parameter] public string? Etiquette { get; set; }
+
+    [Parameter] public string? Unite { get; set; }
+
+    [Parameter] public string? Placeholder { get; set; }
+
+    [Parameter] public bool Obligatoire { get; set; }
+
+    private string Texte => Valeur is null ? string.Empty : Valeur.Value.ToString("0.###", Format.Culture);
+
+    private async Task Changer(ChangeEventArgs e)
+    {
+        var texte = (e.Value?.ToString() ?? string.Empty).Replace('.', ',').Replace(" ", string.Empty, StringComparison.Ordinal);
+        Valeur = decimal.TryParse(texte, NumberStyles.Number, Format.Culture, out var v) ? v : null;
+        await ValeurChanged.InvokeAsync(Valeur);
+    }
+}

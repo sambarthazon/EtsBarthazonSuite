@@ -1,0 +1,178 @@
+@page "/annuaire/bruts/{Id:int}"
+@inject ServiceBruts Bruts
+@inject IUtilisateurCourant Courant
+@inject ServiceToast Toast
+@inject ServiceConfirmation Confirmation
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+<PageTitle>@(_fiche?.Reference ?? "Brut") — Annuaire</PageTitle>
+
+@if (_charge && _fiche is null)
+{
+    <div class="vide"><div class="vide__titre">Brut introuvable</div><a href="/annuaire/bruts">Retour à la liste des bruts</a></div>
+}
+else if (_fiche is not null)
+{
+    <div class="fiche-entete">
+        <div class="fiche-entete__titre">
+            <h1>@_fiche.Reference <span class="doux" style="font-weight: 500">@_fiche.Libelle</span> @if (_fiche.Archive) { <span class="etiquette">archivé</span> }</h1>
+            @if (_fiche.Libelle != _fiche.LibelleAutomatique)
+            {
+                <div class="doux">@_fiche.LibelleAutomatique</div>
+            }
+        </div>
+        <ApercuStockAnnuaire Type="TypeReference.Brut" Id="Id" Detaille="true" />
+        <div class="fiche-entete__actions ecran-seul">
+            @if (Courant.Peut(Role.Gestion))
+            {
+                <GrosBouton Style="principal" Icone="modifier" Texte="Modifier" Href="@($"/annuaire/bruts/{Id}/modifier")" />
+            }
+            <GrosBouton Icone="imprimer" Texte="Imprimer" OnClick="Imprimer" />
+            @if (Courant.Peut(Role.Gestion))
+            {
+                <Menu Titre="Plus d'actions">
+                    <Declencheur><Icone Nom="plus-actions" /></Declencheur>
+                    <ChildContent>
+                        <button type="button" class="menu__element" @onclick="Archiver"><Icone Nom="archive" /> @(_fiche.Archive ? "Désarchiver" : "Archiver")</button>
+                        <button type="button" class="menu__element" @onclick="Supprimer"><Icone Nom="corbeille" /> Supprimer</button>
+                    </ChildContent>
+                </Menu>
+            }
+        </div>
+    </div>
+
+    <div class="grille-blocs" style="margin-top: 1rem">
+        <section class="bloc">
+            <h2 class="bloc__titre">Caractéristiques</h2>
+            <dl class="proprietes">
+                <dt>Forme</dt><dd>@Format.LibelleForme(_fiche.Forme)</dd>
+                @foreach (var (libelle, valeur) in Dimensions())
+                {
+                    <dt>@libelle</dt><dd>@valeur</dd>
+                }
+                <dt>Matière</dt><dd>@_fiche.Matiere</dd>
+                <dt>Unité de stock</dt><dd>@Format.LibelleUnite(_fiche.Unite)</dd>
+                @if (_fiche.Remarques is not null)
+                {
+                    <dt>Remarques</dt><dd style="white-space: pre-line">@_fiche.Remarques</dd>
+                }
+            </dl>
+        </section>
+        <section class="bloc">
+            <h2 class="bloc__titre">Fournisseurs</h2>
+            @if (_fiche.Fournisseurs.Count == 0)
+            {
+                <p class="doux">Aucun fournisseur indiqué.</p>
+            }
+            <ul class="lignes-simples">
+                @foreach (var f in _fiche.Fournisseurs)
+                {
+                    <li>
+                        @if (f.Principal) { <span class="etoile" title="Fournisseur principal"><Icone Nom="etoile" /></span> }
+                        <a href="/annuaire/fournisseurs/@f.FournisseurId">@f.Nom</a>
+                        @if (f.ReferenceFournisseur is not null) { <span class="doux">réf. @f.ReferenceFournisseur</span> }
+                    </li>
+                }
+            </ul>
+        </section>
+        <section class="bloc" style="grid-column: 1 / -1">
+            <h2 class="bloc__titre">Pièces finies qui utilisent ce brut</h2>
+            @if (_fiche.Pieces.Count == 0)
+            {
+                <p class="doux">Aucune pièce finie n'utilise ce brut.</p>
+            }
+            <ul class="lignes-simples">
+                @foreach (var p in _fiche.Pieces)
+                {
+                    <li>
+                        <a href="/annuaire/pieces/@p.Id"><strong>@p.Reference</strong></a>
+                        <span>@p.Designation</span>
+                        <span class="doux">@p.Client</span>
+                        @if (p.Principal) { <span class="etiquette">brut principal</span> }
+                        <span class="doux petit">1 brut → @p.PiecesParBrut pièce(s)</span>
+                        @if (p.Archive) { <span class="etiquette">archivée</span> }
+                    </li>
+                }
+            </ul>
+        </section>
+    </div>
+    <div class="ecran-seul" style="margin-top: 1rem">
+        <SectionRepliable Titre="Historique">
+            <BlocHistorique TypeObjet="@TypesObjet.Brut" ObjetId="Id" Version="_version" />
+        </SectionRepliable>
+    </div>
+}
+
+@code {
+    private FicheBrut? _fiche;
+    private bool _charge;
+    private int _version;
+
+    [Parameter] public int Id { get; set; }
+
+    protected override async Task OnParametersSetAsync() => await Charger();
+
+    private async Task Charger()
+    {
+        _fiche = await Bruts.Obtenir(Id);
+        _charge = true;
+        _version++;
+    }
+
+    private IEnumerable<(string, string)> Dimensions()
+    {
+        static string Mm(decimal? v) => $"{Format.Nombre(v)} mm";
+        var f = _fiche!;
+        if (f.Diametre is not null) { yield return (f.Forme == FormeBrut.Tube ? "Ø extérieur" : "Ø", Mm(f.Diametre)); }
+        if (f.DiametreInterieur is not null) { yield return ("Ø intérieur", Mm(f.DiametreInterieur)); }
+        if (f.Largeur is not null) { yield return ("Largeur", Mm(f.Largeur)); }
+        if (f.Epaisseur is not null) { yield return ("Épaisseur", Mm(f.Epaisseur)); }
+        if (f.Cote is not null) { yield return ("Côté", Mm(f.Cote)); }
+        if (f.SurPlats is not null) { yield return ("Sur plats", Mm(f.SurPlats)); }
+        if (f.Forme is not (FormeBrut.MouleeForgee or FormeBrut.Autre)) { yield return ("Longueur", f.Longueur is null ? "barre entière" : Mm(f.Longueur)); }
+        if (f.DescriptionForme is not null) { yield return ("Description", f.DescriptionForme); }
+    }
+
+    private async Task Imprimer() => await JS.InvokeVoidAsync("barthazon.imprimer");
+
+    private async Task Archiver()
+    {
+        var archiver = !_fiche!.Archive;
+        if (archiver && !await Confirmation.Demander($"Archiver le brut {_fiche.Reference} ? Il n'apparaîtra plus dans les listes.", "Archiver"))
+        {
+            return;
+        }
+
+        var resultat = await Bruts.Archiver(Id, archiver);
+        if (resultat.Reussi)
+        {
+            Toast.Succes(archiver ? "Brut archivé" : "Brut désarchivé");
+            await Charger();
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+
+    private async Task Supprimer()
+    {
+        if (!await Confirmation.Demander($"Supprimer définitivement le brut {_fiche!.Reference} ?", "Supprimer", danger: true))
+        {
+            return;
+        }
+
+        var resultat = await Bruts.Supprimer(Id);
+        if (resultat.Reussi)
+        {
+            Toast.Succes("Brut supprimé");
+            Navigation.NavigateTo("/annuaire/bruts");
+        }
+        else if (await Confirmation.Demander(resultat.Erreur!, "Archiver"))
+        {
+            await Bruts.Archiver(Id, true);
+            Toast.Succes("Brut archivé");
+            await Charger();
+        }
+    }
+}

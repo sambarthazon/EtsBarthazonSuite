@@ -1,0 +1,94 @@
+@inject ServiceReferentiels Referentiels
+@inject ServiceToast Toast
+@inject ServiceConfirmation Confirmation
+@* Liste paramétrable (matières ou postes de gamme) : ajouter, renommer, supprimer si inutilisé. *@
+<div class="bloc" style="max-width: 640px">
+    <h2 class="bloc__titre">@Titre</h2>
+    <p class="doux">@Aide</p>
+    <form class="ligne" @onsubmit="Ajouter" style="margin-bottom: .75rem">
+        <input class="saisie" style="flex: 1 1 200px; width: auto" placeholder="Nouveau libellé" @bind="_nouveau" />
+        <button type="submit" class="bouton bouton--principal"><Icone Nom="plus" /> Ajouter</button>
+    </form>
+    <ul class="lignes-simples">
+        @foreach (var element in _elements)
+        {
+            <li>
+                @if (_enEdition == element.Id)
+                {
+                    <input class="saisie" style="flex: 1 1 200px; width: auto" @bind="_texte" />
+                    <button type="button" class="bouton bouton--principal" @onclick="() => Renommer(element)">OK</button>
+                    <button type="button" class="bouton bouton--discret" @onclick="() => _enEdition = null">Annuler</button>
+                }
+                else
+                {
+                    <span style="flex: 1">@element.Libelle</span>
+                    <span class="doux petit">@(element.Utilisations == 0 ? "inutilisé" : $"{element.Utilisations} utilisation(s)")</span>
+                    <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Renommer" @onclick="() => { _enEdition = element.Id; _texte = element.Libelle; }"><Icone Nom="modifier" /></button>
+                    @if (element.Utilisations == 0)
+                    {
+                        <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Supprimer" @onclick="() => Supprimer(element)"><Icone Nom="corbeille" /></button>
+                    }
+                }
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    private IReadOnlyList<LigneListe> _elements = [];
+    private string _nouveau = string.Empty;
+    private string _texte = string.Empty;
+    private int? _enEdition;
+
+    [Parameter, EditorRequired] public bool Postes { get; set; }
+
+    [Parameter] public string Titre { get; set; } = string.Empty;
+
+    [Parameter] public string Aide { get; set; } = string.Empty;
+
+    protected override Task OnInitializedAsync() => Charger();
+
+    private async Task Charger() => _elements = Postes ? await Referentiels.ListerPostes() : await Referentiels.ListerMatieres();
+
+    private async Task Ajouter()
+    {
+        var resultat = Postes ? await Referentiels.CreerPoste(_nouveau) : await Referentiels.CreerMatiere(_nouveau);
+        if (Afficher(resultat, $"« {_nouveau.Trim()} » ajouté"))
+        {
+            _nouveau = string.Empty;
+            await Charger();
+        }
+    }
+
+    private async Task Renommer(LigneListe element)
+    {
+        if (Afficher(await Referentiels.Renommer(Postes, element.Id, _texte), "Renommé"))
+        {
+            _enEdition = null;
+            await Charger();
+        }
+    }
+
+    private async Task Supprimer(LigneListe element)
+    {
+        if (await Confirmation.Demander($"Supprimer « {element.Libelle} » ?", "Supprimer", danger: true)
+            && Afficher(await Referentiels.Supprimer(Postes, element.Id), "Supprimé"))
+        {
+            await Charger();
+        }
+    }
+
+    private bool Afficher(Resultat resultat, string message)
+    {
+        if (resultat.Reussi)
+        {
+            Toast.Succes(message);
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+
+        return resultat.Reussi;
+    }
+}

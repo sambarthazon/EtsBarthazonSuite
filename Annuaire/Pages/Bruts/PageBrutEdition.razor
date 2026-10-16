@@ -1,0 +1,31 @@
+@page "/annuaire/bruts/nouveau"
+@page "/annuaire/bruts/{Id:int}/modifier"
+@inject NavigationManager Navigation
+@inject IUtilisateurCourant Courant
+<PageTitle>@(Id is null ? "Nouveau brut" : "Modifier le brut") — Annuaire</PageTitle>
+
+@if (!Courant.Peut(Role.Gestion))
+{
+    <AccesRefuse />
+}
+else
+{
+    <div class="contenu--etroit" style="margin: 0 auto">
+        <EntetePage Titre="@(Id is null ? "Nouveau brut" : "Modifier le brut")" Retour="@CheminRetour" />
+        <div class="bloc">
+            <FormulaireBrut BrutId="Id" OnEnregistre="Enregistre" OnAnnuler="() => Navigation.NavigateTo(CheminRetour)" />
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    /// <summary>Page d'origine (ex. le Stock), où revenir après la création.</summary>
+    [SupplyParameterFromQuery(Name = "retour")] private string? Retour { get; set; }
+
+    private string CheminRetour => Authentification.RetourSur(Retour) is var r && r != "/" ? r : Id is null ? "/annuaire/bruts" : $"/annuaire/bruts/{Id}";
+
+    private void Enregistre(int id) =>
+        Navigation.NavigateTo(Authentification.RetourSur(Retour) is var r && r != "/" ? r : $"/annuaire/bruts/{id}");
+}

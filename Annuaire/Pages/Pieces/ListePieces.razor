@@ -1,0 +1,61 @@
+@page "/annuaire"
+@inject ServicePiecesFinies Pieces
+@inject ServiceReferentiels Referentiels
+@inject IUtilisateurCourant Courant
+<PageTitle>Pièces finies — Annuaire</PageTitle>
+
+<EntetePage Titre="Pièces finies" SousTitre="Plans, gammes et indices des pièces clients">
+    <Actions>
+        @if (Courant.Peut(Role.Gestion))
+        {
+            <GrosBouton Style="principal" Gros="true" Icone="plus" Texte="Nouvelle pièce finie" Href="/annuaire/pieces/nouveau" />
+        }
+    </Actions>
+</EntetePage>
+
+<ListeRecherchable T="LignePiece" Elements="Filtrees" TexteRecherche="p => p.TexteRecherche" Lien='p => $"/annuaire/pieces/{p.Id}"'
+                   Placeholder="Rechercher : référence, désignation, client, matière…" Singulier="pièce finie" Pluriel="pièces finies"
+                   MessageVide="Aucune pièce finie pour l'instant">
+    <Filtres>
+        <select aria-label="Client" @bind="_client">
+            <option value="0">Tous les clients</option>
+            @foreach (var c in _clients)
+            {
+                <option value="@c.Id">@c.Nom</option>
+            }
+        </select>
+        <label class="case"><input type="checkbox" @bind="_archivees" @bind:after="Charger" /> Afficher les archivées</label>
+    </Filtres>
+    <Entetes>
+        <th>Référence</th><th>Désignation</th><th>Client</th><th>Indice</th><th>Brut principal</th>
+    </Entetes>
+    <Ligne Context="p">
+        <td><a class="lien-ligne" href="/annuaire/pieces/@p.Id">@p.Reference</a></td>
+        <td>@p.Designation @if (p.Archive) { <span class="etiquette">archivée</span> }</td>
+        <td>@p.Client</td>
+        <td><span class="badge-indice">@p.Indice</span></td>
+        <td>@if (p.BrutPrincipal is not null) { <span class="doux">@p.BrutPrincipalReference</span> @p.BrutPrincipal }</td>
+    </Ligne>
+    <Carte Context="p">
+        <div class="carte__titre"><span>@p.Reference</span> <span class="badge-indice">@p.Indice</span> @if (p.Archive) { <span class="etiquette">archivée</span> }</div>
+        <div>@p.Designation</div>
+        <div class="carte__ligne"><span>@p.Client</span>@if (p.BrutPrincipal is not null) { <span>@p.BrutPrincipal</span> }</div>
+    </Carte>
+</ListeRecherchable>
+
+@code {
+    private IReadOnlyList<LignePiece>? _pieces;
+    private IReadOnlyList<LigneTiers> _clients = [];
+    private int _client;
+    private bool _archivees;
+
+    private IEnumerable<LignePiece>? Filtrees => _pieces?.Where(p => _client == 0 || p.ClientId == _client);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _clients = await Referentiels.ListerTiers(SorteTiers.Client);
+        await Charger();
+    }
+
+    private async Task Charger() => _pieces = await Pieces.Lister(_archivees);
+}

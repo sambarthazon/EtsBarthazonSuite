@@ -1,0 +1,233 @@
+@inject ServiceBruts Bruts
+@inject ServiceReferentiels Referentiels
+@inject ServiceToast Toast
+@* Formulaire d'un brut : forme, dimensions selon la forme, matière, unité ; le reste dans « Plus de détails ». *@
+@if (_saisie is null)
+{
+    <div class="doux">Chargement…</div>
+}
+else
+{
+    <div class="pile">
+        <div class="ligne">
+            <span class="etiquette">@_reference</span>
+            <strong class="libelle-auto">@LibelleAutomatique</strong>
+        </div>
+
+        <div class="champ">
+            <span class="champ__etiquette">Forme <span class="champ__obligatoire">*</span></span>
+            <div class="choix-boutons">
+                @foreach (var forme in Enum.GetValues<FormeBrut>())
+                {
+                    <button type="button" class="@(forme == _saisie.Forme ? "actif" : null)" @onclick="() => _saisie.Forme = forme">@Format.LibelleForme(forme)</button>
+                }
+            </div>
+        </div>
+
+        <div class="grille-champs">
+            @switch (_saisie.Forme)
+            {
+                case FormeBrut.RondPlein:
+                    <ChampNombre Etiquette="Ø" Unite="mm" Obligatoire="true" @bind-Valeur="_saisie.Diametre" />
+                    break;
+                case FormeBrut.Tube:
+                    <ChampNombre Etiquette="Ø extérieur" Unite="mm" Obligatoire="true" @bind-Valeur="_saisie.Diametre" />
+                    <ChampNombre Etiquette="Ø intérieur" Unite="mm" Obligatoire="true" @bind-Valeur="_saisie.DiametreInterieur" />
+                    break;
+                case FormeBrut.Plat:
+                    <ChampNombre Etiquette="Largeur" Unite="mm" Obligatoire="true" @bind-Valeur="_saisie.Largeur" />
+                    <ChampNombre Etiquette="Épaisseur" Unite="mm" Obligatoire="true" @bind-Valeur="_saisie.Epaisseur" />
+                    break;
+                case FormeBrut.Carre:
+                    <ChampNombre Etiquette="Côté" Unite="mm" Obligatoire="true" @bind-Valeur="_saisie.Cote" />
+                    break;
+                case FormeBrut.Hexagone:
+                    <ChampNombre Etiquette="Sur plats" Unite="mm" Obligatoire="true" @bind-Valeur="_saisie.SurPlats" />
+                    break;
+                case FormeBrut.Tole:
+                    <ChampNombre Etiquette="Épaisseur" Unite="mm" Obligatoire="true" @bind-Valeur="_saisie.Epaisseur" />
+                    <ChampNombre Etiquette="Largeur" Unite="mm" @bind-Valeur="_saisie.Largeur" />
+                    break;
+            }
+            @if (_saisie.Forme is FormeBrut.MouleeForgee or FormeBrut.Autre)
+            {
+                <div class="champ" style="grid-column: 1 / -1">
+                    <label for="b-desc">Description <span class="champ__obligatoire">*</span></label>
+                    <input id="b-desc" @bind="_saisie.DescriptionForme" @bind:event="oninput" placeholder="ex. Ébauche forgée corps de vanne" />
+                </div>
+            }
+            else
+            {
+                <ChampNombre Etiquette="Longueur" Unite="mm" Placeholder="barre entière" @bind-Valeur="_saisie.Longueur" />
+            }
+        </div>
+
+        <ChampChoix Etiquette="Matière" Obligatoire="true" Options="_matieres" @bind-Valeur="_saisie.MatiereId" Creer="CreerMatiere" />
+
+        <div class="champ">
+            <span class="champ__etiquette">Unité de stock</span>
+            <div class="choix-boutons">
+                @foreach (var unite in Enum.GetValues<Unite>())
+                {
+                    <button type="button" class="@(unite == _saisie.Unite ? "actif" : null)" @onclick="() => _saisie.Unite = unite">@Format.LibelleUnite(unite)</button>
+                }
+            </div>
+        </div>
+
+        <SectionRepliable Titre="Plus de détails : fournisseurs, désignation, remarques" Ouverte="@(_saisie.Fournisseurs.Count > 0 || !string.IsNullOrEmpty(_saisie.Designation))">
+            <div class="pile">
+                <div class="champ">
+                    <span class="champ__etiquette">Fournisseurs</span>
+                    @foreach (var ligne in _fournisseurs)
+                    {
+                        <div class="ligne-fournisseur">
+                            <ChampChoix Options="_listeFournisseurs" @bind-Valeur="ligne.FournisseurId" Creer="CreerFournisseur" Placeholder="Fournisseur…" />
+                            <input class="saisie" placeholder="Réf. chez ce fournisseur" @bind="ligne.Reference" />
+                            <button type="button" class="bouton bouton--icone @(ligne.Principal ? "bouton--principal" : "bouton--secondaire")" title="Fournisseur principal" aria-label="Fournisseur principal" aria-pressed="@(ligne.Principal ? "true" : "false")" @onclick="() => Principal(ligne)">
+                                <Icone Nom="@(ligne.Principal ? "etoile" : "etoile-vide")" />
+                            </button>
+                            <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Retirer" @onclick="() => _fournisseurs.Remove(ligne)"><Icone Nom="fermer" /></button>
+                        </div>
+                    }
+                    <div><button type="button" class="bouton bouton--secondaire" @onclick="AjouterFournisseur"><Icone Nom="plus" /> Ajouter un fournisseur</button></div>
+                    <span class="champ__aide">★ = fournisseur principal, proposé par défaut pour les arrivages.</span>
+                </div>
+                <div class="champ">
+                    <label for="b-design">Désignation libre</label>
+                    <input id="b-design" @bind="_saisie.Designation" placeholder="si vide : @LibelleAutomatique" />
+                </div>
+                <div class="champ">
+                    <label for="b-rem">Remarques</label>
+                    <textarea id="b-rem" @bind="_saisie.Remarques"></textarea>
+                </div>
+            </div>
+        </SectionRepliable>
+
+        @if (_erreur is not null)
+        {
+            <p class="erreur-formulaire" role="alert">@_erreur</p>
+        }
+
+        <div class="ligne" style="justify-content: flex-end">
+            <button type="button" class="bouton bouton--secondaire" @onclick="() => OnAnnuler.InvokeAsync()">Annuler</button>
+            <GrosBouton Style="principal" Gros="true" Texte="@(BrutId is null ? "Créer le brut" : "Enregistrer")" Desactive="_enCours" OnClick="Enregistrer" />
+        </div>
+    </div>
+}
+
+@code {
+    private SaisieBrut? _saisie;
+    private string _reference = string.Empty;
+    private List<OptionChoix> _matieres = [];
+    private List<OptionChoix> _listeFournisseurs = [];
+    private List<LigneFournisseur> _fournisseurs = [];
+    private string? _erreur;
+    private bool _enCours;
+
+    /// <summary>Brut à modifier ; null pour une création.</summary>
+    [Parameter] public int? BrutId { get; set; }
+
+    /// <summary>Appelé avec l'identifiant du brut créé ou modifié.</summary>
+    [Parameter] public EventCallback<int> OnEnregistre { get; set; }
+
+    [Parameter] public EventCallback OnAnnuler { get; set; }
+
+    private string LibelleAutomatique => _saisie is null ? string.Empty : LibelleBrut.Calculer(_saisie.Forme, _saisie.Diametre, _saisie.DiametreInterieur,
+        _saisie.Largeur, _saisie.Epaisseur, _saisie.Cote, _saisie.SurPlats, _saisie.Longueur, _saisie.DescriptionForme,
+        _matieres.FirstOrDefault(m => m.Id == _saisie.MatiereId)?.Libelle);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _matieres = (await Referentiels.ListerMatieres()).Select(m => new OptionChoix(m.Id, m.Libelle)).ToList();
+        _listeFournisseurs = (await Referentiels.ListerTiers(SorteTiers.Fournisseur)).Select(f => new OptionChoix(f.Id, f.Nom)).ToList();
+        if (BrutId is { } id && await Bruts.Obtenir(id) is { } fiche)
+        {
+            _saisie = SaisieBrut.Depuis(fiche);
+            _reference = fiche.Reference;
+            _fournisseurs = fiche.Fournisseurs.Select(f => new LigneFournisseur { FournisseurId = f.FournisseurId, Reference = f.ReferenceFournisseur, Principal = f.Principal }).ToList();
+        }
+        else
+        {
+            _saisie = new SaisieBrut();
+            _reference = await Bruts.ProchaineReference();
+        }
+    }
+
+    private void AjouterFournisseur() => _fournisseurs.Add(new LigneFournisseur { Principal = _fournisseurs.Count == 0 });
+
+    private void Principal(LigneFournisseur ligne)
+    {
+        var etait = ligne.Principal;
+        _fournisseurs.ForEach(f => f.Principal = false);
+        ligne.Principal = !etait;
+    }
+
+    private async Task<int?> CreerMatiere(string libelle)
+    {
+        var resultat = await Referentiels.CreerMatiere(libelle);
+        if (!resultat.Reussi)
+        {
+            Toast.Erreur(resultat.Erreur!);
+            return null;
+        }
+
+        _matieres = (await Referentiels.ListerMatieres()).Select(m => new OptionChoix(m.Id, m.Libelle)).ToList();
+        return resultat.Valeur;
+    }
+
+    private async Task<int?> CreerFournisseur(string nom)
+    {
+        var resultat = await Referentiels.EnregistrerTiers(SorteTiers.Fournisseur, null, new SaisieTiers(nom, null, null, null, null));
+        if (!resultat.Reussi)
+        {
+            Toast.Erreur(resultat.Erreur!);
+            return null;
+        }
+
+        _listeFournisseurs = (await Referentiels.ListerTiers(SorteTiers.Fournisseur)).Select(f => new OptionChoix(f.Id, f.Nom)).ToList();
+        Toast.Succes($"Fournisseur {nom} créé");
+        return resultat.Valeur;
+    }
+
+    private async Task Enregistrer()
+    {
+        if (_saisie is null || _enCours)
+        {
+            return;
+        }
+
+        _saisie.Fournisseurs = _fournisseurs.Where(f => f.FournisseurId is not null)
+            .Select(f => new SaisieFournisseurBrut(f.FournisseurId!.Value, f.Reference, f.Principal)).ToList();
+        _enCours = true;
+        Resultat<int> resultat;
+        if (BrutId is { } id)
+        {
+            var modification = await Bruts.Modifier(id, _saisie);
+            resultat = modification.Reussi ? Resultat.Ok(id) : Resultat.Echec<int>(modification.Erreur!);
+        }
+        else
+        {
+            resultat = await Bruts.Creer(_saisie);
+        }
+
+        _enCours = false;
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        _erreur = null;
+        Toast.Succes(BrutId is null ? $"Brut {LibelleAutomatique} créé" : "Brut enregistré");
+        await OnEnregistre.InvokeAsync(resultat.Valeur);
+    }
+
+    private sealed class LigneFournisseur
+    {
+        public int? FournisseurId { get; set; }
+
+        public string? Reference { get; set; }
+
+        public bool Principal { get; set; }
+    }
+}

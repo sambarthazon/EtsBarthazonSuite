@@ -1,1 +1,37 @@
 /* Styles propres à l'application Annuaire (couleurs : uniquement les variables de Commun/wwwroot/theme.css). */
+
+.libelle-auto { font-size: 1.1rem; }
+
+/* Ligne fournisseur du formulaire de brut : fournisseur, référence, principal, retirer */
+.ligne-fournisseur { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto auto; gap: .4rem; align-items: center; margin-bottom: .4rem; }
+@media (max-width: 600px) {
+    .ligne-fournisseur { grid-template-columns: 1fr auto auto; }
+    .ligne-fournisseur > .champ { grid-column: 1 / -1; }
+}
+
+/* En-tête d'une fiche (pièce finie, brut) */
+.fiche-entete { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: flex-start; }
+.fiche-entete__titre { flex: 1 1 320px; }
+.fiche-entete__titre h1 { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: 0 0 .3rem; }
+.fiche-entete__stock { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .5rem .75rem; border-radius: var(--rayon); background: var(--surface); border: 1px solid var(--bordure); }
+.fiche-entete__actions { display: flex; flex-wrap: wrap; gap: .5rem; width: 100%; }
+
+/* Assistant de création */
+.etapes { display: flex; gap: .4rem; margin-bottom: 1rem; }
+.etapes__etape { flex: 1; padding: .5rem; border-bottom: 4px solid var(--bordure); color: var(--texte-doux); font-weight: 600; font-size: .9rem; }
+.etapes__etape.active { border-bottom-color: var(--couleur-principale); color: var(--texte); }
+.etapes__etape.faite { border-bottom-color: var(--couleur-principale-claire); }
+
+.choix-brut { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .6rem .75rem; border: 1px solid var(--bordure); border-radius: var(--rayon); background: var(--surface); min-height: var(--cible); }
+.choix-brut.choisi { border-color: var(--couleur-principale); background: var(--couleur-principale-claire); }
+.choix-brut__libelle { flex: 1 1 220px; }
+.choix-brut__nombre { width: 90px; }
+
+/* Gamme */
+.gamme td.numero { font-weight: 800; width: 64px; }
+.gamme__ordre { display: inline-flex; gap: .2rem; }
+.plan-vignette { display: flex; align-items: center; gap: .6rem; }
+
+/* Impression de la fiche pièce */
+.impression-entete { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--encre); padding-bottom: 6px; margin-bottom: 8px; }
+.impression-entete h1 { font-size: 18pt; margin: 0; }

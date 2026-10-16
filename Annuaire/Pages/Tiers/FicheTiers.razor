@@ -1,0 +1,108 @@
+@page "/annuaire/clients/{Id:int}"
+@page "/annuaire/fournisseurs/{Id:int}"
+@inject ServiceReferentiels Referentiels
+@inject ServicePiecesFinies Pieces
+@inject ServiceBruts Bruts
+@inject IUtilisateurCourant Courant
+@inject ServiceToast Toast
+@inject NavigationManager Navigation
+<PageTitle>@(_tiers?.Nom ?? "Fiche") — Annuaire</PageTitle>
+
+@if (_charge && _tiers is null)
+{
+    <div class="vide"><div class="vide__titre">Fiche introuvable</div></div>
+}
+else if (_tiers is not null)
+{
+    <EntetePage Titre="@_tiers.Nom" SousTitre="@(Sorte == SorteTiers.Client ? "Client" : "Fournisseur")" Retour="@Chemin">
+        <Actions>
+            @if (Courant.Peut(Role.Gestion))
+            {
+                <GrosBouton Style="principal" Icone="modifier" Texte="Modifier" OnClick="() => _fenetre = true" />
+                <GrosBouton Style="discret" Icone="archive" Texte="@(_tiers.Archive ? "Désarchiver" : "Archiver")" OnClick="Archiver" />
+            }
+        </Actions>
+    </EntetePage>
+    <div class="grille-blocs">
+        <section class="bloc">
+            <h2 class="bloc__titre">Coordonnées</h2>
+            <dl class="proprietes">
+                <dt>Contact</dt><dd>@(_tiers.Contact ?? "—")</dd>
+                <dt>Téléphone</dt><dd>@if (_tiers.Telephone is not null) { <a href="tel:@_tiers.Telephone">@_tiers.Telephone</a> } else { <text>—</text> }</dd>
+                <dt>E-mail</dt><dd>@if (_tiers.Email is not null) { <a href="mailto:@_tiers.Email">@_tiers.Email</a> } else { <text>—</text> }</dd>
+                @if (_tiers.Remarques is not null)
+                {
+                    <dt>Remarques</dt><dd style="white-space: pre-line">@_tiers.Remarques</dd>
+                }
+            </dl>
+        </section>
+        <section class="bloc">
+            @if (Sorte == SorteTiers.Client)
+            {
+                <h2 class="bloc__titre">Pièces finies (@_pieces.Count)</h2>
+                <ul class="lignes-simples">
+                    @foreach (var p in _pieces)
+                    {
+                        <li><a href="/annuaire/pieces/@p.Id"><strong>@p.Reference</strong></a> <span>@p.Designation</span> <span class="badge-indice">@p.Indice</span> @if (p.Archive) { <span class="etiquette">archivée</span> }</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <h2 class="bloc__titre">Bruts fournis (@_bruts.Count)</h2>
+                <ul class="lignes-simples">
+                    @foreach (var b in _bruts)
+                    {
+                        <li><a href="/annuaire/bruts/@b.Id"><strong>@b.Reference</strong></a> <span>@b.Libelle</span> @if (b.FournisseurPrincipalId == Id) { <span class="etiquette">principal</span> }</li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+    <FenetreTiers @bind-Ouverte="_fenetre" Sorte="Sorte" Tiers="_tiers" OnEnregistre="_ => Charger()" />
+}
+
+@code {
+    private LigneTiers? _tiers;
+    private List<LignePiece> _pieces = [];
+    private List<LigneBrut> _bruts = [];
+    private bool _charge;
+    private bool _fenetre;
+
+    [Parameter] public int Id { get; set; }
+
+    private SorteTiers Sorte => Navigation.Uri.Contains("/annuaire/fournisseurs", StringComparison.OrdinalIgnoreCase) ? SorteTiers.Fournisseur : SorteTiers.Client;
+
+    private string Chemin => Sorte == SorteTiers.Client ? "/annuaire/clients" : "/annuaire/fournisseurs";
+
+    protected override Task OnParametersSetAsync() => Charger();
+
+    private async Task Charger()
+    {
+        _tiers = await Referentiels.ObtenirTiers(Sorte, Id);
+        if (Sorte == SorteTiers.Client)
+        {
+            _pieces = (await Pieces.Lister(true)).Where(p => p.ClientId == Id).ToList();
+        }
+        else
+        {
+            _bruts = (await Bruts.Lister(true)).Where(b => b.FournisseursIds.Contains(Id)).ToList();
+        }
+
+        _charge = true;
+    }
+
+    private async Task Archiver()
+    {
+        var resultat = await Referentiels.ArchiverTiers(Sorte, Id, !_tiers!.Archive);
+        if (resultat.Reussi)
+        {
+            Toast.Succes(_tiers.Archive ? "Fiche désarchivée" : "Fiche archivée");
+            await Charger();
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+}

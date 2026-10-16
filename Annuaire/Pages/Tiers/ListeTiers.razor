@@ -1,0 +1,68 @@
+@page "/annuaire/clients"
+@page "/annuaire/fournisseurs"
+@inject ServiceReferentiels Referentiels
+@inject IUtilisateurCourant Courant
+@inject NavigationManager Navigation
+<PageTitle>@Titre — Annuaire</PageTitle>
+
+<EntetePage Titre="@Titre">
+    <Actions>
+        @if (Courant.Peut(Role.Gestion))
+        {
+            <GrosBouton Style="principal" Gros="true" Icone="plus" Texte="@($"Nouveau {Nature}")" OnClick="() => _fenetre = true" />
+        }
+    </Actions>
+</EntetePage>
+
+<ListeRecherchable T="LigneTiers" Elements="_liste" TexteRecherche="@(t => $"{t.Nom} {t.Contact} {t.Telephone} {t.Email}")" Lien="@(t => $"{Chemin}/{t.Id}")"
+                   Placeholder="@($"Rechercher un {Nature}…")" Singulier="@Nature" Pluriel="@(Nature + "s")" MessageVide="@($"Aucun {Nature} pour l'instant")">
+    <Filtres>
+        <label class="case"><input type="checkbox" @bind="_archives" @bind:after="Charger" /> Afficher les archivés</label>
+    </Filtres>
+    <Entetes>
+        <th>Nom</th><th>Contact</th><th>Téléphone</th><th class="droite">@Utilisations</th>
+    </Entetes>
+    <Ligne Context="t">
+        <td><a class="lien-ligne" href="@Chemin/@t.Id">@t.Nom</a> @if (t.Archive) { <span class="etiquette">archivé</span> }</td>
+        <td>@t.Contact</td>
+        <td>@t.Telephone</td>
+        <td class="droite nombre">@t.Utilisations</td>
+    </Ligne>
+    <Carte Context="t">
+        <div class="carte__titre">@t.Nom @if (t.Archive) { <span class="etiquette">archivé</span> }</div>
+        <div class="carte__ligne"><span>@t.Contact</span><span>@t.Telephone</span><span>@t.Utilisations @Utilisations.ToLowerInvariant()</span></div>
+    </Carte>
+</ListeRecherchable>
+
+<FenetreTiers @bind-Ouverte="_fenetre" Sorte="Sorte" OnEnregistre="Cree" />
+
+@code {
+    private IReadOnlyList<LigneTiers>? _liste;
+    private bool _archives;
+    private bool _fenetre;
+    private SorteTiers? _sorteChargee;
+
+    private SorteTiers Sorte => Navigation.Uri.Contains("/annuaire/fournisseurs", StringComparison.OrdinalIgnoreCase) ? SorteTiers.Fournisseur : SorteTiers.Client;
+
+    private string Chemin => Sorte == SorteTiers.Client ? "/annuaire/clients" : "/annuaire/fournisseurs";
+
+    private string Nature => Sorte == SorteTiers.Client ? "client" : "fournisseur";
+
+    private string Titre => Sorte == SorteTiers.Client ? "Clients" : "Fournisseurs";
+
+    private string Utilisations => Sorte == SorteTiers.Client ? "Pièces finies" : "Bruts fournis";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_sorteChargee != Sorte)
+        {
+            _sorteChargee = Sorte;
+            _liste = null;
+            await Charger();
+        }
+    }
+
+    private async Task Charger() => _liste = await Referentiels.ListerTiers(Sorte, _archives);
+
+    private void Cree(int id) => Navigation.NavigateTo($"{Chemin}/{id}");
+}

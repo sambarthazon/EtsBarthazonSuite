@@ -1,0 +1,181 @@
+@inject ServicePiecesFinies Pieces
+@inject ServiceToast Toast
+@inject ServiceConfirmation Confirmation
+@inject IUtilisateurCourant Courant
+@* Onglet Résumé : bruts associés, spécifications de l'indice courant, plan courant. *@
+<div class="grille-blocs">
+    <section class="bloc" style="grid-column: 1 / -1">
+        <h2 class="bloc__titre">Brut(s)
+            @if (Courant.Peut(Role.Gestion))
+            {
+                <button type="button" class="bouton bouton--secondaire pousse" @onclick="() => _ajout = true"><Icone Nom="plus" /> Ajouter un brut</button>
+            }
+        </h2>
+        <ul class="lignes-simples">
+            @foreach (var brut in Fiche.Bruts)
+            {
+                <li>
+                    @if (Courant.Peut(Role.Gestion))
+                    {
+                        <button type="button" class="bouton bouton--icone @(brut.Principal ? "bouton--principal" : "bouton--discret")" title="@(brut.Principal ? "Brut principal" : "Choisir comme brut principal")" aria-label="Brut principal" @onclick="() => Principal(brut)">
+                            <Icone Nom="@(brut.Principal ? "etoile" : "etoile-vide")" />
+                        </button>
+                    }
+                    else if (brut.Principal)
+                    {
+                        <span class="etoile" title="Brut principal"><Icone Nom="etoile" /></span>
+                    }
+                    <a href="/annuaire/bruts/@brut.BrutId"><strong>@brut.Reference</strong></a>
+                    <span>@brut.Libelle</span>
+                    @if (brut.Archive) { <span class="etiquette">archivé</span> }
+                    @if (Courant.Peut(Role.Gestion))
+                    {
+                        <label class="ligne petit doux pousse">1 brut →
+                            <input class="saisie choix-brut__nombre" type="number" inputmode="numeric" min="1" value="@brut.PiecesParBrut" @onchange="e => PiecesParBrut(brut, e)" aria-label="Pièces obtenues par brut" /> pièce(s)
+                        </label>
+                        <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Retirer ce brut" title="Retirer ce brut" @onclick="() => Retirer(brut)"><Icone Nom="fermer" /></button>
+                    }
+                    else
+                    {
+                        <span class="doux petit">(1 brut → @brut.PiecesParBrut pièce@(brut.PiecesParBrut > 1 ? "s" : null))</span>
+                    }
+                </li>
+            }
+        </ul>
+    </section>
+
+    <section class="bloc">
+        <h2 class="bloc__titre">Spécifications <span class="badge-indice">@Fiche.IndiceCourant.Code</span>
+            @if (Courant.Peut(Role.Gestion))
+            {
+                <button type="button" class="bouton bouton--secondaire pousse" @onclick="OuvrirSpecification"><Icone Nom="modifier" /> Modifier</button>
+            }
+        </h2>
+        <AffichageSpecification Specification="Fiche.IndiceCourant.Specification" />
+    </section>
+
+    <section class="bloc">
+        <h2 class="bloc__titre">Plan</h2>
+        @if (Fiche.IndiceCourant.Plans.FirstOrDefault() is { } plan)
+        {
+            <div class="ligne">
+                <Icone Nom="fichier" /> Dernier plan : <strong>@plan.NomFichier</strong>
+                <a class="bouton bouton--secondaire" href="/annuaire/plans/@plan.Id" target="_blank" rel="noopener"><Icone Nom="externe" /> Ouvrir</a>
+            </div>
+        }
+        else
+        {
+            <p class="doux">Aucun plan numérique pour l'indice @Fiche.IndiceCourant.Code.</p>
+        }
+        <p>Plan papier : <strong>@(Fiche.EmplacementPlanPapier ?? "non indiqué")</strong></p>
+        @if (Fiche.Remarques is not null)
+        {
+            <p style="white-space: pre-line"><span class="doux">Remarques :</span> @Fiche.Remarques</p>
+        }
+    </section>
+</div>
+
+<Fenetre Ouverte="_ajout" OnFermer="() => _ajout = false" Titre="Ajouter un brut possible" Large="true">
+    <SelecteurBrut Exclus="Fiche.Bruts.Select(b => b.BrutId).ToList()" OnChoisi="Ajouter" TexteChoisir="Ajouter" />
+</Fenetre>
+
+<Fenetre Ouverte="_specification is not null" OnFermer="() => _specification = null" Titre="@($"Spécifications — indice {Fiche.IndiceCourant.Code}")" Large="true">
+    <ChildContent>
+        @if (_specification is not null)
+        {
+            <div class="grille-champs grille-champs--2">
+                <div class="champ"><label for="sp-tt">Traitement thermique</label><input id="sp-tt" @bind="_specification.TraitementThermique" placeholder="ex. trempe + revenu" /></div>
+                <div class="champ"><label for="sp-ts">Traitement de surface</label><input id="sp-ts" @bind="_specification.TraitementSurface" placeholder="ex. zingage" /></div>
+                <div class="champ"><label for="sp-tol">Tolérance générale</label><input id="sp-tol" @bind="_specification.ToleranceGenerale" placeholder="ex. ISO 2768-m" /></div>
+                <div class="champ"><label for="sp-masse">Masse</label><input id="sp-masse" @bind="_specification.Masse" placeholder="ex. 1,2 kg" /></div>
+            </div>
+            <div class="champ">
+                <span class="champ__etiquette">Autres spécifications</span>
+                @foreach (var ligne in _specification.Lignes)
+                {
+                    <div class="ligne">
+                        <input class="saisie" style="flex: 1 1 140px; width: auto" placeholder="Libellé" @bind="ligne.Libelle" />
+                        <input class="saisie" style="flex: 2 1 200px; width: auto" placeholder="Valeur" @bind="ligne.Valeur" />
+                        <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Retirer" @onclick="() => _specification.Lignes.Remove(ligne)"><Icone Nom="fermer" /></button>
+                    </div>
+                }
+                <div><button type="button" class="bouton bouton--secondaire" @onclick="() => _specification.Lignes.Add(new())"><Icone Nom="plus" /> Ajouter une ligne</button></div>
+            </div>
+            <div class="champ"><label for="sp-rem">Remarques</label><textarea id="sp-rem" @bind="_specification.Remarques"></textarea></div>
+        }
+    </ChildContent>
+    <Pied>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => _specification = null">Annuler</button>
+        <GrosBouton Style="principal" Texte="Enregistrer" OnClick="EnregistrerSpecification" />
+    </Pied>
+</Fenetre>
+
+@code {
+    private bool _ajout;
+    private SaisieSpecification? _specification;
+
+    [Parameter, EditorRequired] public FichePiece Fiche { get; set; } = default!;
+
+    [Parameter] public EventCallback OnChange { get; set; }
+
+    private void OuvrirSpecification() => _specification = SaisieSpecification.Depuis(Fiche.IndiceCourant.Specification);
+
+    private async Task EnregistrerSpecification()
+    {
+        if (await Afficher(await Pieces.EnregistrerSpecification(Fiche.IndiceCourant.Id, _specification!), "Spécifications enregistrées"))
+        {
+            _specification = null;
+        }
+    }
+
+    private async Task Ajouter(int brutId)
+    {
+        if (await Afficher(await Pieces.AjouterBrut(Fiche.Id, brutId), "Brut ajouté"))
+        {
+            _ajout = false;
+        }
+    }
+
+    private async Task Principal(BrutDePiece brut)
+    {
+        if (!brut.Principal)
+        {
+            await Afficher(await Pieces.DefinirBrutPrincipal(Fiche.Id, brut.BrutId), $"{brut.Reference} est le brut principal");
+        }
+    }
+
+    private async Task PiecesParBrut(BrutDePiece brut, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var nombre))
+        {
+            await Afficher(await Pieces.ModifierPiecesParBrut(Fiche.Id, brut.BrutId, nombre), $"1 brut {brut.Reference} → {nombre} pièce(s)");
+        }
+    }
+
+    private async Task Retirer(BrutDePiece brut)
+    {
+        if (Fiche.Bruts.Count == 1)
+        {
+            Toast.Erreur("Impossible de retirer le dernier brut : une pièce finie a toujours au moins un brut.");
+            return;
+        }
+
+        if (await Confirmation.Demander($"Retirer le brut {brut.Reference} de cette pièce ?", "Retirer"))
+        {
+            await Afficher(await Pieces.RetirerBrut(Fiche.Id, brut.BrutId), "Brut retiré");
+        }
+    }
+
+    private async Task<bool> Afficher(Resultat resultat, string message)
+    {
+        if (!resultat.Reussi)
+        {
+            Toast.Erreur(resultat.Erreur!);
+            return false;
+        }
+
+        Toast.Succes(message);
+        await OnChange.InvokeAsync();
+        return true;
+    }
+}

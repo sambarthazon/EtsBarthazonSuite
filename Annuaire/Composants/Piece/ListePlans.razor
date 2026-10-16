@@ -1,0 +1,53 @@
+@inject ServicePiecesFinies Pieces
+@inject ServiceToast Toast
+@inject ServiceConfirmation Confirmation
+@inject IUtilisateurCourant Courant
+@* Plans : ouvrir dans le navigateur, télécharger, supprimer (Gestion). *@
+<ul class="lignes-simples">
+    @foreach (var plan in Plans)
+    {
+        <li>
+            <span class="plan-vignette">
+                <Icone Nom="@(plan.EstImage ? "photo" : "fichier")" />
+                <a href="/annuaire/plans/@plan.Id" target="_blank" rel="noopener"><strong>@plan.NomFichier</strong></a>
+            </span>
+            @if (plan.AncienIndice) { <span class="etiquette">ancien indice @plan.Indice</span> } else { <span class="badge-indice">@plan.Indice</span> }
+            <span class="doux petit">@Format.Taille(plan.Taille) · @Format.Date(plan.DateAjout)@(plan.Auteur is null ? null : " · " + plan.Auteur)</span>
+            <span class="pousse ligne">
+                <a class="bouton bouton--secondaire" href="/annuaire/plans/@plan.Id" target="_blank" rel="noopener"><Icone Nom="externe" /> Ouvrir</a>
+                <a class="bouton bouton--discret bouton--icone" href="/annuaire/plans/@plan.Id?telecharger=true" aria-label="Télécharger" title="Télécharger"><Icone Nom="telecharger" /></a>
+                @if (Modifiable && Courant.Peut(Role.Gestion))
+                {
+                    <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Supprimer" title="Supprimer" @onclick="() => Supprimer(plan)"><Icone Nom="corbeille" /></button>
+                }
+            </span>
+        </li>
+    }
+</ul>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<PlanAffiche> Plans { get; set; } = [];
+
+    [Parameter] public bool Modifiable { get; set; }
+
+    [Parameter] public EventCallback OnChange { get; set; }
+
+    private async Task Supprimer(PlanAffiche plan)
+    {
+        if (!await Confirmation.Demander($"Supprimer le plan {plan.NomFichier} ?", "Supprimer", danger: true))
+        {
+            return;
+        }
+
+        var resultat = await Pieces.SupprimerPlan(plan.Id);
+        if (resultat.Reussi)
+        {
+            Toast.Succes("Plan supprimé");
+            await OnChange.InvokeAsync();
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+}

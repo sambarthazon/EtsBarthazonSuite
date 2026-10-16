@@ -1,0 +1,256 @@
+@page "/annuaire/pieces/{Id:int}"
+@inject ServicePiecesFinies Pieces
+@inject ServiceReferentiels Referentiels
+@inject IUtilisateurCourant Courant
+@inject ServiceToast Toast
+@inject ServiceConfirmation Confirmation
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+<PageTitle>@(_fiche is null ? "Pièce finie" : $"{_fiche.Reference} · {_fiche.Designation}") — Annuaire</PageTitle>
+
+@if (_charge && _fiche is null)
+{
+    <div class="vide"><div class="vide__titre">Pièce introuvable</div><a href="/annuaire">Retour à la liste des pièces finies</a></div>
+}
+else if (_fiche is not null)
+{
+    <div class="ecran-seul">
+        <div class="fiche-entete">
+            <div class="fiche-entete__titre">
+                <h1>@_fiche.Reference <span style="font-weight: 500">· @_fiche.Designation</span> <span class="badge-indice badge-indice--grand" title="Indice courant">Indice @_fiche.IndiceCourant.Code</span>
+                    @if (_fiche.Archive) { <span class="etiquette">archivée</span> }</h1>
+                <div>Client : <a href="/annuaire/clients/@_fiche.ClientId">@_fiche.Client</a></div>
+            </div>
+            <ApercuStockAnnuaire Type="TypeReference.PieceFinie" Id="Id" />
+            <div class="fiche-entete__actions">
+                <GrosBouton Style="principal" Icone="imprimer" Texte="Imprimer" OnClick="Imprimer" />
+                @if (Courant.Peut(Role.Gestion))
+                {
+                    <GrosBouton Icone="modifier" Texte="Modifier" OnClick="OuvrirIdentite" />
+                    <Menu Titre="Plus d'actions">
+                        <Declencheur><Icone Nom="plus-actions" /></Declencheur>
+                        <ChildContent>
+                            <button type="button" class="menu__element" @onclick="OuvrirNouvelIndice"><Icone Nom="plus" /> Nouvel indice</button>
+                            <button type="button" class="menu__element" @onclick="Archiver"><Icone Nom="archive" /> @(_fiche.Archive ? "Désarchiver" : "Archiver")</button>
+                            <button type="button" class="menu__element" @onclick="Supprimer"><Icone Nom="corbeille" /> Supprimer</button>
+                        </ChildContent>
+                    </Menu>
+                }
+            </div>
+        </div>
+
+        <Onglets Elements="OngletsFiche" Actif="@_onglet" ActifChanged="ChangerOnglet" />
+
+        @switch (_onglet)
+        {
+            case "plans":
+                <PlansPiece Fiche="_fiche" OnChange="Charger" />
+                break;
+            case "gamme":
+                <GammePiece Indice="_fiche.IndiceCourant" OnChange="Charger" />
+                break;
+            case "indices":
+                <IndicesPiece Fiche="_fiche" OnNouvelIndice="OuvrirNouvelIndice" />
+                break;
+            case "liens":
+                <LiensPiece Fiche="_fiche" OnChange="Charger" />
+                break;
+            case "historique":
+                <section class="bloc"><BlocHistorique TypeObjet="@TypesObjet.PieceFinie" ObjetId="Id" Version="_version" /></section>
+                break;
+            default:
+                <ResumePiece Fiche="_fiche" OnChange="Charger" />
+                break;
+        }
+    </div>
+
+    <ImpressionPiece Fiche="_fiche" />
+
+    <Fenetre Ouverte="_identite" OnFermer="() => _identite = false" Titre="Modifier la pièce">
+        <ChildContent>
+            <div class="champ"><label for="i-ref">Référence <span class="champ__obligatoire">*</span></label><input id="i-ref" @bind="_reference" /></div>
+            <div class="champ"><label for="i-des">Désignation <span class="champ__obligatoire">*</span></label><input id="i-des" @bind="_designation" /></div>
+            <ChampChoix Etiquette="Client" Obligatoire="true" Options="_clients" @bind-Valeur="_clientId" Creer="CreerClient" />
+            <div class="champ"><label for="i-papier">Emplacement du plan papier</label><input id="i-papier" @bind="_papier" placeholder="ex. classeur Dupont, chemise 12" /></div>
+            <div class="champ"><label for="i-rem">Remarques</label><textarea id="i-rem" @bind="_remarques"></textarea></div>
+            @if (_erreur is not null) { <p class="erreur-formulaire">@_erreur</p> }
+        </ChildContent>
+        <Pied>
+            <button type="button" class="bouton bouton--secondaire" @onclick="() => _identite = false">Annuler</button>
+            <GrosBouton Style="principal" Texte="Enregistrer" OnClick="EnregistrerIdentite" />
+        </Pied>
+    </Fenetre>
+
+    <Fenetre Ouverte="_nouvelIndice" OnFermer="() => _nouvelIndice = false" Titre="Nouvel indice">
+        <ChildContent>
+            <p>Indice actuel : <span class="badge-indice">@_fiche.IndiceCourant.Code</span></p>
+            <div class="champ"><label for="n-code">Nouvel indice <span class="champ__obligatoire">*</span></label><input id="n-code" @bind="_code" style="max-width: 160px" /></div>
+            <div class="champ"><label for="n-desc">Ce qui a changé <span class="champ__obligatoire">*</span></label><input id="n-desc" @bind="_description" placeholder="ex. Cote 40 h7 passée en 40 g6" /></div>
+            <label class="case"><input type="checkbox" @bind="_recopier" /> Recopier les spécifications et la gamme de l'indice @_fiche.IndiceCourant.Code</label>
+            <p class="doux petit">Les plans ne sont pas recopiés : déposez le nouveau plan dans l'onglet Plans. L'indice @_fiche.IndiceCourant.Code reste consultable.</p>
+            @if (_erreur is not null) { <p class="erreur-formulaire">@_erreur</p> }
+        </ChildContent>
+        <Pied>
+            <button type="button" class="bouton bouton--secondaire" @onclick="() => _nouvelIndice = false">Annuler</button>
+            <GrosBouton Style="principal" Texte="@($"Passer à l'indice {_code}")" OnClick="CreerIndice" />
+        </Pied>
+    </Fenetre>
+}
+
+@code {
+    private FichePiece? _fiche;
+    private bool _charge;
+    private int _version;
+    private string _onglet = "resume";
+
+    private bool _identite;
+    private string _reference = string.Empty;
+    private string _designation = string.Empty;
+    private int? _clientId;
+    private string? _papier;
+    private string? _remarques;
+    private List<OptionChoix> _clients = [];
+
+    private bool _nouvelIndice;
+    private string _code = string.Empty;
+    private string _description = string.Empty;
+    private bool _recopier = true;
+    private string? _erreur;
+
+    [Parameter] public int Id { get; set; }
+
+    [SupplyParameterFromQuery(Name = "onglet")] private string? OngletDemande { get; set; }
+
+    private IReadOnlyList<Onglets.Onglet> OngletsFiche =>
+    [
+        new("resume", "Résumé"),
+        new("plans", "Plans", _fiche!.Plans.Count(p => !p.AncienIndice) is var n and > 0 ? n : null),
+        new("gamme", "Gamme"),
+        new("indices", "Indices", _fiche.Indices.Count > 1 ? _fiche.Indices.Count : null),
+        new("liens", "Liens", _fiche.Liens.Count > 0 ? _fiche.Liens.Count : null),
+        new("historique", "Historique"),
+    ];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _onglet = OngletDemande ?? "resume";
+        await Charger();
+    }
+
+    private async Task Charger()
+    {
+        _fiche = await Pieces.Obtenir(Id);
+        _charge = true;
+        _version++;
+    }
+
+    private void ChangerOnglet(string onglet)
+    {
+        _onglet = onglet;
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("onglet", onglet == "resume" ? null : onglet), replace: true);
+    }
+
+    private async Task Imprimer() => await JS.InvokeVoidAsync("barthazon.imprimer");
+
+    private async Task OuvrirIdentite()
+    {
+        _clients = (await Referentiels.ListerTiers(SorteTiers.Client, true)).Select(c => new OptionChoix(c.Id, c.Nom)).ToList();
+        (_reference, _designation, _clientId, _papier, _remarques, _erreur) = (_fiche!.Reference, _fiche.Designation, _fiche.ClientId, _fiche.EmplacementPlanPapier, _fiche.Remarques, null);
+        _identite = true;
+    }
+
+    private async Task<int?> CreerClient(string nom)
+    {
+        var resultat = await Referentiels.EnregistrerTiers(SorteTiers.Client, null, new SaisieTiers(nom, null, null, null, null));
+        if (!resultat.Reussi)
+        {
+            Toast.Erreur(resultat.Erreur!);
+            return null;
+        }
+
+        _clients = (await Referentiels.ListerTiers(SorteTiers.Client, true)).Select(c => new OptionChoix(c.Id, c.Nom)).ToList();
+        return resultat.Valeur;
+    }
+
+    private async Task EnregistrerIdentite()
+    {
+        if (_clientId is null)
+        {
+            _erreur = "Choisissez le client.";
+            return;
+        }
+
+        var resultat = await Pieces.ModifierIdentite(Id, new SaisieIdentite(_reference, _designation, _clientId.Value, _papier, _remarques));
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        _identite = false;
+        Toast.Succes("Pièce enregistrée");
+        await Charger();
+    }
+
+    private void OuvrirNouvelIndice()
+    {
+        (_code, _description, _recopier, _erreur) = (Indices.Suivant(_fiche!.IndiceCourant.Code), string.Empty, true, null);
+        _nouvelIndice = true;
+    }
+
+    private async Task CreerIndice()
+    {
+        var precedent = _fiche!.IndiceCourant.Code;
+        var resultat = await Pieces.NouvelIndice(Id, _code, _description, _recopier);
+        if (!resultat.Reussi)
+        {
+            _erreur = resultat.Erreur;
+            return;
+        }
+
+        _nouvelIndice = false;
+        Toast.Succes($"Indice passé de {precedent} à {_code.Trim()}");
+        await Charger();
+    }
+
+    private async Task Archiver()
+    {
+        var archiver = !_fiche!.Archive;
+        if (archiver && !await Confirmation.Demander($"Archiver la pièce {_fiche.Reference} ? Elle n'apparaîtra plus dans les listes.", "Archiver"))
+        {
+            return;
+        }
+
+        var resultat = await Pieces.Archiver(Id, archiver);
+        if (resultat.Reussi)
+        {
+            Toast.Succes(archiver ? "Pièce archivée" : "Pièce désarchivée");
+            await Charger();
+        }
+        else
+        {
+            Toast.Erreur(resultat.Erreur!);
+        }
+    }
+
+    private async Task Supprimer()
+    {
+        if (!await Confirmation.Demander($"Supprimer définitivement la pièce {_fiche!.Reference}, ses plans et sa gamme ?", "Supprimer", danger: true))
+        {
+            return;
+        }
+
+        var resultat = await Pieces.Supprimer(Id);
+        if (resultat.Reussi)
+        {
+            Toast.Succes("Pièce supprimée");
+            Navigation.NavigateTo("/annuaire");
+        }
+        else if (await Confirmation.Demander(resultat.Erreur!, "Archiver"))
+        {
+            await Pieces.Archiver(Id, true);
+            Toast.Succes("Pièce archivée");
+            await Charger();
+        }
+    }
+}

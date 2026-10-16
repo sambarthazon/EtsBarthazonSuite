@@ -1,0 +1,37 @@
+@inject IStockLecture Stock
+@inject ServiceBascule Bascule
+@* Aperçu du stock (fourni par l'application Stock) ; masqué si le Stock n'est pas chargé. *@
+@if (_apercu is not null)
+{
+    <div class="fiche-entete__stock">
+        <span class="doux">Stock :</span>
+        <strong class="nombre">@_apercu.QuantiteTexte</strong>
+        <BadgeEtat Etat="_apercu.Etat" />
+        @if (_lien is { } lien)
+        {
+            <a class="bouton bouton--secondaire" href="@lien.Chemin"><Icone Nom="droite" /> Voir dans le stock</a>
+        }
+        @if (Detaille && _apercu.DernierMouvementTexte is not null)
+        {
+            <span class="doux petit" style="width: 100%">@_apercu.DernierMouvementTexte</span>
+        }
+    </div>
+}
+
+@code {
+    private ApercuStock? _apercu;
+    private (string Chemin, ModuleApplication Module)? _lien;
+
+    [Parameter, EditorRequired] public TypeReference Type { get; set; }
+
+    [Parameter, EditorRequired] public int Id { get; set; }
+
+    /// <summary>Affiche aussi le dernier mouvement.</summary>
+    [Parameter] public bool Detaille { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _apercu = Type == TypeReference.Brut ? await Stock.ApercuBrut(Id) : await Stock.ApercuPieceFinie(Id);
+        _lien = Bascule.Ailleurs(Type == TypeReference.Brut ? TypesObjet.Brut : TypesObjet.PieceFinie, Id, AnnuaireExtensions.Cle);
+    }
+}
