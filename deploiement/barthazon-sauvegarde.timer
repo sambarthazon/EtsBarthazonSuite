@@ -1,0 +1,11 @@
+# Sauvegarde quotidienne à 22 h. Si la Raspberry était éteinte à 22 h, la sauvegarde est faite au démarrage suivant.
+[Unit]
+Description=Sauvegarde quotidienne Barthazon (22 h)
+
+[Timer]
+OnCalendar=*-*-* 22:00:00
+Persistent=true
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

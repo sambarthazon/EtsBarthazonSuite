@@ -1,0 +1,8 @@
+# Sauvegarde de la base et des plans (lancée chaque soir par barthazon-sauvegarde.timer).
+[Unit]
+Description=Sauvegarde Barthazon (base SQLite + plans)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/barthazon-sauvegarde
+SyslogIdentifier=barthazon-sauvegarde

@@ -1,0 +1,28 @@
+# Service systemd de l'application Barthazon (Annuaire & Stock).
+# Installé par installer.sh dans /etc/systemd/system/barthazon.service.
+[Unit]
+Description=Barthazon - Annuaire et Stock (Ets BARTHAZON)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=barthazon
+Group=barthazon
+WorkingDirectory=/opt/barthazon
+ExecStart=/usr/bin/dotnet /opt/barthazon/Barthazon.Portail.dll
+Restart=always
+RestartSec=5
+# Données (base SQLite + plans) : /var/lib/barthazon, créé automatiquement pour le compte barthazon.
+StateDirectory=barthazon
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:5000
+Environment=Barthazon__DossierDonnees=/var/lib/barthazon
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+# Arrêt propre (laisse le temps de terminer les écritures en cours).
+TimeoutStopSec=30
+KillSignal=SIGINT
+SyslogIdentifier=barthazon
+
+[Install]
+WantedBy=multi-user.target

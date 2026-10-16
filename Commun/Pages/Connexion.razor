@@ -17,7 +17,7 @@
         <h1>Qui êtes-vous ?</h1>
         @if (Motif == "inactivite")
         {
-            <p class="information">Vous avez été déconnecté après @Options.DureeInactiviteMinutes minutes sans activité.</p>
+            <p class="information">Vous avez été déconnecté après @Minutes sans activité.</p>
         }
         @if (_tuiles is null)
         {
@@ -91,6 +91,8 @@
     private bool _enCours;
     private DotNetObjectReference<Connexion>? _reference;
     private IJSObjectReference? _clavier;
+
+    private string Minutes => Options.DureeInactiviteMinutes > 1 ? $"{Options.DureeInactiviteMinutes} minutes" : "1 minute";
 
     [SupplyParameterFromQuery(Name = "retour")] private string? RetourDemande { get; set; }
 

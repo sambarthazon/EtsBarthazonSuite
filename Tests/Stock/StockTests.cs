@@ -44,14 +44,14 @@ public sealed class StockTests : IDisposable
     [Fact]
     public async Task Arrivage_ajoute_au_stock_du_brut()
     {
-        var resultat = await Service().EnregistrerArrivage(new DemandeArrivage(BrutSecondaire, 50, 7, null, "BL 8812", null));
+        var resultat = await Service().EnregistrerArrivage(new DemandeArrivage(BrutSecondaire, 50, 7, null, "8812", null));
         Assert.True(resultat.Reussi, resultat.Erreur);
         Assert.Equal("Arrivage enregistré : +50 barres de BR-0011", resultat.Valeur!.Message);
         Assert.Equal(50, await Quantite(TypeReference.Brut, BrutSecondaire));
 
         await using var db = await _fabrique.CreateDbContextAsync();
         var mouvement = await db.Mouvements.SingleAsync();
-        Assert.Equal((TypeMouvement.Arrivage, 50m, 50m, 7, "BL 8812"), (mouvement.TypeMouvement, mouvement.Quantite, mouvement.QuantiteApres, mouvement.FournisseurId!.Value, mouvement.NumeroBL!));
+        Assert.Equal((TypeMouvement.Arrivage, 50m, 50m, 7, "8812"), (mouvement.TypeMouvement, mouvement.Quantite, mouvement.QuantiteApres, mouvement.FournisseurId!.Value, mouvement.NumeroBL!));
     }
 
     [Fact]

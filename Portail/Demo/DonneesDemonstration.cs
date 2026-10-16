@@ -131,9 +131,9 @@ internal sealed class DonneesDemonstration(IServiceProvider services, ILogger<Do
         var patte = pieces["LB-7781"];
         var hier = DateTime.Today.AddDays(-1);
 
-        await mouvements.EnregistrerArrivage(new DemandeArrivage(axe.Bruts[0], 50, null, hier, "BL 8812", null));
+        await mouvements.EnregistrerArrivage(new DemandeArrivage(axe.Bruts[0], 50, null, hier, "8812", null));
         await mouvements.EnregistrerFabrication(new DemandeFabrication(axe.Piece, axe.Bruts[0], 10, 10, false, null, null));
-        await mouvements.EnregistrerSortie(new DemandeSortie(TypeReference.PieceFinie, axe.Piece, 4, MotifSortie.LivraisonClient, null, null, "BL C-1021", null));
+        await mouvements.EnregistrerSortie(new DemandeSortie(TypeReference.PieceFinie, axe.Piece, 4, MotifSortie.LivraisonClient, null, null, "C-1021", null));
         await mouvements.ModifierSeuil(TypeReference.PieceFinie, axe.Piece, 5);
 
         await mouvements.EnregistrerArrivage(new DemandeArrivage(entretoise.Bruts[0], 6, null, hier, null, null));
