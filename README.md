@@ -255,7 +255,7 @@ Un même brut peut servir à plusieurs pièces finies.
 │  ★ BR-0003  Rond Ø40 × 120 — 42CrMo4   (1 brut → 1 pièce)  [→]       │
 │    BR-0011  Rond Ø45 × 120 — 42CrMo4   (1 brut → 1 pièce)  [→]       │
 │ Spécifications (indice C)                                            │
-│  Traitement thermique : trempe + revenu   Tolérance générale : ISO 2768-m
+│  Masse : 0,85 kg   Longueur : 120 mm   Traitement thermique : trempe + revenu
 │ Dernier plan : 4512-B_indC.pdf  [Ouvrir]   Plan papier : classeur 3  │
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -264,7 +264,7 @@ Onglets :
 - **Résumé** : bruts associés, spécifications de l'indice courant, plan courant, aperçu stock.
 - **Plans** (5.5), **Gamme** (5.6), **Indices** (5.4), **Liens** (5.7), **Historique** (4.7).
 
-**Spécifications** (rattachées à un indice) : champs facultatifs prédéfinis — traitement thermique, traitement de surface, tolérance générale, masse — plus des **lignes libres** (libellé / valeur) et un champ remarques.
+**Spécifications** (rattachées à un indice) : seule la **Masse** est proposée par défaut (unité kg) ; un bouton **« + »** ajoute une ligne (ce que c'est — longueur, largeur, traitement thermique… —, valeur, unité facultative) et un **« × »** la retire. Plus un champ remarques.
 
 ### 5.4 Indices
 
@@ -467,9 +467,8 @@ Annuaire
                          Remarques, Archive                (unique : ClientId + Reference)
   ann_PieceFinieBrut     PieceFinieId, BrutId, Principal, PiecesParBrut
   ann_Indice             Id, PieceFinieId, Code, Date, AuteurId, DescriptionChangement
-  ann_Specification      Id, IndiceId, TraitementThermique, TraitementSurface, ToleranceGenerale,
-                         Masse, Remarques
-  ann_SpecificationLigne Id, IndiceId, Libelle, Valeur, Ordre
+  ann_Specification      Id, IndiceId, Remarques
+  ann_SpecificationLigne Id, IndiceId, Libelle, Valeur, Unite?, Ordre   (Masse, Longueur, Largeur…)
   ann_Plan               Id, IndiceId, NomFichier, Chemin, TypeMime, Taille, DateAjout, AuteurId
   ann_Poste              Id, Libelle                       (liste paramétrable)
   ann_OperationGamme     Id, IndiceId, Numero, PosteId, Description, TempsEstimeMin, Remarque, Ordre

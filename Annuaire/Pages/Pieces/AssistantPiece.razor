@@ -78,11 +78,9 @@ else
                         <label for="p-papier">Emplacement du plan papier</label>
                         <input id="p-papier" @bind="_saisie.EmplacementPlanPapier" placeholder="ex. classeur Dupont, chemise 12" />
                     </div>
-                    <div class="grille-champs grille-champs--2">
-                        <div class="champ"><label for="s-tt">Traitement thermique</label><input id="s-tt" @bind="_specification.TraitementThermique" /></div>
-                        <div class="champ"><label for="s-ts">Traitement de surface</label><input id="s-ts" @bind="_specification.TraitementSurface" /></div>
-                        <div class="champ"><label for="s-tol">Tolérance générale</label><input id="s-tol" @bind="_specification.ToleranceGenerale" placeholder="ex. ISO 2768-m" /></div>
-                        <div class="champ"><label for="s-masse">Masse</label><input id="s-masse" @bind="_specification.Masse" placeholder="ex. 1,2 kg" /></div>
+                    <div class="champ">
+                        <span class="champ__etiquette">Spécifications</span>
+                        <EditeurSpecifications Saisie="_specification" AvecRemarques="false" />
                     </div>
                     break;
             }
@@ -118,7 +116,7 @@ else
 
 @code {
     private readonly SaisieCreationPiece _saisie = new();
-    private SaisieSpecification _specification = new();
+    private SaisieSpecification _specification = SaisieSpecification.ParDefaut();
     private readonly List<BrutSelectionne> _choisis = [];
     private readonly List<(string Nom, byte[] Contenu)> _fichiers = [];
     private List<OptionChoix> _clients = [];
@@ -227,7 +225,7 @@ else
     {
         _fichiers.Clear();
         _saisie.EmplacementPlanPapier = null;
-        _specification = new SaisieSpecification();
+        _specification = SaisieSpecification.ParDefaut();
         return Creer();
     }
 

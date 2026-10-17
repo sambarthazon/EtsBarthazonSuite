@@ -83,25 +83,7 @@
     <ChildContent>
         @if (_specification is not null)
         {
-            <div class="grille-champs grille-champs--2">
-                <div class="champ"><label for="sp-tt">Traitement thermique</label><input id="sp-tt" @bind="_specification.TraitementThermique" placeholder="ex. trempe + revenu" /></div>
-                <div class="champ"><label for="sp-ts">Traitement de surface</label><input id="sp-ts" @bind="_specification.TraitementSurface" placeholder="ex. zingage" /></div>
-                <div class="champ"><label for="sp-tol">Tolérance générale</label><input id="sp-tol" @bind="_specification.ToleranceGenerale" placeholder="ex. ISO 2768-m" /></div>
-                <div class="champ"><label for="sp-masse">Masse</label><input id="sp-masse" @bind="_specification.Masse" placeholder="ex. 1,2 kg" /></div>
-            </div>
-            <div class="champ">
-                <span class="champ__etiquette">Autres spécifications</span>
-                @foreach (var ligne in _specification.Lignes)
-                {
-                    <div class="ligne">
-                        <input class="saisie" style="flex: 1 1 140px; width: auto" placeholder="Libellé" @bind="ligne.Libelle" />
-                        <input class="saisie" style="flex: 2 1 200px; width: auto" placeholder="Valeur" @bind="ligne.Valeur" />
-                        <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Retirer" @onclick="() => _specification.Lignes.Remove(ligne)"><Icone Nom="fermer" /></button>
-                    </div>
-                }
-                <div><button type="button" class="bouton bouton--secondaire" @onclick="() => _specification.Lignes.Add(new())"><Icone Nom="plus" /> Ajouter une ligne</button></div>
-            </div>
-            <div class="champ"><label for="sp-rem">Remarques</label><textarea id="sp-rem" @bind="_specification.Remarques"></textarea></div>
+            <EditeurSpecifications Saisie="_specification" />
         }
     </ChildContent>
     <Pied>

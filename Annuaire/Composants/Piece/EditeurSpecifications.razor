@@ -1,0 +1,49 @@
+@* Spécifications : la Masse par défaut, puis « + » pour ajouter une ligne (ce que c'est, valeur, unité facultative), « × » pour la retirer. *@
+<div class="pile" style="gap: .5rem">
+    @if (Saisie.Lignes.Count > 0)
+    {
+        <div class="ligne-specification ligne-specification--entete" aria-hidden="true">
+            <span>Ce que c'est</span><span>Valeur</span><span>Unité</span><span></span>
+        </div>
+    }
+    @foreach (var ligne in Saisie.Lignes)
+    {
+        <div class="ligne-specification">
+            <input class="saisie" list="specs-libelles" placeholder="ex. Longueur" aria-label="Ce que c'est" @bind="ligne.Libelle" />
+            <input class="saisie" placeholder="Valeur" aria-label="Valeur" @bind="ligne.Valeur" />
+            <input class="saisie" list="specs-unites" placeholder="—" aria-label="Unité (facultative)" @bind="ligne.Unite" />
+            <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Retirer cette spécification" title="Retirer" @onclick="() => Saisie.Lignes.Remove(ligne)"><Icone Nom="fermer" /></button>
+        </div>
+    }
+    <div>
+        <button type="button" class="bouton bouton--secondaire" @onclick="() => Saisie.Lignes.Add(new())"><Icone Nom="plus" /> Ajouter une spécification</button>
+    </div>
+    @if (AvecRemarques)
+    {
+        <div class="champ"><label for="sp-rem">Remarques</label><textarea id="sp-rem" @bind="Saisie.Remarques"></textarea></div>
+    }
+</div>
+
+<datalist id="specs-libelles">
+    @foreach (var libelle in Libelles)
+    {
+        <option value="@libelle"></option>
+    }
+</datalist>
+<datalist id="specs-unites">
+    @foreach (var unite in Unites)
+    {
+        <option value="@unite"></option>
+    }
+</datalist>
+
+@code {
+    private static readonly string[] Libelles =
+        ["Masse", "Longueur", "Largeur", "Hauteur", "Épaisseur", "Diamètre", "Traitement thermique", "Traitement de surface", "Tolérance générale", "Rugosité", "Dureté"];
+
+    private static readonly string[] Unites = ["kg", "g", "mm", "m", "µm", "°", "Ra", "HRC"];
+
+    [Parameter, EditorRequired] public SaisieSpecification Saisie { get; set; } = default!;
+
+    [Parameter] public bool AvecRemarques { get; set; } = true;
+}

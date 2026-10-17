@@ -181,18 +181,10 @@ public sealed class Specification
 
     public int IndiceId { get; set; }
 
-    public string? TraitementThermique { get; set; }
-
-    public string? TraitementSurface { get; set; }
-
-    public string? ToleranceGenerale { get; set; }
-
-    public string? Masse { get; set; }
-
     public string? Remarques { get; set; }
 }
 
-/// <summary>Spécification libre (libellé / valeur).</summary>
+/// <summary>Une spécification : ce que c'est (Masse, Longueur…), sa valeur et son unité facultative.</summary>
 public sealed class SpecificationLigne
 {
     public int Id { get; set; }
@@ -202,6 +194,9 @@ public sealed class SpecificationLigne
     public string Libelle { get; set; } = string.Empty;
 
     public string Valeur { get; set; } = string.Empty;
+
+    /// <summary>Unité facultative : kg, mm…</summary>
+    public string? Unite { get; set; }
 
     public int Ordre { get; set; }
 }

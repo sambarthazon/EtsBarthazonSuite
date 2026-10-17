@@ -117,20 +117,14 @@ public sealed class AnnuaireDbContext(DbContextOptions<AnnuaireDbContext> option
             e.HasMany(i => i.Operations).WithOne().HasForeignKey(o => o.IndiceId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<Specification>(e =>
-        {
-            e.ToTable("ann_Specification");
-            e.Property(s => s.TraitementThermique).HasMaxLength(200);
-            e.Property(s => s.TraitementSurface).HasMaxLength(200);
-            e.Property(s => s.ToleranceGenerale).HasMaxLength(100);
-            e.Property(s => s.Masse).HasMaxLength(50);
-        });
+        modelBuilder.Entity<Specification>(e => e.ToTable("ann_Specification"));
 
         modelBuilder.Entity<SpecificationLigne>(e =>
         {
             e.ToTable("ann_SpecificationLigne");
             e.Property(l => l.Libelle).HasMaxLength(100);
             e.Property(l => l.Valeur).HasMaxLength(300);
+            e.Property(l => l.Unite).HasMaxLength(20);
         });
 
         modelBuilder.Entity<Plan>(e =>

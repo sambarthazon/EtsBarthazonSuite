@@ -96,7 +96,14 @@ internal sealed class DonneesDemonstration(IServiceProvider services, ILogger<Do
                 ClientId = client,
                 EmplacementPlanPapier = papier,
                 Bruts = brutsPiece.Select((b, i) => new BrutChoisi(b.Brut, i == 0, b.ParBrut)).ToList(),
-                Specification = new SaisieSpecification { TraitementThermique = traitement, ToleranceGenerale = tolerance },
+                Specification = new SaisieSpecification
+                {
+                    Lignes =
+                    [
+                        new() { Libelle = "Tolérance générale", Valeur = tolerance },
+                        .. traitement is null ? [] : new[] { new SaisieSpecification.LigneSaisie { Libelle = "Traitement thermique", Valeur = traitement } },
+                    ],
+                },
             })).Valeur;
             var indice = (await pieces.Obtenir(id))!.IndiceCourant.Id;
             foreach (var (poste, description, temps) in gamme)

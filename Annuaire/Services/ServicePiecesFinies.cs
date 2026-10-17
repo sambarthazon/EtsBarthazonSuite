@@ -31,18 +31,15 @@ public sealed record PlanAffiche(int Id, string NomFichier, string TypeMime, lon
 
 public sealed record OperationAffichee(int Id, int Numero, int? PosteId, string? Poste, string Description, int? TempsEstimeMin, string? Remarque);
 
-public sealed record LigneSpec(string Libelle, string Valeur);
-
-public sealed record SpecificationAffichee(
-    string? TraitementThermique,
-    string? TraitementSurface,
-    string? ToleranceGenerale,
-    string? Masse,
-    string? Remarques,
-    IReadOnlyList<LigneSpec> Lignes)
+/// <summary>Une spécification : « Masse : 1,2 kg », « Longueur : 120 mm ».</summary>
+public sealed record LigneSpec(string Libelle, string Valeur, string? Unite)
 {
-    public bool EstVide => TraitementThermique is null && TraitementSurface is null && ToleranceGenerale is null
-        && Masse is null && Remarques is null && Lignes.Count == 0;
+    public string ValeurAffichee => Unite is null ? Valeur : $"{Valeur} {Unite}";
+}
+
+public sealed record SpecificationAffichee(string? Remarques, IReadOnlyList<LigneSpec> Lignes)
+{
+    public bool EstVide => Remarques is null && Lignes.Count == 0;
 }
 
 public sealed record DetailIndice(
@@ -79,31 +76,31 @@ public sealed record FichePiece(
 
 public sealed record BrutChoisi(int BrutId, bool Principal, int PiecesParBrut);
 
+/// <summary>
+/// Saisie des spécifications : la Masse est proposée par défaut, puis chacun ajoute (« + ») ou retire (« × »)
+/// des lignes : ce que c'est (Longueur, Largeur…), la valeur et l'unité facultative.
+/// </summary>
 public sealed class SaisieSpecification
 {
-    public string? TraitementThermique { get; set; }
-
-    public string? TraitementSurface { get; set; }
-
-    public string? ToleranceGenerale { get; set; }
-
-    public string? Masse { get; set; }
-
     public string? Remarques { get; set; }
 
     public List<LigneSaisie> Lignes { get; set; } = [];
 
+    /// <summary>Nouvelle saisie : une seule ligne, la Masse (en kg).</summary>
+    public static SaisieSpecification ParDefaut() => new() { Lignes = [new LigneSaisie { Libelle = "Masse", Unite = "kg" }] };
+
     public static SaisieSpecification Depuis(SpecificationAffichee s)
     {
         ArgumentNullException.ThrowIfNull(s);
+        if (s.EstVide)
+        {
+            return ParDefaut();
+        }
+
         return new()
         {
-            TraitementThermique = s.TraitementThermique,
-            TraitementSurface = s.TraitementSurface,
-            ToleranceGenerale = s.ToleranceGenerale,
-            Masse = s.Masse,
             Remarques = s.Remarques,
-            Lignes = s.Lignes.Select(l => new LigneSaisie { Libelle = l.Libelle, Valeur = l.Valeur }).ToList(),
+            Lignes = s.Lignes.Select(l => new LigneSaisie { Libelle = l.Libelle, Valeur = l.Valeur, Unite = l.Unite }).ToList(),
         };
     }
 
@@ -112,6 +109,8 @@ public sealed class SaisieSpecification
         public string Libelle { get; set; } = string.Empty;
 
         public string Valeur { get; set; } = string.Empty;
+
+        public string? Unite { get; set; }
     }
 }
 
@@ -264,8 +263,8 @@ public sealed class ServicePiecesFinies(
         }
 
         var s = i.Specification;
-        var specification = new SpecificationAffichee(s?.TraitementThermique, s?.TraitementSurface, s?.ToleranceGenerale, s?.Masse, s?.Remarques,
-            i.LignesSpecification.OrderBy(l => l.Ordre).Select(l => new LigneSpec(l.Libelle, l.Valeur)).ToList());
+        var specification = new SpecificationAffichee(s?.Remarques,
+            i.LignesSpecification.OrderBy(l => l.Ordre).Select(l => new LigneSpec(l.Libelle, l.Valeur, l.Unite)).ToList());
         return new DetailIndice(i.Id, i.Code, i.Date, Prenom(prenoms, i.AuteurId), i.DescriptionChangement, i.Id == courantId, specification,
             i.Plans.OrderByDescending(p => p.DateAjout).Select(p => VersPlan(p, i, i.Id != courantId, prenoms)).ToList(),
             i.Operations.OrderBy(o => o.Ordre).ThenBy(o => o.Numero)
@@ -317,6 +316,11 @@ public sealed class ServicePiecesFinies(
         if (saisie.Bruts.Count == 0)
         {
             return Resultat.Echec<int>("Choisissez au moins un brut : une pièce finie ne peut pas être enregistrée sans brut.");
+        }
+
+        if (saisie.Specification is not null && VerifierSpecification(saisie.Specification) is { } erreurSpecification)
+        {
+            return Resultat.Echec<int>(erreurSpecification);
         }
 
         if (saisie.Bruts.Any(b => b.PiecesParBrut < 1))
@@ -633,18 +637,11 @@ public sealed class ServicePiecesFinies(
         {
             if (precedent.Specification is { } s)
             {
-                indice.Specification = new Specification
-                {
-                    TraitementThermique = s.TraitementThermique,
-                    TraitementSurface = s.TraitementSurface,
-                    ToleranceGenerale = s.ToleranceGenerale,
-                    Masse = s.Masse,
-                    Remarques = s.Remarques,
-                };
+                indice.Specification = new Specification { Remarques = s.Remarques };
             }
 
             indice.LignesSpecification = precedent.LignesSpecification
-                .Select(l => new SpecificationLigne { Libelle = l.Libelle, Valeur = l.Valeur, Ordre = l.Ordre }).ToList();
+                .Select(l => new SpecificationLigne { Libelle = l.Libelle, Valeur = l.Valeur, Unite = l.Unite, Ordre = l.Ordre }).ToList();
             indice.Operations = precedent.Operations
                 .Select(o => new OperationGamme { Numero = o.Numero, PosteId = o.PosteId, Description = o.Description, TempsEstimeMin = o.TempsEstimeMin, Remarque = o.Remarque, Ordre = o.Ordre })
                 .ToList();
@@ -672,6 +669,13 @@ public sealed class ServicePiecesFinies(
             return Resultat.Echec(verification.Erreur);
         }
 
+        var erreur = VerifierSpecification(saisie);
+        if (erreur is not null)
+        {
+            await verification.Db!.DisposeAsync();
+            return Resultat.Echec(erreur);
+        }
+
         await using var db = verification.Db!;
         var indice = await db.Indices.Include(i => i.Specification).Include(i => i.LignesSpecification).FirstAsync(i => i.Id == indiceId);
         AppliquerSpecification(indice, saisie);
@@ -680,19 +684,27 @@ public sealed class ServicePiecesFinies(
         return Resultat.Ok();
     }
 
+    /// <summary>Une valeur doit dire ce qu'elle mesure ; les lignes sans valeur (ex. Masse non remplie) sont ignorées.</summary>
+    internal static string? VerifierSpecification(SaisieSpecification s) =>
+        s.Lignes.Any(l => !string.IsNullOrWhiteSpace(l.Valeur) && string.IsNullOrWhiteSpace(l.Libelle))
+            ? "Indiquez ce que mesure chaque valeur (ex. Longueur, Largeur)."
+            : null;
+
     private static void AppliquerSpecification(Indice indice, SaisieSpecification s)
     {
         indice.Specification ??= new Specification();
-        indice.Specification.TraitementThermique = ServiceReferentiels.Net(s.TraitementThermique);
-        indice.Specification.TraitementSurface = ServiceReferentiels.Net(s.TraitementSurface);
-        indice.Specification.ToleranceGenerale = ServiceReferentiels.Net(s.ToleranceGenerale);
-        indice.Specification.Masse = ServiceReferentiels.Net(s.Masse);
         indice.Specification.Remarques = ServiceReferentiels.Net(s.Remarques);
         indice.LignesSpecification.Clear();
         var ordre = 0;
-        foreach (var ligne in s.Lignes.Where(l => !string.IsNullOrWhiteSpace(l.Libelle) || !string.IsNullOrWhiteSpace(l.Valeur)))
+        foreach (var ligne in s.Lignes.Where(l => !string.IsNullOrWhiteSpace(l.Valeur)))
         {
-            indice.LignesSpecification.Add(new SpecificationLigne { Libelle = ligne.Libelle.Trim(), Valeur = ligne.Valeur.Trim(), Ordre = ordre++ });
+            indice.LignesSpecification.Add(new SpecificationLigne
+            {
+                Libelle = ligne.Libelle.Trim(),
+                Valeur = ligne.Valeur.Trim(),
+                Unite = ServiceReferentiels.Net(ligne.Unite),
+                Ordre = ordre++,
+            });
         }
     }
 

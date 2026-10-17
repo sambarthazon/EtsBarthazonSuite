@@ -35,3 +35,12 @@
 /* Impression de la fiche pièce */
 .impression-entete { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--encre); padding-bottom: 6px; margin-bottom: 8px; }
 .impression-entete h1 { font-size: 18pt; margin: 0; }
+
+/* Ligne de spécification : ce que c'est, valeur, unité, retirer */
+.ligne-specification { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 90px) auto; gap: .4rem; align-items: center; }
+.ligne-specification--entete { font-size: .85rem; font-weight: 600; color: var(--texte-doux); }
+@media (max-width: 600px) {
+    .ligne-specification { grid-template-columns: minmax(0, 1fr) minmax(0, 80px) auto; }
+    .ligne-specification > input:first-child { grid-column: 1 / -1; }
+    .ligne-specification--entete { display: none; }
+}

@@ -142,7 +142,10 @@ public sealed class AnnuaireTests : IDisposable
         var a = (await _pieces.Obtenir(piece))!.IndiceCourant;
         await _pieces.EnregistrerOperation(a.Id, null, new SaisieOperation { Description = "Tournage" });
         await _pieces.EnregistrerOperation(a.Id, null, new SaisieOperation { Description = "Contrôle" });
-        await _pieces.EnregistrerSpecification(a.Id, new SaisieSpecification { TraitementThermique = "Trempe" });
+        var specification = SaisieSpecification.ParDefaut();
+        specification.Lignes[0].Valeur = "1,2";
+        specification.Lignes.Add(new() { Libelle = "Traitement thermique", Valeur = "Trempe" });
+        await _pieces.EnregistrerSpecification(a.Id, specification);
 
         Assert.False((await _pieces.NouvelIndice(piece, "B", "", true)).Reussi);
         Assert.True((await _pieces.NouvelIndice(piece, "B", "Cote modifiée", true)).Reussi);
@@ -150,7 +153,7 @@ public sealed class AnnuaireTests : IDisposable
         var fiche = (await _pieces.Obtenir(piece))!;
         Assert.Equal("B", fiche.IndiceCourant.Code);
         Assert.Equal([10, 20], fiche.IndiceCourant.Operations.Select(o => o.Numero));
-        Assert.Equal("Trempe", fiche.IndiceCourant.Specification.TraitementThermique);
+        Assert.Equal(["Masse : 1,2 kg", "Traitement thermique : Trempe"], fiche.IndiceCourant.Specification.Lignes.Select(l => $"{l.Libelle} : {l.ValeurAffichee}"));
 
         // L'indice A reste consultable, en lecture seule.
         var ancien = (await _pieces.ObtenirIndice(a.Id))!;
@@ -161,6 +164,26 @@ public sealed class AnnuaireTests : IDisposable
         var historique = await _historique.Lister(TypesObjet.PieceFinie, piece);
         Assert.Contains(historique, h => h.Phrase.StartsWith("Marc a passé l'indice de A à B", StringComparison.Ordinal));
         Assert.Contains(historique, h => h.Phrase == "Marc a créé la pièce 4512-B (Client Dupont SA)");
+    }
+
+    [Fact]
+    public async Task Specifications_masse_par_defaut_et_lignes_libres()
+    {
+        var piece = await Piece(await Client(), await Brut());
+        var indice = (await _pieces.Obtenir(piece))!.IndiceCourant;
+
+        // Masse proposée par défaut ; laissée vide, elle n'est pas enregistrée.
+        var saisie = SaisieSpecification.Depuis(indice.Specification);
+        Assert.Equal("Masse", Assert.Single(saisie.Lignes).Libelle);
+        saisie.Lignes.Add(new() { Libelle = "Longueur", Valeur = "120", Unite = "mm" });
+        saisie.Lignes.Add(new() { Libelle = "Rugosité", Valeur = "Ra 0,8" });
+        Assert.True((await _pieces.EnregistrerSpecification(indice.Id, saisie)).Reussi);
+        var lignes = (await _pieces.Obtenir(piece))!.IndiceCourant.Specification.Lignes;
+        Assert.Equal(["Longueur : 120 mm", "Rugosité : Ra 0,8"], lignes.Select(l => $"{l.Libelle} : {l.ValeurAffichee}"));
+
+        // Une valeur sans dire ce que c'est est refusée.
+        var sansLibelle = new SaisieSpecification { Lignes = [new() { Valeur = "40" }] };
+        Assert.False((await _pieces.EnregistrerSpecification(indice.Id, sansLibelle)).Reussi);
     }
 
     [Fact]

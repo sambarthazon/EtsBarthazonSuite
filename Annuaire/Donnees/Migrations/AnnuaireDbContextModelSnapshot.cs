@@ -545,23 +545,7 @@ namespace Barthazon.Annuaire.Donnees.Migrations
                     b.Property<int>("IndiceId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Masse")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Remarques")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ToleranceGenerale")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TraitementSurface")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TraitementThermique")
-                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -588,6 +572,10 @@ namespace Barthazon.Annuaire.Donnees.Migrations
 
                     b.Property<int>("Ordre")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Unite")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Valeur")
                         .IsRequired()
