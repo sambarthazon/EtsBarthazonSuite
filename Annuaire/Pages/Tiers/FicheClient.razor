@@ -1,0 +1,6 @@
+@page "/annuaire/clients/{Id:int}"
+<FicheTiers Sorte="SorteTiers.Client" Id="Id" />
+
+@code {
+    [Parameter] public int Id { get; set; }
+}

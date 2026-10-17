@@ -1,0 +1,10 @@
+@page "/annuaire/fournisseurs"
+@page "/annuaire/fournisseurs/nouveau"
+@inject NavigationManager Navigation
+<ListeTiers Sorte="SorteTiers.Fournisseur" Creation="@Creation" Retour="@Retour" />
+
+@code {
+    [SupplyParameterFromQuery(Name = "retour")] private string? Retour { get; set; }
+
+    private bool Creation => Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0].EndsWith("/nouveau", StringComparison.OrdinalIgnoreCase);
+}

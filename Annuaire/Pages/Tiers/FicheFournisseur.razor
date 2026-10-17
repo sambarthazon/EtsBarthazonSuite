@@ -1,0 +1,6 @@
+@page "/annuaire/fournisseurs/{Id:int}"
+<FicheTiers Sorte="SorteTiers.Fournisseur" Id="Id" />
+
+@code {
+    [Parameter] public int Id { get; set; }
+}

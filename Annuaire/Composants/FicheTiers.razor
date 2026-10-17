@@ -1,5 +1,3 @@
-@page "/annuaire/clients/{Id:int}"
-@page "/annuaire/fournisseurs/{Id:int}"
 @inject ServiceReferentiels Referentiels
 @inject ServicePiecesFinies Pieces
 @inject ServiceBruts Bruts
@@ -75,7 +73,8 @@ else if (_tiers is not null)
 
     [Parameter] public int Id { get; set; }
 
-    private SorteTiers Sorte => Navigation.Uri.Contains("/annuaire/fournisseurs", StringComparison.OrdinalIgnoreCase) ? SorteTiers.Fournisseur : SorteTiers.Client;
+    /// <summary>Clients ou fournisseurs : chaque sorte a sa propre page (Pages/Tiers), donc sa propre instance.</summary>
+    [Parameter, EditorRequired] public SorteTiers Sorte { get; set; }
 
     private string Chemin => Sorte == SorteTiers.Client ? "/annuaire/clients" : "/annuaire/fournisseurs";
 

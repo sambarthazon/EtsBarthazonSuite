@@ -1,7 +1,3 @@
-@page "/annuaire/clients"
-@page "/annuaire/fournisseurs"
-@page "/annuaire/clients/nouveau"
-@page "/annuaire/fournisseurs/nouveau"
 @inject ServiceReferentiels Referentiels
 @inject IUtilisateurCourant Courant
 @inject NavigationManager Navigation
@@ -42,9 +38,9 @@
     private IReadOnlyList<LigneTiers>? _liste;
     private bool _archives;
     private bool _fenetre;
-    private SorteTiers? _sorteChargee;
 
-    private SorteTiers Sorte => Navigation.Uri.Contains("/annuaire/fournisseurs", StringComparison.OrdinalIgnoreCase) ? SorteTiers.Fournisseur : SorteTiers.Client;
+    /// <summary>Clients ou fournisseurs : chaque sorte a sa propre page (Pages/Tiers), donc sa propre instance.</summary>
+    [Parameter, EditorRequired] public SorteTiers Sorte { get; set; }
 
     private string Chemin => Sorte == SorteTiers.Client ? "/annuaire/clients" : "/annuaire/fournisseurs";
 
@@ -55,23 +51,15 @@
     private string Utilisations => Sorte == SorteTiers.Client ? "Pièces finies" : "Bruts fournis";
 
     /// <summary>Page d'origine où revenir après la création (ex. /annuaire/clients/nouveau?retour=…).</summary>
-    [SupplyParameterFromQuery(Name = "retour")] private string? Retour { get; set; }
+    [Parameter] public string? Retour { get; set; }
 
-    private bool AdresseCreation => Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0].EndsWith("/nouveau", StringComparison.OrdinalIgnoreCase);
+    /// <summary>Adresse …/nouveau : la fiche de création s'ouvre directement.</summary>
+    [Parameter] public bool Creation { get; set; }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
-        if (AdresseCreation && Courant.Peut(Role.Gestion))
-        {
-            _fenetre = true;
-        }
-
-        if (_sorteChargee != Sorte)
-        {
-            _sorteChargee = Sorte;
-            _liste = null;
-            await Charger();
-        }
+        _fenetre = Creation && Courant.Peut(Role.Gestion);
+        await Charger();
     }
 
     private async Task Charger() => _liste = await Referentiels.ListerTiers(Sorte, _archives);
@@ -82,7 +70,7 @@
     private void Fermer(bool ouverte)
     {
         _fenetre = ouverte;
-        if (!ouverte && AdresseCreation)
+        if (!ouverte && Creation)
         {
             Navigation.NavigateTo(Authentification.RetourSur(Retour) is var r && r != "/" ? r : Chemin);
         }
