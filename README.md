@@ -151,8 +151,11 @@ Toujours visible, sur toutes les pages :
 
 - Toutes les couleurs, rayons, ombres et polices sont des **variables CSS** dans un seul fichier `Commun/wwwroot/theme.css`.
 - Couleurs nommées par rôle (`--couleur-principale`, `--couleur-succes`, `--couleur-alerte`, `--couleur-danger`, `--fond`, `--texte`…), jamais par teinte.
-- Un **mode sombre** est fourni (suivant le réglage de l'appareil).
-- Page « Paramètres → Apparence » (Administrateur) : choisir la couleur principale avec un sélecteur, aperçu immédiat, valeur enregistrée en base et injectée au chargement.
+- **Mode d'affichage** : automatique (selon le réglage de l'appareil), **clair** ou **sombre**, choisi par l'administrateur.
+- Page « Paramètres → Apparence » (Administrateur), aperçu immédiat, réglages enregistrés en base et injectés au chargement de chaque page :
+  - **logo** en haut à gauche (PNG, JPG, WebP ou SVG, 1 Mo maximum ; retour possible au logo d'origine) ;
+  - **couleur principale** et **couleur d'accentuation** (liens, badges d'indice, onglet actif ; par défaut identique à la principale) ;
+  - pour chaque mode (clair, sombre) : fond de la page, fond des encadrés, texte, texte secondaire, barre du haut, couleurs des états OK / Sous le seuil / Rupture.
 
 ### 4.6 Composants partagés
 

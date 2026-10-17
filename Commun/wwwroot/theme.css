@@ -1,14 +1,30 @@
 /*
   Thème Ets BARTHAZON — SEUL fichier où sont définies les couleurs, rayons, ombres et polices.
   Les couleurs sont nommées par rôle, jamais par teinte.
-  La couleur principale peut être changée dans Paramètres → Apparence (injectée au chargement de la page).
+
+  Paramètres → Apparence (administrateur) permet de changer, sans toucher à ce fichier :
+  le logo, la couleur principale, la couleur d'accentuation, le mode d'affichage (automatique, clair, sombre)
+  et, pour chaque mode, les couleurs de fond, d'encadrés, de texte, de la barre du haut et des états.
+  Ces réglages sont injectés au chargement de la page (Commun/Parametres/ServiceTheme.cs) et remplacent
+  les valeurs ci-dessous. Les valeurs par défaut de ServiceTheme.Couleurs doivent rester identiques à
+  celles de ce fichier (vérifié par un test).
+
+  Mode d'affichage : attribut data-mode de la balise <html> :
+    « auto »   = suit le réglage de l'appareil (mode sombre si l'appareil est en sombre) ;
+    « clair »  = toujours clair ;
+    « sombre » = toujours sombre.
 */
 :root {
-    /* Couleur principale (remplacée par la valeur enregistrée en base) */
+    /* Couleur principale : boutons principaux, sélecteur d'application, logo */
     --couleur-principale: #d9631e;
     --texte-sur-principale: #ffffff;
     --couleur-principale-foncee: color-mix(in srgb, var(--couleur-principale) 82%, #000000);
     --couleur-principale-claire: color-mix(in srgb, var(--couleur-principale) 13%, var(--surface));
+
+    /* Couleur d'accentuation : liens, badges d'indice, onglet actif (par défaut : la couleur principale) */
+    --couleur-accent: var(--couleur-principale);
+    --texte-sur-accent: var(--texte-sur-principale);
+    --couleur-lien: color-mix(in srgb, var(--couleur-accent) 82%, var(--texte));
 
     /* États */
     --couleur-succes: #2e7d32;
@@ -25,14 +41,14 @@
     /* Fonds et textes */
     --fond: #f3f4f6;
     --surface: #ffffff;
-    --surface-2: #eceef2;
-    --bordure: #d6dae1;
+    --surface-2: color-mix(in srgb, var(--texte) 7%, var(--surface));
+    --bordure: color-mix(in srgb, var(--texte) 16%, var(--surface));
     --texte: #1b2130;
     --texte-doux: #5a6273;
     --voile: rgba(15, 18, 25, 0.45);
     --barre-haut: #1f2430;
     --texte-barre-haut: #ffffff;
-    --texte-barre-haut-doux: #b9c0cc;
+    --texte-barre-haut-doux: color-mix(in srgb, var(--texte-barre-haut) 72%, var(--barre-haut));
     --texte-inverse: #ffffff;
     --noir: #000000;
 
@@ -66,12 +82,31 @@
     /* Tactile : taille minimale d'une cible */
     --cible: 44px;
 
-    color-scheme: light dark;
+    color-scheme: light;
 }
 
-/* Mode sombre : suit le réglage de l'appareil */
+/* Mode sombre forcé */
+:root[data-mode="sombre"] {
+    --couleur-succes: #5cbf64;
+    --couleur-alerte: #f0a530;
+    --couleur-danger: #ef5b5b;
+    --couleur-neutre: #8d95a3;
+    --couleur-info: #5aa7e6;
+    --fond: #13161c;
+    --surface: #1c2028;
+    --texte: #e8ebf0;
+    --texte-doux: #a3abb9;
+    --voile: rgba(0, 0, 0, 0.6);
+    --barre-haut: #0c0e12;
+    --ombre: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --couleur-principale-claire: color-mix(in srgb, var(--couleur-principale) 22%, var(--surface));
+    --couleur-lien: color-mix(in srgb, var(--couleur-accent) 75%, var(--texte));
+    color-scheme: dark;
+}
+
+/* Mode automatique : sombre si l'appareil est réglé en sombre (mêmes valeurs que ci-dessus) */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-mode="clair"]) {
         --couleur-succes: #5cbf64;
         --couleur-alerte: #f0a530;
         --couleur-danger: #ef5b5b;
@@ -79,13 +114,13 @@
         --couleur-info: #5aa7e6;
         --fond: #13161c;
         --surface: #1c2028;
-        --surface-2: #262b35;
-        --bordure: #363c48;
         --texte: #e8ebf0;
         --texte-doux: #a3abb9;
         --voile: rgba(0, 0, 0, 0.6);
         --barre-haut: #0c0e12;
         --ombre: 0 1px 2px rgba(0, 0, 0, 0.4);
         --couleur-principale-claire: color-mix(in srgb, var(--couleur-principale) 22%, var(--surface));
+        --couleur-lien: color-mix(in srgb, var(--couleur-accent) 75%, var(--texte));
+        color-scheme: dark;
     }
 }

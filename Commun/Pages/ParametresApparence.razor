@@ -1,50 +1,327 @@
-@inject ServiceParametres Parametres
+@implements IAsyncDisposable
+@inject ServiceTheme Theme
 @inject ServiceToast Toast
+@inject ServiceConfirmation Confirmation
+@inject NavigationManager Navigation
 @inject IJSRuntime JS
-@* Couleur principale : aperçu immédiat, enregistrée en base pour tous les postes. *@
-<div class="bloc" style="max-width: 560px">
-    <h2 class="bloc__titre">Couleur principale</h2>
-    <p class="doux">Elle colore les boutons principaux, l'onglet actif et le logo. Les autres postes la prennent à leur prochain chargement de page.</p>
-    <div class="ligne">
-        <input type="color" value="@_couleur" @oninput="Apercu" aria-label="Couleur principale" style="width: 72px; height: 52px; border: 0; background: none; cursor: pointer" />
-        <code>@_couleur</code>
-        <button type="button" class="bouton bouton--discret" @onclick="Reinitialiser">Couleur d'origine</button>
+@* Paramètres → Apparence : logo, mode d'affichage, couleurs. Aperçu immédiat sur la page ; enregistré pour tous les postes. *@
+@if (_reglages is null)
+{
+    <div class="doux">Chargement…</div>
+}
+else
+{
+    <div class="apparence">
+        <section class="bloc">
+            <h2 class="bloc__titre">Logo</h2>
+            <p class="doux">Affiché en haut à gauche de chaque page et sur l'écran de connexion.</p>
+            <div class="apparence__apercu-barre"><Logo /> <strong>BARTHAZON</strong></div>
+            <ChampFichier OnFichiers="DeposerLogo" Accept="image/png,image/jpeg,image/webp,image/svg+xml" Multiple="false" Photo="false"
+                          Texte="Déposer le logo ici, ou toucher pour choisir" Aide="PNG, JPG, WebP ou SVG — 1 Mo maximum, de préférence sur fond transparent" />
+            @if (_reglages.Logo is not null)
+            {
+                <div><button type="button" class="bouton bouton--discret" @onclick="LogoOrigine"><Icone Nom="annuler" /> Revenir au logo d'origine</button></div>
+            }
+        </section>
+
+        <section class="bloc">
+            <h2 class="bloc__titre">Mode d'affichage</h2>
+            <div class="choix-boutons">
+                @foreach (var (mode, libelle) in Modes)
+                {
+                    <button type="button" class="@(mode == _mode ? "actif" : null)" @onclick="() => ChoisirMode(mode)">@libelle</button>
+                }
+            </div>
+            <p class="champ__aide">
+                @(_mode switch
+                {
+                    ModeAffichage.Clair => "Toujours clair, quel que soit le réglage de l'appareil.",
+                    ModeAffichage.Sombre => "Toujours sombre, quel que soit le réglage de l'appareil.",
+                    _ => "Clair ou sombre selon le réglage de chaque téléphone, tablette ou ordinateur.",
+                })
+            </p>
+        </section>
+
+        <section class="bloc">
+            <h2 class="bloc__titre">Couleurs principales</h2>
+            <div class="apparence__couleurs">
+                <div class="apparence__couleur">
+                    <input type="color" value="@_principale" @oninput="e => Changer(ref _principale, e)" aria-label="Couleur principale" />
+                    <div>
+                        <strong>Couleur principale</strong>
+                        <div class="doux petit">Boutons principaux, sélecteur d'application, logo d'origine</div>
+                    </div>
+                    <code>@_principale</code>
+                    @if (!string.Equals(_principale, ServiceTheme.CouleurPrincipaleParDefaut, StringComparison.OrdinalIgnoreCase))
+                    {
+                        <button type="button" class="bouton bouton--discret" @onclick="() => Definir(ref _principale, ServiceTheme.CouleurPrincipaleParDefaut)">Par défaut</button>
+                    }
+                </div>
+                <div class="apparence__couleur">
+                    <input type="color" value="@(_accent ?? _principale)" @oninput="ChangerAccent" aria-label="Couleur d'accentuation" />
+                    <div>
+                        <strong>Couleur d'accentuation</strong>
+                        <div class="doux petit">Liens, badges d'indice, onglet actif@(_accent is null ? " — identique à la couleur principale" : null)</div>
+                    </div>
+                    <code>@(_accent ?? "—")</code>
+                    @if (_accent is not null)
+                    {
+                        <button type="button" class="bouton bouton--discret" @onclick="AccentParDefaut">Comme la principale</button>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <section class="bloc">
+            <h2 class="bloc__titre">Couleurs de chaque mode</h2>
+            <p class="doux">Choisissez le mode à régler : la page s'affiche dans ce mode pendant le réglage.</p>
+            <Onglets Elements="OngletsModes" Actif="@(_modeEdite == ModeAffichage.Sombre ? "sombre" : "clair")" ActifChanged="ChoisirModeEdite" />
+            <div class="apparence__couleurs">
+                @foreach (var couleur in ServiceTheme.Couleurs)
+                {
+                    var valeur = Valeur(couleur);
+                    var defaut = _modeEdite == ModeAffichage.Sombre ? couleur.DefautSombre : couleur.DefautClair;
+                    <div class="apparence__couleur">
+                        <input type="color" value="@valeur" @oninput="e => ChangerCouleur(couleur, e)" aria-label="@couleur.Libelle" />
+                        <div>
+                            <strong>@couleur.Libelle</strong>
+                            <div class="doux petit">@couleur.Aide</div>
+                        </div>
+                        <code>@valeur</code>
+                        @if (!string.Equals(valeur, defaut, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <button type="button" class="bouton bouton--discret" @onclick="() => CouleurParDefaut(couleur)">Par défaut</button>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="bloc">
+            <h2 class="bloc__titre">Aperçu</h2>
+            <div class="ligne">
+                <span class="bouton bouton--principal">Bouton principal</span>
+                <span class="bouton bouton--secondaire">Bouton secondaire</span>
+                <span class="badge-indice">C</span>
+                <a href="javascript:void(0)">Un lien</a>
+                <BadgeEtat Etat="EtatStock.Ok" />
+                <BadgeEtat Etat="EtatStock.SousLeSeuil" />
+                <BadgeEtat Etat="EtatStock.Rupture" />
+                <span class="doux">Texte secondaire</span>
+            </div>
+        </section>
+
+        <div class="apparence__actions">
+            <button type="button" class="bouton bouton--secondaire" @onclick="ToutParDefaut">Tout remettre par défaut</button>
+            <button type="button" class="bouton bouton--discret" @onclick="Annuler">Annuler les modifications</button>
+            <GrosBouton Style="principal" Gros="true" Icone="valider" Texte="Enregistrer l'apparence" OnClick="Enregistrer" />
+        </div>
     </div>
-    <div class="ligne" style="margin: 1rem 0">
-        <span class="bouton bouton--principal">Bouton principal</span>
-        <span class="badge-indice">C</span>
-    </div>
-    <GrosBouton Style="principal" Texte="Enregistrer" OnClick="Enregistrer" />
-</div>
+}
 
 @code {
-    private string _couleur = ServiceParametres.CouleurParDefaut;
+    private static readonly (ModeAffichage, string)[] Modes =
+        [(ModeAffichage.Auto, "Automatique (selon l'appareil)"), (ModeAffichage.Clair, "Clair"), (ModeAffichage.Sombre, "Sombre")];
 
-    protected override async Task OnInitializedAsync() => _couleur = await Parametres.CouleurPrincipale();
+    private static readonly IReadOnlyList<Onglets.Onglet> OngletsModes = [new("clair", "Mode clair"), new("sombre", "Mode sombre")];
 
-    private async Task Apercu(ChangeEventArgs e)
+    private ReglagesTheme? _reglages;
+    private ModeAffichage _mode;
+    private ModeAffichage _modeEdite = ModeAffichage.Clair;
+    private string _principale = ServiceTheme.CouleurPrincipaleParDefaut;
+    private string? _accent;
+    private Dictionary<string, string> _clair = [];
+    private Dictionary<string, string> _sombre = [];
+    private bool _apercu;
+
+    [SupplyParameterFromQuery(Name = "enregistre")] private bool Enregistre { get; set; }
+
+    protected override async Task OnInitializedAsync()
     {
-        var couleur = e.Value?.ToString();
-        if (ServiceParametres.CouleurValide(couleur))
+        _reglages = await Theme.Lire();
+        _mode = _reglages.Mode;
+        _modeEdite = _mode == ModeAffichage.Sombre ? ModeAffichage.Sombre : ModeAffichage.Clair;
+        _principale = _reglages.Principale;
+        _accent = _reglages.Accent;
+        _clair = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => _reglages.CouleurMode(ModeAffichage.Clair, c));
+        _sombre = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => _reglages.CouleurMode(ModeAffichage.Sombre, c));
+        if (Enregistre)
         {
-            _couleur = couleur!;
-            await JS.InvokeVoidAsync("barthazon.definirCouleur", _couleur, ServiceParametres.TexteSurCouleur(_couleur));
+            Toast.Succes("Apparence enregistrée pour tous les postes");
         }
     }
 
-    private async Task Reinitialiser() =>
-        await Apercu(new ChangeEventArgs { Value = ServiceParametres.CouleurParDefaut });
+    private Dictionary<string, string> CouleursEditees => _modeEdite == ModeAffichage.Sombre ? _sombre : _clair;
+
+    private string Valeur(CouleurTheme couleur) => CouleursEditees[couleur.Cle];
+
+    private Task Changer(ref string champ, ChangeEventArgs e)
+    {
+        if (ServiceTheme.CouleurValide(e.Value?.ToString()))
+        {
+            champ = e.Value!.ToString()!;
+        }
+
+        return Apercu();
+    }
+
+    private Task Definir(ref string champ, string valeur)
+    {
+        champ = valeur;
+        return Apercu();
+    }
+
+    private Task ChangerAccent(ChangeEventArgs e)
+    {
+        if (ServiceTheme.CouleurValide(e.Value?.ToString()))
+        {
+            _accent = e.Value!.ToString();
+        }
+
+        return Apercu();
+    }
+
+    private Task AccentParDefaut()
+    {
+        _accent = null;
+        return Apercu();
+    }
+
+    private Task ChangerCouleur(CouleurTheme couleur, ChangeEventArgs e)
+    {
+        if (ServiceTheme.CouleurValide(e.Value?.ToString()))
+        {
+            CouleursEditees[couleur.Cle] = e.Value!.ToString()!;
+        }
+
+        return Apercu();
+    }
+
+    private Task CouleurParDefaut(CouleurTheme couleur)
+    {
+        CouleursEditees[couleur.Cle] = _modeEdite == ModeAffichage.Sombre ? couleur.DefautSombre : couleur.DefautClair;
+        return Apercu();
+    }
+
+    private Task ChoisirMode(ModeAffichage mode)
+    {
+        _mode = mode;
+        if (mode != ModeAffichage.Auto)
+        {
+            _modeEdite = mode;
+        }
+
+        return Apercu();
+    }
+
+    private Task ChoisirModeEdite(string onglet)
+    {
+        _modeEdite = onglet == "sombre" ? ModeAffichage.Sombre : ModeAffichage.Clair;
+        return Apercu();
+    }
+
+    /// <summary>Aperçu sur toute la page : couleurs du mode réglé, la page s'affichant dans ce mode.</summary>
+    private async Task Apercu()
+    {
+        var variables = new Dictionary<string, string>
+        {
+            ["--couleur-principale"] = _principale,
+            ["--texte-sur-principale"] = ServiceTheme.TexteSurCouleur(_principale),
+            ["--couleur-accent"] = _accent ?? "var(--couleur-principale)",
+            ["--texte-sur-accent"] = _accent is null ? "var(--texte-sur-principale)" : ServiceTheme.TexteSurCouleur(_accent),
+        };
+        foreach (var couleur in ServiceTheme.Couleurs)
+        {
+            variables[couleur.Variable] = CouleursEditees[couleur.Cle];
+        }
+
+        variables["--texte-barre-haut"] = ServiceTheme.TexteSurCouleur(CouleursEditees["barre-haut"]);
+        _apercu = true;
+        await JS.InvokeVoidAsync("barthazon.apercuTheme", variables, _modeEdite == ModeAffichage.Sombre ? "sombre" : "clair");
+    }
+
+    private async Task ToutParDefaut()
+    {
+        if (!await Confirmation.Demander("Remettre toutes les couleurs et le mode d'affichage par défaut ? (le logo est conservé)", "Tout remettre par défaut"))
+        {
+            return;
+        }
+
+        (_mode, _principale, _accent) = (ModeAffichage.Auto, ServiceTheme.CouleurPrincipaleParDefaut, null);
+        _clair = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => c.DefautClair);
+        _sombre = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => c.DefautSombre);
+        await Apercu();
+    }
+
+    private void Annuler() => Navigation.NavigateTo("/parametres/apparence", forceLoad: true);
 
     private async Task Enregistrer()
     {
-        var resultat = await Parametres.DefinirCouleurPrincipale(_couleur);
+        var resultat = await Theme.Enregistrer(new ReglagesTheme(_mode, _principale, _accent, _reglages!.Logo, _clair, _sombre));
+        if (!resultat.Reussi)
+        {
+            Toast.Erreur(resultat.Erreur!);
+            return;
+        }
+
+        // Rechargement : la page s'affiche exactement comme sur les autres postes.
+        Navigation.NavigateTo("/parametres/apparence?enregistre=true", forceLoad: true);
+    }
+
+    private async Task DeposerLogo(IReadOnlyList<IBrowserFile> fichiers)
+    {
+        var fichier = fichiers[0];
+        if (fichier.Size > ServiceTheme.TailleMaxLogo)
+        {
+            Toast.Erreur("Le logo ne doit pas dépasser 1 Mo.");
+            return;
+        }
+
+        await using var flux = fichier.OpenReadStream(ServiceTheme.TailleMaxLogo);
+        var resultat = await Theme.EnregistrerLogo(fichier.Name, flux, fichier.Size);
         if (resultat.Reussi)
         {
-            Toast.Succes("Couleur enregistrée");
+            _reglages = await Theme.Lire();
+            Toast.Succes("Logo enregistré");
         }
         else
         {
             Toast.Erreur(resultat.Erreur!);
+        }
+    }
+
+    private async Task LogoOrigine()
+    {
+        if (!await Confirmation.Demander("Revenir au logo d'origine ?", "Revenir au logo d'origine"))
+        {
+            return;
+        }
+
+        var resultat = await Theme.SupprimerLogo();
+        if (resultat.Reussi)
+        {
+            _reglages = await Theme.Lire();
+            Toast.Succes("Logo d'origine rétabli");
+        }
+    }
+
+    /// <summary>En quittant la page sans enregistrer : l'aperçu est retiré.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (!_apercu || _reglages is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var variables = new[] { "--couleur-principale", "--texte-sur-principale", "--couleur-accent", "--texte-sur-accent", "--texte-barre-haut" }
+                .Concat(ServiceTheme.Couleurs.Select(c => c.Variable));
+            await JS.InvokeVoidAsync("barthazon.annulerApercu", variables, _reglages.AttributMode);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Page déjà fermée.
         }
     }
 }

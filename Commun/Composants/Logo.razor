@@ -1,5 +1,39 @@
-@* Logo provisoire (lettre B) : couleur principale du thème. *@
-<svg viewBox="0 0 64 64" role="img" aria-label="Ets BARTHAZON" class="logo">
-    <rect x="2" y="2" width="60" height="60" rx="14" style="fill: var(--couleur-principale)" />
-    <path style="fill: var(--texte-sur-principale)" d="M20 14h15c7.2 0 11.5 3.6 11.5 9.3 0 3.8-2 6.6-5.4 7.8 4.3 1.1 6.9 4.2 6.9 8.6 0 6.3-4.8 10.3-12.6 10.3H20V14zm8 6.5v8.3h6c3 0 4.7-1.5 4.7-4.2s-1.7-4.1-4.7-4.1h-6zm0 14.6v8.4h6.9c3.3 0 5.2-1.6 5.2-4.2 0-2.7-1.9-4.2-5.2-4.2H28z" />
-</svg>
+@implements IDisposable
+@inject ServiceTheme Theme
+@inject SignauxApplication Signaux
+@* Logo en haut à gauche : celui choisi dans Paramètres → Apparence, sinon le logo d'origine (lettre B). *@
+@if (_logo is not null)
+{
+    <img class="logo-image" src="/theme/logo/@_logo" alt="Ets BARTHAZON" />
+}
+else
+{
+    <svg viewBox="0 0 64 64" role="img" aria-label="Ets BARTHAZON" class="logo">
+        <rect x="2" y="2" width="60" height="60" rx="14" style="fill: var(--couleur-principale)" />
+        <path style="fill: var(--texte-sur-principale)" d="M20 14h15c7.2 0 11.5 3.6 11.5 9.3 0 3.8-2 6.6-5.4 7.8 4.3 1.1 6.9 4.2 6.9 8.6 0 6.3-4.8 10.3-12.6 10.3H20V14zm8 6.5v8.3h6c3 0 4.7-1.5 4.7-4.2s-1.7-4.1-4.7-4.1h-6zm0 14.6v8.4h6.9c3.3 0 5.2-1.6 5.2-4.2 0-2.7-1.9-4.2-5.2-4.2H28z" />
+    </svg>
+}
+
+@code {
+    private string? _logo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Signaux.Signal += SurSignal;
+        _logo = (await Theme.Lire()).Logo;
+    }
+
+    public void Dispose() => Signaux.Signal -= SurSignal;
+
+    private void SurSignal(string sujet)
+    {
+        if (sujet == ServiceTheme.Signal)
+        {
+            _ = InvokeAsync(async () =>
+            {
+                _logo = (await Theme.Lire()).Logo;
+                StateHasChanged();
+            });
+        }
+    }
+}

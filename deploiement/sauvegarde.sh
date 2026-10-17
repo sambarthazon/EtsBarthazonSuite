@@ -10,6 +10,7 @@
 #      2026-10-16_2200/barthazon.db   copie cohérente de la base (sqlite3 .backup)
 #      2026-10-16_2200/plans/         copie des plans (fichiers identiques partagés
 #                                     avec la sauvegarde précédente : peu de place)
+#      2026-10-16_2200/theme/         logo choisi dans Paramètres → Apparence
 #  Les sauvegardes de plus de CONSERVATION_JOURS jours sont supprimées.
 # =============================================================================
 set -euo pipefail
@@ -42,9 +43,9 @@ sqlite3 "${DONNEES}/barthazon.db" ".backup '${DOSSIER}/barthazon.db'"
 VERIF="$(sqlite3 "${DOSSIER}/barthazon.db" 'PRAGMA integrity_check;')"
 [[ "${VERIF}" == "ok" ]] || erreur "la copie de la base est invalide : ${VERIF}"
 
-# 2. Plans (et clés de session) : les fichiers inchangés sont partagés avec la sauvegarde précédente.
+# 2. Plans, logo et clés de session : les fichiers inchangés sont partagés avec la sauvegarde précédente.
 PRECEDENTE="${DESTINATION}/derniere"
-for dossier in plans cles; do
+for dossier in plans cles theme; do
     if [[ -d "${DONNEES}/${dossier}" ]]; then
         if [[ -d "${PRECEDENTE}/${dossier}" ]]; then
             rsync -a --delete --link-dest="${PRECEDENTE}/${dossier}" "${DONNEES}/${dossier}/" "${DOSSIER}/${dossier}/"

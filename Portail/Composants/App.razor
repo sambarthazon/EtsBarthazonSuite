@@ -1,6 +1,7 @@
+@inject Barthazon.Commun.Parametres.ServiceTheme Theme
 @inject Barthazon.Commun.Modules.CatalogueModules Catalogue
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-mode="@_mode">
 
 <head>
     <meta charset="utf-8" />
@@ -30,6 +31,11 @@
 </html>
 
 @code {
+    private string _mode = "auto";
+
+    /// <summary>Mode d'affichage choisi par l'administrateur (automatique, clair ou sombre).</summary>
+    protected override async Task OnInitializedAsync() => _mode = (await Theme.Lire()).AttributMode;
+
     /// <summary>Interactif côté serveur, sans prérendu (un seul chargement des données par page).</summary>
     private static readonly IComponentRenderMode ModeRendu = new InteractiveServerRenderMode(prerender: false);
 }

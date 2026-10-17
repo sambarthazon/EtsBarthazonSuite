@@ -119,7 +119,7 @@ Sur le PC du bureau, ouvrir un navigateur à l'adresse **<http://barthazon.local
 1. La page « Bienvenue » demande de créer le **premier administrateur** (prénom + code PIN de 4 à 6 chiffres).
 2. Se connecter : toucher son nom, taper son code.
 3. Menu de l'avatar (en haut à droite) → **Paramètres** → **Utilisateurs** : créer chaque employé avec son rôle et son code PIN.
-4. **Paramètres → Apparence** : choisir la couleur principale si besoin.
+4. **Paramètres → Apparence** : si besoin, déposer le logo de l'entreprise, choisir le mode (automatique, clair ou sombre) et les couleurs.
 
 Les données sont dans `/var/lib/barthazon` : `barthazon.db` (la base) et `plans/` (les plans).
 
@@ -185,6 +185,7 @@ SAUVEGARDE=/mnt/sauvegarde/barthazon/2026-10-16_2200
 sudo rm -f /var/lib/barthazon/barthazon.db-wal /var/lib/barthazon/barthazon.db-shm
 sudo cp "$SAUVEGARDE/barthazon.db" /var/lib/barthazon/barthazon.db
 sudo rsync -a --delete "$SAUVEGARDE/plans/" /var/lib/barthazon/plans/
+[ -d "$SAUVEGARDE/theme" ] && sudo rsync -a --delete "$SAUVEGARDE/theme/" /var/lib/barthazon/theme/
 sudo chown -R barthazon:barthazon /var/lib/barthazon
 sudo systemctl start barthazon
 ```

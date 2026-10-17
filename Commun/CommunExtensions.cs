@@ -6,6 +6,7 @@ using Barthazon.Commun.Modules;
 using Barthazon.Commun.Parametres;
 using Barthazon.Commun.Securite;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ public static class CommunExtensions
         services.AddScoped<ServiceUtilisateurs>();
         services.AddScoped<ServiceHistorique>();
         services.AddScoped<ServiceParametres>();
+        services.AddScoped<ServiceTheme>();
 
         services.AddSingleton<CatalogueModules>();
         services.AddSingleton<ServiceBascule>();
@@ -66,11 +68,27 @@ public static class CommunExtensions
         return app.UtiliserPremiereUtilisation();
     }
 
+    /// <summary>Logo personnalisé (aussi affiché sur l'écran de connexion, donc sans connexion).</summary>
+    private static void MapLogo(IEndpointRouteBuilder points) =>
+        points.MapGet("/theme/logo/{nom}", (string nom, HttpContext http, ServiceTheme theme) =>
+        {
+            if (theme.FichierLogo(nom) is not { } fichier)
+            {
+                return Results.NotFound();
+            }
+
+            // Un SVG ouvert directement ne peut exécuter aucun script ; le nom change à chaque envoi : cache long.
+            http.Response.Headers.ContentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'";
+            http.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+            return Results.File(fichier.Chemin, fichier.Type);
+        }).AllowAnonymous();
+
     /// <summary>Points d'accès HTTP du socle et de chaque application.</summary>
     public static IEndpointRouteBuilder MapCommun(this IEndpointRouteBuilder points)
     {
         ArgumentNullException.ThrowIfNull(points);
         points.MapAuthentification();
+        MapLogo(points);
         foreach (var module in points.ServiceProvider.GetRequiredService<CatalogueModules>().Modules)
         {
             module.PointsAcces?.Invoke(points);

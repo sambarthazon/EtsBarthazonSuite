@@ -47,10 +47,20 @@ window.barthazon = (function () {
             window.print();
         },
 
-        /** Aperçu immédiat de la couleur principale (Paramètres → Apparence). */
-        definirCouleur: function (couleur, texte) {
-            document.documentElement.style.setProperty("--couleur-principale", couleur);
-            document.documentElement.style.setProperty("--texte-sur-principale", texte);
+        /** Aperçu immédiat de l'apparence (Paramètres → Apparence) : variables CSS appliquées à la page. */
+        apercuTheme: function (variables, mode) {
+            const racine = document.documentElement;
+            Object.keys(variables).forEach(function (nom) { racine.style.setProperty(nom, variables[nom]); });
+            if (mode) {
+                racine.setAttribute("data-mode", mode);
+            }
+        },
+
+        /** Fin de l'aperçu : retour à l'apparence enregistrée. */
+        annulerApercu: function (variables, mode) {
+            const racine = document.documentElement;
+            variables.forEach(function (nom) { racine.style.removeProperty(nom); });
+            racine.setAttribute("data-mode", mode);
         },
 
         /** Téléchargement d'un fichier produit côté serveur (export CSV). */
