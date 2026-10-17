@@ -39,8 +39,8 @@ public static class AnnuaireExtensions
             [
                 new("Pièces finies", "/annuaire"),
                 new("Bruts", "/annuaire/bruts"),
-                new("Clients", "/annuaire/clients", Secondaire: true),
-                new("Fournisseurs", "/annuaire/fournisseurs", Secondaire: true),
+                new("Clients", "/annuaire/clients"),
+                new("Fournisseurs", "/annuaire/fournisseurs"),
             ],
             Routes =
             [
@@ -53,6 +53,8 @@ public static class AnnuaireExtensions
             [
                 new(TypesObjet.PieceFinie, "/annuaire/pieces/nouveau"),
                 new(TypesObjet.Brut, "/annuaire/bruts/nouveau"),
+                new(TypesObjet.Client, "/annuaire/clients/nouveau"),
+                new(TypesObjet.Fournisseur, "/annuaire/fournisseurs/nouveau"),
             ],
             Parametres =
             [

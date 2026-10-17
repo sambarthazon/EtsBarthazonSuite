@@ -18,6 +18,10 @@ else if (_tiers is not null)
         <Actions>
             @if (Courant.Peut(Role.Gestion))
             {
+                @if (Sorte == SorteTiers.Client)
+                {
+                    <GrosBouton Style="secondaire" Icone="plus" Texte="Nouvelle pièce pour ce client" Href="@($"/annuaire/pieces/nouveau?client={Id}")" />
+                }
                 <GrosBouton Style="principal" Icone="modifier" Texte="Modifier" OnClick="() => _fenetre = true" />
                 <GrosBouton Style="discret" Icone="archive" Texte="@(_tiers.Archive ? "Désarchiver" : "Archiver")" OnClick="Archiver" />
             }

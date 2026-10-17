@@ -1,5 +1,7 @@
 @page "/annuaire/clients"
 @page "/annuaire/fournisseurs"
+@page "/annuaire/clients/nouveau"
+@page "/annuaire/fournisseurs/nouveau"
 @inject ServiceReferentiels Referentiels
 @inject IUtilisateurCourant Courant
 @inject NavigationManager Navigation
@@ -34,7 +36,7 @@
     </Carte>
 </ListeRecherchable>
 
-<FenetreTiers @bind-Ouverte="_fenetre" Sorte="Sorte" OnEnregistre="Cree" />
+<FenetreTiers Ouverte="_fenetre" OuverteChanged="Fermer" Sorte="Sorte" OnEnregistre="Cree" />
 
 @code {
     private IReadOnlyList<LigneTiers>? _liste;
@@ -52,8 +54,18 @@
 
     private string Utilisations => Sorte == SorteTiers.Client ? "Pièces finies" : "Bruts fournis";
 
+    /// <summary>Page d'origine où revenir après la création (ex. /annuaire/clients/nouveau?retour=…).</summary>
+    [SupplyParameterFromQuery(Name = "retour")] private string? Retour { get; set; }
+
+    private bool AdresseCreation => Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0].EndsWith("/nouveau", StringComparison.OrdinalIgnoreCase);
+
     protected override async Task OnParametersSetAsync()
     {
+        if (AdresseCreation && Courant.Peut(Role.Gestion))
+        {
+            _fenetre = true;
+        }
+
         if (_sorteChargee != Sorte)
         {
             _sorteChargee = Sorte;
@@ -64,5 +76,15 @@
 
     private async Task Charger() => _liste = await Referentiels.ListerTiers(Sorte, _archives);
 
-    private void Cree(int id) => Navigation.NavigateTo($"{Chemin}/{id}");
+    private void Cree(int id) =>
+        Navigation.NavigateTo(Authentification.RetourSur(Retour) is var r && r != "/" ? r : $"{Chemin}/{id}");
+
+    private void Fermer(bool ouverte)
+    {
+        _fenetre = ouverte;
+        if (!ouverte && AdresseCreation)
+        {
+            Navigation.NavigateTo(Authentification.RetourSur(Retour) is var r && r != "/" ? r : Chemin);
+        }
+    }
 }
