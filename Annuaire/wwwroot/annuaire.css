@@ -11,7 +11,7 @@
 
 /* En-tête d'une fiche (pièce finie, brut) */
 .fiche-entete { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: flex-start; }
-.fiche-entete__titre { flex: 1 1 320px; }
+.fiche-entete__titre { flex: 1 1 240px; min-width: 0; }
 .fiche-entete__titre h1 { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: 0 0 .3rem; }
 .fiche-entete__stock { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .5rem .75rem; border-radius: var(--rayon); background: var(--surface); border: 1px solid var(--bordure); }
 .fiche-entete__actions { display: flex; flex-wrap: wrap; gap: .5rem; width: 100%; }
@@ -44,3 +44,6 @@
     .ligne-specification > input:first-child { grid-column: 1 / -1; }
     .ligne-specification--entete { display: none; }
 }
+
+/* Flèche retour alignée sur la première ligne du titre de la fiche */
+.fiche-entete > .bouton-retour { flex: none; margin-top: -.15rem; }

@@ -16,6 +16,7 @@ else if (_fiche is not null)
 {
     <div class="ecran-seul">
         <div class="fiche-entete">
+            <BoutonRetour Href="/annuaire" Titre="Retour aux pièces finies" />
             <div class="fiche-entete__titre">
                 <h1>@_fiche.Reference <span style="font-weight: 500">· @_fiche.Designation</span> <span class="badge-indice badge-indice--grand" title="Indice courant">Indice @_fiche.IndiceCourant.Code</span>
                     @if (_fiche.Archive) { <span class="etiquette">archivée</span> }</h1>

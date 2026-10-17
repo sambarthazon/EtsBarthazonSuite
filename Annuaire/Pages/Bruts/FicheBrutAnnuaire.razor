@@ -14,6 +14,7 @@
 else if (_fiche is not null)
 {
     <div class="fiche-entete">
+        <BoutonRetour Href="/annuaire/bruts" Titre="Retour aux bruts" />
         <div class="fiche-entete__titre">
             <h1>@_fiche.Reference <span class="doux" style="font-weight: 500">@_fiche.Libelle</span> @if (_fiche.Archive) { <span class="etiquette">archivé</span> }</h1>
             @if (_fiche.Libelle != _fiche.LibelleAutomatique)

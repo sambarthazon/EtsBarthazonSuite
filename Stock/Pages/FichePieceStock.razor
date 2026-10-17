@@ -12,6 +12,7 @@ else if (_ligne is not null)
 {
     var p = _ligne.Piece;
     <div class="entete-page">
+        <BoutonRetour Href="/stock" Titre="Retour au stock des pièces finies" />
         <div>
             <h1>@p.Reference <span style="font-weight: 500">· @p.Designation</span> @if (p.Archive) { <span class="etiquette">archivée</span> }</h1>
             <div class="doux">@p.Client · Ind. <span class="badge-indice">@p.Indice</span></div>

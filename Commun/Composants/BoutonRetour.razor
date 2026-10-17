@@ -1,0 +1,8 @@
+@* Flèche « retour » en tête d'une fiche, vers la liste d'où l'on vient. *@
+<a class="bouton bouton--discret bouton--icone bouton-retour" href="@Href" aria-label="@Titre" title="@Titre"><Icone Nom="retour" /></a>
+
+@code {
+    [Parameter, EditorRequired] public string Href { get; set; } = string.Empty;
+
+    [Parameter] public string Titre { get; set; } = "Retour";
+}
