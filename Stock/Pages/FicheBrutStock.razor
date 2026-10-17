@@ -37,29 +37,28 @@ else if (_ligne is not null)
 
     <BoutonsActions Type="TypeReference.Brut" OnAction="a => _actions.Ouvrir(a, TypeReference.Brut, Id)" />
 
-    <div class="grille-blocs">
-        <section class="bloc">
-            <h2 class="bloc__titre">Pièces finies qui utilisent ce brut</h2>
-            @if (_pieces.Count == 0) { <p class="doux">Aucune.</p> }
-            <ul class="lignes-simples">
-                @foreach (var p in _pieces)
-                {
-                    <li>
-                        <a href="/stock/pieces/@p.Piece.Id"><strong>@p.Piece.Reference</strong></a>
-                        <span class="doux">@p.Piece.Designation</span>
-                        <span class="pousse nombre">@Format.Quantite(p.Quantite, Unite.Piece)</span>
-                        <BadgeEtat Etat="p.Etat" />
-                    </li>
-                }
-            </ul>
-        </section>
-        <section class="bloc">
-            <h2 class="bloc__titre">Derniers mouvements
-                <a class="bouton bouton--discret pousse" href="/stock/mouvements?periode=Tout&brut=@Id">Tous</a>
-            </h2>
-            <TableauMouvements Lignes="_mouvements" AvecReference="false" OnChange="Charger" />
-        </section>
-    </div>
+    <section class="bloc">
+        <h2 class="bloc__titre">Pièces finies qui utilisent ce brut</h2>
+        @if (_pieces.Count == 0) { <p class="doux">Aucune.</p> }
+        <ul class="lignes-simples">
+            @foreach (var p in _pieces)
+            {
+                <li>
+                    <a href="/stock/pieces/@p.Piece.Id"><strong>@p.Piece.Reference</strong></a>
+                    <span class="doux">@p.Piece.Designation</span>
+                    <span class="pousse nombre">@Format.Quantite(p.Quantite, Unite.Piece)</span>
+                    <BadgeEtat Etat="p.Etat" />
+                </li>
+            }
+        </ul>
+    </section>
+
+    <section class="bloc">
+        <h2 class="bloc__titre">Derniers mouvements
+            <a class="bouton bouton--discret pousse" href="/stock/mouvements?periode=Tout&brut=@Id">Voir tous les mouvements</a>
+        </h2>
+        <TableauMouvements Lignes="_mouvements" AvecReference="false" OnChange="Charger" />
+    </section>
 }
 
 <ActionsStock @ref="_actions" OnEnregistre="Charger" />

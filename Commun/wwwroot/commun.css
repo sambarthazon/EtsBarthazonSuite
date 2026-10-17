@@ -445,3 +445,12 @@ h1:focus { outline: none; }
 .champ-nombre { position: relative; display: flex; align-items: center; }
 .champ-nombre input { padding-right: 2.6rem !important; }
 .champ-nombre__unite { position: absolute; right: .75rem; color: var(--texte-doux); pointer-events: none; }
+
+/* Tableau large dans un encadré : il défile à l'intérieur au lieu d'en sortir */
+.tableau-defilant { max-width: 100%; overflow-x: auto; }
+@media (max-width: 767px) { .liste .tableau-defilant { display: none; } }
+.tableau th.entete-long { white-space: normal; }
+@media (max-width: 1199px) {
+    .tableau .bouton-annuler { width: var(--cible); padding: 0; }
+    .tableau .bouton-annuler span { display: none; }
+}

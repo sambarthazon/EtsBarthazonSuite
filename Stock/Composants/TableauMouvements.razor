@@ -9,11 +9,12 @@
 else
 {
     <div class="liste">
-        <table class="tableau">
+        <div class="tableau-defilant">
+            <table class="tableau">
             <thead>
                 <tr>
                     <th>Date</th><th>Qui</th><th>Type</th>@if (AvecReference) { <th>Brut / pièce finie</th> }
-                    <th class="droite">Quantité</th><th class="droite">Stock après</th><th>Fournisseur / client · BL</th><th>Commentaire</th><th></th>
+                    <th class="droite">Quantité</th><th class="droite">Stock après</th><th class="entete-long">Fournisseur / client · BL</th><th>Commentaire</th><th></th>
                 </tr>
             </thead>
             <tbody>
@@ -34,13 +35,14 @@ else
                         <td class="droite">
                             @if (m.PeutAnnuler)
                             {
-                                <button type="button" class="bouton bouton--discret" title="Annuler ce mouvement" @onclick="() => Annuler(m)"><Icone Nom="annuler" /> Annuler</button>
+                                <button type="button" class="bouton bouton--discret bouton-annuler" title="Annuler ce mouvement" aria-label="Annuler ce mouvement" @onclick="() => Annuler(m)"><Icone Nom="annuler" /> <span>Annuler</span></button>
                             }
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
+        </div>
         <div class="cartes">
             @foreach (var m in Lignes)
             {
