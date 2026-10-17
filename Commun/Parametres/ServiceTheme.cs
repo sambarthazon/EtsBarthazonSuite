@@ -9,49 +9,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Barthazon.Commun.Parametres;
 
-/// <summary>Mode d'affichage : selon l'appareil, toujours clair ou toujours sombre.</summary>
-public enum ModeAffichage
-{
-    Auto,
-    Clair,
-    Sombre,
-}
-
-/// <summary>Couleur réglable pour chaque mode (fond, encadrés, texte…), avec ses valeurs par défaut (celles de theme.css).</summary>
-public sealed record CouleurTheme(string Cle, string Variable, string Libelle, string Aide, string DefautClair, string DefautSombre);
+/// <summary>Couleur réglable (fond, encadrés, texte…), avec sa valeur par défaut (celle de theme.css).</summary>
+public sealed record CouleurTheme(string Cle, string Variable, string Libelle, string Aide, string Defaut);
 
 /// <summary>Réglages d'apparence enregistrés (les couleurs absentes gardent la valeur de theme.css).</summary>
-public sealed record ReglagesTheme(
-    ModeAffichage Mode,
-    string Principale,
-    string? Accent,
-    string? Logo,
-    IReadOnlyDictionary<string, string> Clair,
-    IReadOnlyDictionary<string, string> Sombre)
+public sealed record ReglagesTheme(string Principale, string? Accent, string? Logo, IReadOnlyDictionary<string, string> Couleurs)
 {
-    public static ReglagesTheme ParDefaut { get; } =
-        new(ModeAffichage.Auto, ServiceTheme.CouleurPrincipaleParDefaut, null, null, new Dictionary<string, string>(), new Dictionary<string, string>());
+    public static ReglagesTheme ParDefaut { get; } = new(ServiceTheme.CouleurPrincipaleParDefaut, null, null, new Dictionary<string, string>());
 
-    /// <summary>Valeur de l'attribut data-mode de la page.</summary>
-    public string AttributMode => Mode switch
-    {
-        ModeAffichage.Clair => "clair",
-        ModeAffichage.Sombre => "sombre",
-        _ => "auto",
-    };
-
-    public string CouleurMode(ModeAffichage mode, CouleurTheme couleur)
+    /// <summary>Couleur enregistrée, ou valeur par défaut.</summary>
+    public string Couleur(CouleurTheme couleur)
     {
         ArgumentNullException.ThrowIfNull(couleur);
-        var valeurs = mode == ModeAffichage.Sombre ? Sombre : Clair;
-        return valeurs.GetValueOrDefault(couleur.Cle) ?? (mode == ModeAffichage.Sombre ? couleur.DefautSombre : couleur.DefautClair);
+        return Couleurs.GetValueOrDefault(couleur.Cle) ?? couleur.Defaut;
     }
 }
 
 /// <summary>
 /// Apparence du portail (Paramètres → Apparence, administrateur) : logo, couleur principale, couleur
-/// d'accentuation, mode d'affichage et couleurs de chaque mode. Enregistré dans com_Parametre (clés « theme. »),
-/// logo dans {DossierDonnees}/theme/.
+/// d'accentuation et autres couleurs. Une seule apparence pour tous les appareils. Enregistré dans
+/// com_Parametre (clés « theme. »), logo dans {DossierDonnees}/theme/.
 /// </summary>
 public sealed partial class ServiceTheme(
     IDbContextFactory<CommunDbContext> fabrique,
@@ -70,7 +47,7 @@ public sealed partial class ServiceTheme(
     private const string Prefixe = "theme.";
     private const string ClePrincipale = "theme.couleur-principale";
     private const string CleAccent = "theme.accent";
-    private const string CleMode = "theme.mode";
+    private const string PrefixeCouleur = "theme.couleur.";
     private const string CleLogo = "theme.logo";
 
     private static readonly Dictionary<string, string> TypesLogo = new(StringComparer.OrdinalIgnoreCase)
@@ -82,17 +59,17 @@ public sealed partial class ServiceTheme(
         [".svg"] = "image/svg+xml",
     };
 
-    /// <summary>Couleurs réglables pour chaque mode. Valeurs par défaut identiques à theme.css (vérifié par un test).</summary>
+    /// <summary>Couleurs réglables. Valeurs par défaut identiques à theme.css (vérifié par un test).</summary>
     public static IReadOnlyList<CouleurTheme> Couleurs { get; } =
     [
-        new("fond", "--fond", "Fond de la page", "Derrière les encadrés", "#f3f4f6", "#13161c"),
-        new("surface", "--surface", "Fond des encadrés", "Cartes, tableaux, fenêtres", "#ffffff", "#1c2028"),
-        new("texte", "--texte", "Texte", "Titres et texte courant", "#1b2130", "#e8ebf0"),
-        new("texte-doux", "--texte-doux", "Texte secondaire", "Dates, aides, sous-titres", "#5a6273", "#a3abb9"),
-        new("barre-haut", "--barre-haut", "Barre du haut", "Bandeau avec le logo et le sélecteur d'application", "#1f2430", "#0c0e12"),
-        new("succes", "--couleur-succes", "État « OK »", "Stock suffisant, messages de réussite", "#2e7d32", "#5cbf64"),
-        new("alerte", "--couleur-alerte", "État « Sous le seuil »", "Alertes de stock", "#c77700", "#f0a530"),
-        new("danger", "--couleur-danger", "État « Rupture »", "Ruptures, suppressions, erreurs", "#c62828", "#ef5b5b"),
+        new("fond", "--fond", "Fond de la page", "Derrière les encadrés", "#f3f4f6"),
+        new("surface", "--surface", "Fond des encadrés", "Cartes, tableaux, fenêtres", "#ffffff"),
+        new("texte", "--texte", "Texte", "Titres et texte courant", "#1b2130"),
+        new("texte-doux", "--texte-doux", "Texte secondaire", "Dates, aides, sous-titres", "#5a6273"),
+        new("barre-haut", "--barre-haut", "Barre du haut", "Bandeau avec le logo et le sélecteur d'application", "#1f2430"),
+        new("succes", "--couleur-succes", "État « OK »", "Stock suffisant, messages de réussite", "#2e7d32"),
+        new("alerte", "--couleur-alerte", "État « Sous le seuil »", "Alertes de stock", "#c77700"),
+        new("danger", "--couleur-danger", "État « Rupture »", "Ruptures, suppressions, erreurs", "#c62828"),
     ];
 
     public async Task<ReglagesTheme> Lire()
@@ -115,23 +92,17 @@ public sealed partial class ServiceTheme(
     internal static ReglagesTheme Depuis(IReadOnlyDictionary<string, string> valeurs)
     {
         string? Couleur(string cle) => valeurs.GetValueOrDefault(cle) is { } v && CouleurValide(v) ? v : null;
-        Dictionary<string, string> Mode(string mode) => Couleurs
-            .Select(c => (c.Cle, Valeur: Couleur($"{Prefixe}{mode}.{c.Cle}")))
+
+        var couleurs = Couleurs
+            .Select(c => (c.Cle, Valeur: Couleur(PrefixeCouleur + c.Cle)))
             .Where(c => c.Valeur is not null)
             .ToDictionary(c => c.Cle, c => c.Valeur!);
-
-        var mode = valeurs.GetValueOrDefault(CleMode) switch
-        {
-            "clair" => ModeAffichage.Clair,
-            "sombre" => ModeAffichage.Sombre,
-            _ => ModeAffichage.Auto,
-        };
         var logo = valeurs.GetValueOrDefault(CleLogo);
-        return new ReglagesTheme(mode, Couleur(ClePrincipale) ?? CouleurPrincipaleParDefaut, Couleur(CleAccent),
-            string.IsNullOrWhiteSpace(logo) ? null : logo, Mode("clair"), Mode("sombre"));
+        return new ReglagesTheme(Couleur(ClePrincipale) ?? CouleurPrincipaleParDefaut, Couleur(CleAccent),
+            string.IsNullOrWhiteSpace(logo) ? null : logo, couleurs);
     }
 
-    /// <summary>Enregistre les couleurs (principale, accentuation, couleurs de chaque mode) et le mode d'affichage.</summary>
+    /// <summary>Enregistre les couleurs (principale, accentuation et autres couleurs).</summary>
     public async Task<Resultat> Enregistrer(ReglagesTheme reglages)
     {
         ArgumentNullException.ThrowIfNull(reglages);
@@ -141,7 +112,7 @@ public sealed partial class ServiceTheme(
         }
 
         var couleurs = new[] { reglages.Principale, reglages.Accent }
-            .Concat(reglages.Clair.Values).Concat(reglages.Sombre.Values)
+            .Concat(reglages.Couleurs.Values)
             .OfType<string>();
         if (!couleurs.All(CouleurValide))
         {
@@ -151,7 +122,6 @@ public sealed partial class ServiceTheme(
         var nouvelles = new Dictionary<string, string>
         {
             [ClePrincipale] = reglages.Principale.ToLowerInvariant(),
-            [CleMode] = reglages.AttributMode,
         };
         if (reglages.Accent is not null)
         {
@@ -160,14 +130,9 @@ public sealed partial class ServiceTheme(
 
         foreach (var couleur in Couleurs)
         {
-            if (reglages.Clair.GetValueOrDefault(couleur.Cle) is { } clair && !Egales(clair, couleur.DefautClair))
+            if (reglages.Couleurs.GetValueOrDefault(couleur.Cle) is { } valeur && !Egales(valeur, couleur.Defaut))
             {
-                nouvelles[$"{Prefixe}clair.{couleur.Cle}"] = clair.ToLowerInvariant();
-            }
-
-            if (reglages.Sombre.GetValueOrDefault(couleur.Cle) is { } sombre && !Egales(sombre, couleur.DefautSombre))
-            {
-                nouvelles[$"{Prefixe}sombre.{couleur.Cle}"] = sombre.ToLowerInvariant();
+                nouvelles[PrefixeCouleur + couleur.Cle] = valeur.ToLowerInvariant();
             }
         }
 
@@ -253,17 +218,8 @@ public sealed partial class ServiceTheme(
             Variable(css, "--texte-sur-accent", TexteSurCouleur(reglages.Accent));
         }
 
-        AjouterCouleurs(css, reglages.Clair);
+        AjouterCouleurs(css, reglages.Couleurs);
         css.Append('}');
-
-        if (reglages.Sombre.Count > 0)
-        {
-            var sombre = new StringBuilder();
-            AjouterCouleurs(sombre, reglages.Sombre);
-            css.Append(":root[data-mode=\"sombre\"]{").Append(sombre).Append('}');
-            css.Append("@media (prefers-color-scheme: dark){:root:not([data-mode=\"clair\"]){").Append(sombre).Append("}}");
-        }
-
         return css.ToString();
 
         static void AjouterCouleurs(StringBuilder css, IReadOnlyDictionary<string, string> valeurs)

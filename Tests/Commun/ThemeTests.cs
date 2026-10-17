@@ -26,34 +26,32 @@ public sealed class ThemeTests : IDisposable
         new(_fabrique, Utilisateurs.Avec(1, role), new OptionsBarthazon { CheminDonnees = _dossier }, new SignauxApplication());
 
     [Fact]
-    public async Task Par_defaut_mode_automatique_et_couleur_d_origine()
+    public async Task Par_defaut_couleurs_et_logo_d_origine()
     {
         var reglages = await Service().Lire();
-        Assert.Equal((ModeAffichage.Auto, "#d9631e", null, null), (reglages.Mode, reglages.Principale, reglages.Accent, reglages.Logo));
-        Assert.Equal("#f3f4f6", reglages.CouleurMode(ModeAffichage.Clair, ServiceTheme.Couleurs[0]));
+        Assert.Equal(("#d9631e", null, null), (reglages.Principale, reglages.Accent, reglages.Logo));
+        Assert.Equal("#f3f4f6", reglages.Couleur(ServiceTheme.Couleurs[0]));
     }
 
     [Fact]
-    public async Task Enregistre_et_relit_les_couleurs_de_chaque_mode()
+    public async Task Enregistre_et_relit_les_couleurs()
     {
         var service = Service();
-        var resultat = await service.Enregistrer(new ReglagesTheme(ModeAffichage.Clair, "#1F6FB2", "#aa0000", null,
-            new Dictionary<string, string> { ["fond"] = "#ffffee", ["texte"] = "#1b2130" },
-            new Dictionary<string, string> { ["barre-haut"] = "#000000" }));
+        var resultat = await service.Enregistrer(new ReglagesTheme("#1F6FB2", "#aa0000", null,
+            new Dictionary<string, string> { ["fond"] = "#ffffee", ["texte"] = "#1b2130", ["barre-haut"] = "#000000" }));
         Assert.True(resultat.Reussi, resultat.Erreur);
 
         var relu = await service.Lire();
-        Assert.Equal((ModeAffichage.Clair, "#1f6fb2", "#aa0000"), (relu.Mode, relu.Principale, relu.Accent));
-        Assert.Equal("#ffffee", relu.Clair["fond"]);
-        Assert.False(relu.Clair.ContainsKey("texte")); // valeur par défaut : rien d'enregistré
-        Assert.Equal("#000000", relu.Sombre["barre-haut"]);
-        Assert.Equal("clair", relu.AttributMode);
+        Assert.Equal(("#1f6fb2", "#aa0000"), (relu.Principale, relu.Accent));
+        Assert.Equal("#ffffee", relu.Couleurs["fond"]);
+        Assert.Equal("#000000", relu.Couleurs["barre-haut"]);
+        Assert.False(relu.Couleurs.ContainsKey("texte")); // valeur par défaut : rien d'enregistré
     }
 
     [Fact]
     public async Task Refuse_une_couleur_invalide_ou_un_non_administrateur()
     {
-        var invalide = new ReglagesTheme(ModeAffichage.Auto, "rouge", null, null, new Dictionary<string, string>(), new Dictionary<string, string>());
+        var invalide = new ReglagesTheme("rouge", null, null, new Dictionary<string, string>());
         Assert.False((await Service().Enregistrer(invalide)).Reussi);
 
         var valide = invalide with { Principale = "#123456" };
@@ -61,16 +59,10 @@ public sealed class ThemeTests : IDisposable
     }
 
     [Fact]
-    public void Css_injecte_les_couleurs_et_le_mode_sombre_seulement_si_regle()
+    public void Css_injecte_les_couleurs_choisies()
     {
-        var clair = ServiceTheme.Css(ReglagesTheme.ParDefaut with { Clair = new Dictionary<string, string> { ["barre-haut"] = "#ffffff" } });
-        Assert.Contains("--couleur-principale:#d9631e;", clair, StringComparison.Ordinal);
-        Assert.Contains("--barre-haut:#ffffff;--texte-barre-haut:#111111;", clair, StringComparison.Ordinal);
-        Assert.DoesNotContain("data-mode", clair, StringComparison.Ordinal);
-
-        var sombre = ServiceTheme.Css(ReglagesTheme.ParDefaut with { Sombre = new Dictionary<string, string> { ["fond"] = "#000011" } });
-        Assert.Contains(":root[data-mode=\"sombre\"]{--fond:#000011;}", sombre, StringComparison.Ordinal);
-        Assert.Contains("@media (prefers-color-scheme: dark){:root:not([data-mode=\"clair\"]){--fond:#000011;}}", sombre, StringComparison.Ordinal);
+        var css = ServiceTheme.Css(ReglagesTheme.ParDefaut with { Couleurs = new Dictionary<string, string> { ["barre-haut"] = "#ffffff", ["fond"] = "#000011" } });
+        Assert.Equal(":root{--couleur-principale:#d9631e;--texte-sur-principale:#ffffff;--fond:#000011;--barre-haut:#ffffff;--texte-barre-haut:#111111;}", css);
     }
 
     [Fact]
@@ -97,21 +89,19 @@ public sealed class ThemeTests : IDisposable
         Assert.Null(service.FichierLogo(nom));
     }
 
-    /// <summary>Les valeurs par défaut de ServiceTheme.Couleurs doivent rester celles de theme.css (clair, sombre forcé, sombre automatique).</summary>
+    /// <summary>Les valeurs par défaut de ServiceTheme.Couleurs doivent rester celles de theme.css ; une seule apparence.</summary>
     [Fact]
     public void Valeurs_par_defaut_identiques_a_theme_css()
     {
         var css = File.ReadAllText(Path.Combine(Racine(), "Commun", "wwwroot", "theme.css"));
-        var clair = Bloc(css, ":root {");
-        var sombre = Bloc(css, ":root[data-mode=\"sombre\"] {");
-        var automatique = Bloc(css, ":root:not([data-mode=\"clair\"]) {");
-        Assert.Contains($"--couleur-principale: {ServiceTheme.CouleurPrincipaleParDefaut};", clair, StringComparison.Ordinal);
+        var racine = Bloc(css, ":root {");
+        Assert.Contains($"--couleur-principale: {ServiceTheme.CouleurPrincipaleParDefaut};", racine, StringComparison.Ordinal);
         foreach (var couleur in ServiceTheme.Couleurs)
         {
-            Assert.Contains($"{couleur.Variable}: {couleur.DefautClair};", clair, StringComparison.Ordinal);
-            Assert.Contains($"{couleur.Variable}: {couleur.DefautSombre};", sombre, StringComparison.Ordinal);
-            Assert.Contains($"{couleur.Variable}: {couleur.DefautSombre};", automatique, StringComparison.Ordinal);
+            Assert.Contains($"{couleur.Variable}: {couleur.Defaut};", racine, StringComparison.Ordinal);
         }
+
+        Assert.DoesNotContain("prefers-color-scheme", css, StringComparison.Ordinal);
     }
 
     private static string Bloc(string css, string debut)

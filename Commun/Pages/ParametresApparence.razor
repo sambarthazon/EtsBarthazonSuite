@@ -4,7 +4,7 @@
 @inject ServiceConfirmation Confirmation
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
-@* Paramètres → Apparence : logo, mode d'affichage, couleurs. Aperçu immédiat sur la page ; enregistré pour tous les postes. *@
+@* Paramètres → Apparence : logo et couleurs. Aperçu immédiat sur la page ; enregistré pour tous les postes. *@
 @if (_reglages is null)
 {
     <div class="doux">Chargement…</div>
@@ -22,24 +22,6 @@ else
             {
                 <div><button type="button" class="bouton bouton--discret" @onclick="LogoOrigine"><Icone Nom="annuler" /> Revenir au logo d'origine</button></div>
             }
-        </section>
-
-        <section class="bloc">
-            <h2 class="bloc__titre">Mode d'affichage</h2>
-            <div class="choix-boutons">
-                @foreach (var (mode, libelle) in Modes)
-                {
-                    <button type="button" class="@(mode == _mode ? "actif" : null)" @onclick="() => ChoisirMode(mode)">@libelle</button>
-                }
-            </div>
-            <p class="champ__aide">
-                @(_mode switch
-                {
-                    ModeAffichage.Clair => "Toujours clair, quel que soit le réglage de l'appareil.",
-                    ModeAffichage.Sombre => "Toujours sombre, quel que soit le réglage de l'appareil.",
-                    _ => "Clair ou sombre selon le réglage de chaque téléphone, tablette ou ordinateur.",
-                })
-            </p>
         </section>
 
         <section class="bloc">
@@ -73,14 +55,12 @@ else
         </section>
 
         <section class="bloc">
-            <h2 class="bloc__titre">Couleurs de chaque mode</h2>
-            <p class="doux">Choisissez le mode à régler : la page s'affiche dans ce mode pendant le réglage.</p>
-            <Onglets Elements="OngletsModes" Actif="@(_modeEdite == ModeAffichage.Sombre ? "sombre" : "clair")" ActifChanged="ChoisirModeEdite" />
+            <h2 class="bloc__titre">Autres couleurs</h2>
             <div class="apparence__couleurs">
                 @foreach (var couleur in ServiceTheme.Couleurs)
                 {
-                    var valeur = Valeur(couleur);
-                    var defaut = _modeEdite == ModeAffichage.Sombre ? couleur.DefautSombre : couleur.DefautClair;
+                    var valeur = _couleurs[couleur.Cle];
+                    var defaut = couleur.Defaut;
                     <div class="apparence__couleur">
                         <input type="color" value="@valeur" @oninput="e => ChangerCouleur(couleur, e)" aria-label="@couleur.Libelle" />
                         <div>
@@ -120,18 +100,10 @@ else
 }
 
 @code {
-    private static readonly (ModeAffichage, string)[] Modes =
-        [(ModeAffichage.Auto, "Automatique (selon l'appareil)"), (ModeAffichage.Clair, "Clair"), (ModeAffichage.Sombre, "Sombre")];
-
-    private static readonly IReadOnlyList<Onglets.Onglet> OngletsModes = [new("clair", "Mode clair"), new("sombre", "Mode sombre")];
-
     private ReglagesTheme? _reglages;
-    private ModeAffichage _mode;
-    private ModeAffichage _modeEdite = ModeAffichage.Clair;
     private string _principale = ServiceTheme.CouleurPrincipaleParDefaut;
     private string? _accent;
-    private Dictionary<string, string> _clair = [];
-    private Dictionary<string, string> _sombre = [];
+    private Dictionary<string, string> _couleurs = [];
     private bool _apercu;
 
     [SupplyParameterFromQuery(Name = "enregistre")] private bool Enregistre { get; set; }
@@ -139,21 +111,14 @@ else
     protected override async Task OnInitializedAsync()
     {
         _reglages = await Theme.Lire();
-        _mode = _reglages.Mode;
-        _modeEdite = _mode == ModeAffichage.Sombre ? ModeAffichage.Sombre : ModeAffichage.Clair;
         _principale = _reglages.Principale;
         _accent = _reglages.Accent;
-        _clair = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => _reglages.CouleurMode(ModeAffichage.Clair, c));
-        _sombre = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => _reglages.CouleurMode(ModeAffichage.Sombre, c));
+        _couleurs = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => _reglages.Couleur(c));
         if (Enregistre)
         {
             Toast.Succes("Apparence enregistrée pour tous les postes");
         }
     }
-
-    private Dictionary<string, string> CouleursEditees => _modeEdite == ModeAffichage.Sombre ? _sombre : _clair;
-
-    private string Valeur(CouleurTheme couleur) => CouleursEditees[couleur.Cle];
 
     private Task Changer(ref string champ, ChangeEventArgs e)
     {
@@ -191,7 +156,7 @@ else
     {
         if (ServiceTheme.CouleurValide(e.Value?.ToString()))
         {
-            CouleursEditees[couleur.Cle] = e.Value!.ToString()!;
+            _couleurs[couleur.Cle] = e.Value!.ToString()!;
         }
 
         return Apercu();
@@ -199,28 +164,11 @@ else
 
     private Task CouleurParDefaut(CouleurTheme couleur)
     {
-        CouleursEditees[couleur.Cle] = _modeEdite == ModeAffichage.Sombre ? couleur.DefautSombre : couleur.DefautClair;
+        _couleurs[couleur.Cle] = couleur.Defaut;
         return Apercu();
     }
 
-    private Task ChoisirMode(ModeAffichage mode)
-    {
-        _mode = mode;
-        if (mode != ModeAffichage.Auto)
-        {
-            _modeEdite = mode;
-        }
-
-        return Apercu();
-    }
-
-    private Task ChoisirModeEdite(string onglet)
-    {
-        _modeEdite = onglet == "sombre" ? ModeAffichage.Sombre : ModeAffichage.Clair;
-        return Apercu();
-    }
-
-    /// <summary>Aperçu sur toute la page : couleurs du mode réglé, la page s'affichant dans ce mode.</summary>
+    /// <summary>Aperçu sur toute la page, avant enregistrement.</summary>
     private async Task Apercu()
     {
         var variables = new Dictionary<string, string>
@@ -232,24 +180,23 @@ else
         };
         foreach (var couleur in ServiceTheme.Couleurs)
         {
-            variables[couleur.Variable] = CouleursEditees[couleur.Cle];
+            variables[couleur.Variable] = _couleurs[couleur.Cle];
         }
 
-        variables["--texte-barre-haut"] = ServiceTheme.TexteSurCouleur(CouleursEditees["barre-haut"]);
+        variables["--texte-barre-haut"] = ServiceTheme.TexteSurCouleur(_couleurs["barre-haut"]);
         _apercu = true;
-        await JS.InvokeVoidAsync("barthazon.apercuTheme", variables, _modeEdite == ModeAffichage.Sombre ? "sombre" : "clair");
+        await JS.InvokeVoidAsync("barthazon.apercuTheme", variables);
     }
 
     private async Task ToutParDefaut()
     {
-        if (!await Confirmation.Demander("Remettre toutes les couleurs et le mode d'affichage par défaut ? (le logo est conservé)", "Tout remettre par défaut"))
+        if (!await Confirmation.Demander("Remettre toutes les couleurs par défaut ? (le logo est conservé)", "Tout remettre par défaut"))
         {
             return;
         }
 
-        (_mode, _principale, _accent) = (ModeAffichage.Auto, ServiceTheme.CouleurPrincipaleParDefaut, null);
-        _clair = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => c.DefautClair);
-        _sombre = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => c.DefautSombre);
+        (_principale, _accent) = (ServiceTheme.CouleurPrincipaleParDefaut, null);
+        _couleurs = ServiceTheme.Couleurs.ToDictionary(c => c.Cle, c => c.Defaut);
         await Apercu();
     }
 
@@ -257,7 +204,7 @@ else
 
     private async Task Enregistrer()
     {
-        var resultat = await Theme.Enregistrer(new ReglagesTheme(_mode, _principale, _accent, _reglages!.Logo, _clair, _sombre));
+        var resultat = await Theme.Enregistrer(new ReglagesTheme(_principale, _accent, _reglages!.Logo, _couleurs));
         if (!resultat.Reussi)
         {
             Toast.Erreur(resultat.Erreur!);
@@ -317,7 +264,7 @@ else
         {
             var variables = new[] { "--couleur-principale", "--texte-sur-principale", "--couleur-accent", "--texte-sur-accent", "--texte-barre-haut" }
                 .Concat(ServiceTheme.Couleurs.Select(c => c.Variable));
-            await JS.InvokeVoidAsync("barthazon.annulerApercu", variables, _reglages.AttributMode);
+            await JS.InvokeVoidAsync("barthazon.annulerApercu", variables);
         }
         catch (JSDisconnectedException)
         {

@@ -48,19 +48,15 @@ window.barthazon = (function () {
         },
 
         /** Aperçu immédiat de l'apparence (Paramètres → Apparence) : variables CSS appliquées à la page. */
-        apercuTheme: function (variables, mode) {
+        apercuTheme: function (variables) {
             const racine = document.documentElement;
             Object.keys(variables).forEach(function (nom) { racine.style.setProperty(nom, variables[nom]); });
-            if (mode) {
-                racine.setAttribute("data-mode", mode);
-            }
         },
 
         /** Fin de l'aperçu : retour à l'apparence enregistrée. */
-        annulerApercu: function (variables, mode) {
+        annulerApercu: function (variables) {
             const racine = document.documentElement;
             variables.forEach(function (nom) { racine.style.removeProperty(nom); });
-            racine.setAttribute("data-mode", mode);
         },
 
         /** Téléchargement d'un fichier produit côté serveur (export CSV). */

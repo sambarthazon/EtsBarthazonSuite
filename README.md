@@ -151,11 +151,11 @@ Toujours visible, sur toutes les pages :
 
 - Toutes les couleurs, rayons, ombres et polices sont des **variables CSS** dans un seul fichier `Commun/wwwroot/theme.css`.
 - Couleurs nommées par rôle (`--couleur-principale`, `--couleur-succes`, `--couleur-alerte`, `--couleur-danger`, `--fond`, `--texte`…), jamais par teinte.
-- **Mode d'affichage** : automatique (selon le réglage de l'appareil), **clair** ou **sombre**, choisi par l'administrateur.
+- **Une seule apparence**, identique sur tous les appareils (pas de mode sombre).
 - Page « Paramètres → Apparence » (Administrateur), aperçu immédiat, réglages enregistrés en base et injectés au chargement de chaque page :
   - **logo** en haut à gauche (PNG, JPG, WebP ou SVG, 1 Mo maximum ; retour possible au logo d'origine) ;
   - **couleur principale** et **couleur d'accentuation** (liens, badges d'indice, onglet actif ; par défaut identique à la principale) ;
-  - pour chaque mode (clair, sombre) : fond de la page, fond des encadrés, texte, texte secondaire, barre du haut, couleurs des états OK / Sous le seuil / Rupture.
+  - fond de la page, fond des encadrés, texte, texte secondaire, barre du haut, couleurs des états OK / Sous le seuil / Rupture.
 
 ### 4.6 Composants partagés
 
@@ -528,7 +528,7 @@ Avancer **une étape à la fois**. À la fin de chaque étape : compiler, lancer
 - ✅ Sur la fiche annuaire d'une pièce, cliquer « Stock » dans le sélecteur ouvre la fiche stock de la même pièce ; retirer le module Stock du Portail : l'Annuaire compile et fonctionne, sans aperçu stock ni cloche.
 
 **Étape 6 — Finitions et déploiement**
-- Revue responsive (téléphone 375 px, tablette, PC), mode sombre, écran de reconnexion, jeu de données de démonstration (uniquement en environnement de développement), fichiers de la section 9.
+- Revue responsive (téléphone 375 px, tablette, PC), écran de reconnexion, jeu de données de démonstration (uniquement en environnement de développement), fichiers de la section 9.
 - ✅ Installation sur la Raspberry en suivant uniquement `INSTALLATION.md` ; accès depuis un PC du bureau ; une sauvegarde est produite la nuit.
 
 ---
