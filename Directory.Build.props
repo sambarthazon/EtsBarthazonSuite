@@ -14,5 +14,11 @@
     <Company>Ets BARTHAZON</Company>
     <Product>Barthazon — Annuaire &amp; Stock</Product>
     <Version>2.0.0</Version>
+    <!--
+      Chaque projet est à la racine de son dossier (Portail/, Annuaire/…) : on ignore les dossiers bin/ et obj/
+      imbriqués, par exemple ceux laissés par une compilation de la v1 (Portail/src/…/obj), qui provoqueraient
+      l'erreur CS0579 (attributs d'assemblage en double).
+    -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/bin/**;**/obj/**</DefaultItemExcludes>
   </PropertyGroup>
 </Project>
