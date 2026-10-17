@@ -35,7 +35,7 @@
         <td>@p.Designation @if (p.Archive) { <span class="etiquette">archivée</span> }</td>
         <td>@p.Client</td>
         <td><span class="badge-indice">@p.Indice</span></td>
-        <td>@if (p.BrutPrincipal is not null) { <span class="doux">@p.BrutPrincipalReference</span> @p.BrutPrincipal }</td>
+        <td><span class="doux">@p.BrutPrincipalReference</span> @p.BrutPrincipal</td>
     </Ligne>
     <Carte Context="p">
         <div class="carte__titre"><span>@p.Reference</span> <span class="badge-indice">@p.Indice</span> @if (p.Archive) { <span class="etiquette">archivée</span> }</div>
