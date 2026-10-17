@@ -454,3 +454,5 @@ h1:focus { outline: none; }
     .tableau .bouton-annuler { width: var(--cible); padding: 0; }
     .tableau .bouton-annuler span { display: none; }
 }
+.carte.cliquable { cursor: pointer; }
+.carte.cliquable:hover { border-color: var(--couleur-principale); }

@@ -1,6 +1,7 @@
 @page "/stock/alertes"
 @inject ServiceStock Stock
 @inject IUtilisateurCourant Courant
+@inject NavigationManager Navigation
 <PageTitle>Alertes — Stock</PageTitle>
 
 <EntetePage Titre="Alertes" SousTitre="Ruptures d'abord, puis sous le seuil" />
@@ -24,13 +25,13 @@ else
             <tbody>
                 @foreach (var a in _alertes)
                 {
-                    <tr>
+                    <tr class="cliquable" @onclick="() => Ouvrir(a)">
                         <td><BadgeEtat Etat="a.Etat" /></td>
                         <td><a class="lien-ligne" href="@Lien(a)">@a.Reference</a> <span class="etiquette">@(a.Type == TypeReference.Brut ? "brut" : "pièce finie")</span></td>
                         <td>@a.Libelle @if (a.PlusDeBrut) { <span class="badge badge--rupture badge--sans-point">Plus de brut disponible</span> }</td>
                         <td class="droite nombre"><strong>@Format.Quantite(a.Quantite, a.Unite)</strong></td>
                         <td class="droite nombre">@Format.Nombre(a.Seuil)</td>
-                        <td class="droite" style="white-space: nowrap">@Actions(a)</td>
+                        <td class="droite" style="white-space: nowrap" @onclick:stopPropagation="true">@Actions(a)</td>
                     </tr>
                 }
             </tbody>
@@ -38,7 +39,7 @@ else
         <div class="cartes">
             @foreach (var a in _alertes)
             {
-                <div class="carte">
+                <div class="carte cliquable" @onclick="() => Ouvrir(a)">
                     <div class="carte__titre"><a href="@Lien(a)">@a.Reference</a> <BadgeEtat Etat="a.Etat" /></div>
                     <div>@a.Libelle</div>
                     <div class="carte__ligne">
@@ -46,7 +47,7 @@ else
                         @if (a.Seuil is not null) { <span>seuil @Format.Nombre(a.Seuil)</span> }
                         @if (a.PlusDeBrut) { <span class="badge badge--rupture badge--sans-point">Plus de brut disponible</span> }
                     </div>
-                    <div class="ligne" style="margin-top: .5rem">@Actions(a)</div>
+                    <div class="ligne" style="margin-top: .5rem" @onclick:stopPropagation="true">@Actions(a)</div>
                 </div>
             }
         </div>
@@ -62,6 +63,9 @@ else
     protected override Task OnInitializedAsync() => Charger();
 
     private async Task Charger() => _alertes = await Stock.Alertes();
+
+    /// <summary>Toucher une ligne ouvre la fiche stock de la pièce ou du brut.</summary>
+    private void Ouvrir(Alerte a) => Navigation.NavigateTo(Lien(a));
 
     private static string Lien(Alerte a) => a.Type == TypeReference.Brut ? $"/stock/bruts/{a.Id}" : $"/stock/pieces/{a.Id}";
 
