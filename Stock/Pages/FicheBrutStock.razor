@@ -13,7 +13,7 @@ else if (_ligne is not null)
     var b = _ligne.Brut;
     <div class="entete-page">
         <BoutonRetour Href="/stock/bruts" Titre="Retour au stock des bruts" />
-        <div>
+        <div class="entete-page__titre">
             <h1>@b.Reference <span style="font-weight: 500">· @b.Libelle</span> @if (b.Archive) { <span class="etiquette">archivé</span> }</h1>
             @if (b.FournisseurPrincipal is not null) { <div class="doux">Fournisseur principal : @b.FournisseurPrincipal</div> }
         </div>
