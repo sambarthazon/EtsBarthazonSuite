@@ -13,6 +13,8 @@ public sealed class AnnuaireDbContext(DbContextOptions<AnnuaireDbContext> option
 
     public DbSet<Fournisseur> Fournisseurs => Set<Fournisseur>();
 
+    public DbSet<Contact> Contacts => Set<Contact>();
+
     public DbSet<Matiere> Matieres => Set<Matiere>();
 
     public DbSet<Poste> Postes => Set<Poste>();
@@ -45,12 +47,22 @@ public sealed class AnnuaireDbContext(DbContextOptions<AnnuaireDbContext> option
         {
             e.ToTable("ann_Client");
             e.Property(c => c.Nom).HasMaxLength(120).IsRequired();
+            e.HasMany(c => c.Contacts).WithOne().HasForeignKey(c => c.ClientId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Fournisseur>(e =>
         {
             e.ToTable("ann_Fournisseur");
             e.Property(f => f.Nom).HasMaxLength(120).IsRequired();
+            e.HasMany(f => f.Contacts).WithOne().HasForeignKey(c => c.FournisseurId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Contact>(e =>
+        {
+            e.ToTable("ann_Contact");
+            e.Property(c => c.Nom).HasMaxLength(120);
+            e.Property(c => c.Telephone).HasMaxLength(40);
+            e.Property(c => c.Email).HasMaxLength(200);
         });
 
         modelBuilder.Entity<Matiere>(e =>

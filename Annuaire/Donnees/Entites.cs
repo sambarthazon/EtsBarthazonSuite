@@ -8,15 +8,11 @@ public sealed class Client
 
     public string Nom { get; set; } = string.Empty;
 
-    public string? Contact { get; set; }
-
-    public string? Telephone { get; set; }
-
-    public string? Email { get; set; }
-
     public string? Remarques { get; set; }
 
     public bool Archive { get; set; }
+
+    public List<Contact> Contacts { get; set; } = [];
 }
 
 public sealed class Fournisseur
@@ -25,15 +21,29 @@ public sealed class Fournisseur
 
     public string Nom { get; set; } = string.Empty;
 
-    public string? Contact { get; set; }
+    public string? Remarques { get; set; }
+
+    public bool Archive { get; set; }
+
+    public List<Contact> Contacts { get; set; } = [];
+}
+
+/// <summary>Un contact d'un client ou d'un fournisseur (autant que nécessaire) : nom, téléphone, e-mail.</summary>
+public sealed class Contact
+{
+    public int Id { get; set; }
+
+    public int? ClientId { get; set; }
+
+    public int? FournisseurId { get; set; }
+
+    public string? Nom { get; set; }
 
     public string? Telephone { get; set; }
 
     public string? Email { get; set; }
 
-    public string? Remarques { get; set; }
-
-    public bool Archive { get; set; }
+    public int Ordre { get; set; }
 }
 
 /// <summary>Liste paramétrable des matières (S235, C45, 42CrMo4…).</summary>

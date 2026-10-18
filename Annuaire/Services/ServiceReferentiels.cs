@@ -13,11 +13,39 @@ public enum SorteTiers
     Fournisseur,
 }
 
-/// <summary>Ligne de la liste des clients ou des fournisseurs.</summary>
-/// <param name="Utilisations">Pièces finies du client, ou bruts du fournisseur.</param>
-public sealed record LigneTiers(int Id, string Nom, string? Contact, string? Telephone, string? Email, string? Remarques, bool Archive, int Utilisations);
+/// <summary>Un contact d'un client ou d'un fournisseur (tous les champs sont facultatifs, mais pas tous vides).</summary>
+public sealed record ContactTiers(string? Nom, string? Telephone, string? Email);
 
-public sealed record SaisieTiers(string Nom, string? Contact, string? Telephone, string? Email, string? Remarques);
+/// <summary>Ligne de la liste des clients ou des fournisseurs.</summary>
+/// <param name="Contacts">Dans l'ordre de saisie.</param>
+/// <param name="Utilisations">Pièces finies du client, ou bruts du fournisseur.</param>
+public sealed record LigneTiers(int Id, string Nom, IReadOnlyList<ContactTiers> Contacts, string? Remarques, bool Archive, int Utilisations)
+{
+    /// <summary>Premier contact (affiché dans les listes), ou null.</summary>
+    public ContactTiers? PremierContact => Contacts.Count > 0 ? Contacts[0] : null;
+
+    /// <summary>Noms, téléphones et e-mails de tous les contacts, pour la recherche.</summary>
+    public string TexteContacts => string.Join(' ', Contacts.Select(c => $"{c.Nom} {c.Telephone} {c.Email}"));
+}
+
+/// <summary>Contact en cours de saisie (« + » ajoute une ligne, « × » la retire).</summary>
+public sealed class SaisieContact
+{
+    public string? Nom { get; set; }
+
+    public string? Telephone { get; set; }
+
+    public string? Email { get; set; }
+
+    public static SaisieContact Depuis(ContactTiers c)
+    {
+        ArgumentNullException.ThrowIfNull(c);
+        return new() { Nom = c.Nom, Telephone = c.Telephone, Email = c.Email };
+    }
+}
+
+/// <param name="Contacts">Les lignes entièrement vides sont ignorées.</param>
+public sealed record SaisieTiers(string Nom, string? Remarques = null, IReadOnlyList<SaisieContact>? Contacts = null);
 
 public sealed record LigneListe(int Id, string Libelle, int Utilisations);
 
@@ -33,20 +61,23 @@ public sealed class ServiceReferentiels(IDbContextFactory<AnnuaireDbContext> fab
         if (sorte == SorteTiers.Client)
         {
             var usages = await db.PiecesFinies.GroupBy(p => p.ClientId).Select(g => new { g.Key, N = g.Count() }).ToDictionaryAsync(x => x.Key, x => x.N);
-            lignes = (await db.Clients.AsNoTracking().Where(c => inclureArchives || !c.Archive).ToListAsync())
-                .Select(c => new LigneTiers(c.Id, c.Nom, c.Contact, c.Telephone, c.Email, c.Remarques, c.Archive, usages.GetValueOrDefault(c.Id)))
+            lignes = (await db.Clients.AsNoTracking().Include(c => c.Contacts).Where(c => inclureArchives || !c.Archive).ToListAsync())
+                .Select(c => new LigneTiers(c.Id, c.Nom, Contacts(c.Contacts), c.Remarques, c.Archive, usages.GetValueOrDefault(c.Id)))
                 .ToList();
         }
         else
         {
             var usages = await db.BrutsFournisseurs.GroupBy(b => b.FournisseurId).Select(g => new { g.Key, N = g.Count() }).ToDictionaryAsync(x => x.Key, x => x.N);
-            lignes = (await db.Fournisseurs.AsNoTracking().Where(f => inclureArchives || !f.Archive).ToListAsync())
-                .Select(f => new LigneTiers(f.Id, f.Nom, f.Contact, f.Telephone, f.Email, f.Remarques, f.Archive, usages.GetValueOrDefault(f.Id)))
+            lignes = (await db.Fournisseurs.AsNoTracking().Include(f => f.Contacts).Where(f => inclureArchives || !f.Archive).ToListAsync())
+                .Select(f => new LigneTiers(f.Id, f.Nom, Contacts(f.Contacts), f.Remarques, f.Archive, usages.GetValueOrDefault(f.Id)))
                 .ToList();
         }
 
         return lignes.OrderBy(l => l.Nom, Tri).ToList();
     }
+
+    private static List<ContactTiers> Contacts(IEnumerable<Contact> contacts) =>
+        contacts.OrderBy(c => c.Ordre).ThenBy(c => c.Id).Select(c => new ContactTiers(c.Nom, c.Telephone, c.Email)).ToList();
 
     public async Task<LigneTiers?> ObtenirTiers(SorteTiers sorte, int id) =>
         (await ListerTiers(sorte, inclureArchives: true)).FirstOrDefault(t => t.Id == id);
@@ -66,6 +97,16 @@ public sealed class ServiceReferentiels(IDbContextFactory<AnnuaireDbContext> fab
             return Resultat.Echec<int>("Le nom est obligatoire.");
         }
 
+        var contacts = (saisie.Contacts ?? [])
+            .Select(c => new { Nom = Net(c.Nom), Telephone = Net(c.Telephone), Email = Net(c.Email) })
+            .Where(c => c.Nom is not null || c.Telephone is not null || c.Email is not null)
+            .Select((c, i) => new Contact { Nom = c.Nom, Telephone = c.Telephone, Email = c.Email, Ordre = i })
+            .ToList();
+        if (contacts.FirstOrDefault(c => c.Email is not null && !EmailPlausible(c.Email)) is { } faux)
+        {
+            return Resultat.Echec<int>($"L'e-mail « {faux.Email} » ne semble pas valide.");
+        }
+
         await using var db = await fabrique.CreateDbContextAsync();
         var libelle = sorte == SorteTiers.Client ? "le client" : "le fournisseur";
         var doublon = sorte == SorteTiers.Client
@@ -79,13 +120,15 @@ public sealed class ServiceReferentiels(IDbContextFactory<AnnuaireDbContext> fab
         int idFinal;
         if (sorte == SorteTiers.Client)
         {
-            var client = id is null ? new Client() : await db.Clients.FindAsync(id.Value);
+            var client = id is null ? new Client() : await db.Clients.Include(c => c.Contacts).FirstOrDefaultAsync(c => c.Id == id.Value);
             if (client is null)
             {
                 return Resultat.Echec<int>("Client introuvable.");
             }
 
-            (client.Nom, client.Contact, client.Telephone, client.Email, client.Remarques) = (nom, Net(saisie.Contact), Net(saisie.Telephone), Net(saisie.Email), Net(saisie.Remarques));
+            (client.Nom, client.Remarques) = (nom, Net(saisie.Remarques));
+            db.Contacts.RemoveRange(client.Contacts);
+            client.Contacts = contacts;
             if (id is null)
             {
                 db.Clients.Add(client);
@@ -96,13 +139,15 @@ public sealed class ServiceReferentiels(IDbContextFactory<AnnuaireDbContext> fab
         }
         else
         {
-            var fournisseur = id is null ? new Fournisseur() : await db.Fournisseurs.FindAsync(id.Value);
+            var fournisseur = id is null ? new Fournisseur() : await db.Fournisseurs.Include(f => f.Contacts).FirstOrDefaultAsync(f => f.Id == id.Value);
             if (fournisseur is null)
             {
                 return Resultat.Echec<int>("Fournisseur introuvable.");
             }
 
-            (fournisseur.Nom, fournisseur.Contact, fournisseur.Telephone, fournisseur.Email, fournisseur.Remarques) = (nom, Net(saisie.Contact), Net(saisie.Telephone), Net(saisie.Email), Net(saisie.Remarques));
+            (fournisseur.Nom, fournisseur.Remarques) = (nom, Net(saisie.Remarques));
+            db.Contacts.RemoveRange(fournisseur.Contacts);
+            fournisseur.Contacts = contacts;
             if (id is null)
             {
                 db.Fournisseurs.Add(fournisseur);
@@ -259,6 +304,13 @@ public sealed class ServiceReferentiels(IDbContextFactory<AnnuaireDbContext> fab
         }
 
         return Resultat.Ok();
+    }
+
+    /// <summary>Contrôle volontairement simple : quelque chose, une arobase, un point après.</summary>
+    private static bool EmailPlausible(string email)
+    {
+        var arobase = email.IndexOf('@', StringComparison.Ordinal);
+        return arobase > 0 && email.LastIndexOf('.') > arobase + 1 && !email.EndsWith('.') && !email.Contains(' ', StringComparison.Ordinal);
     }
 
     internal static string? Net(string? texte) => string.IsNullOrWhiteSpace(texte) ? null : texte.Trim();

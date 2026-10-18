@@ -43,7 +43,7 @@ public sealed class AnnuaireTests : IDisposable
     }
 
     private async Task<int> Client(string nom = "Dupont SA") =>
-        (await _referentiels.EnregistrerTiers(SorteTiers.Client, null, new SaisieTiers(nom, null, null, null, null))).Valeur;
+        (await _referentiels.EnregistrerTiers(SorteTiers.Client, null, new SaisieTiers(nom))).Valeur;
 
     private async Task<int> Brut(decimal diametre = 40)
     {
@@ -64,6 +64,38 @@ public sealed class AnnuaireTests : IDisposable
         });
         Assert.True(resultat.Reussi, resultat.Erreur);
         return resultat.Valeur;
+    }
+
+    [Fact]
+    public async Task Contacts_multiples_d_un_fournisseur()
+    {
+        static SaisieContact Contact(string? nom, string? telephone = null, string? email = null) => new() { Nom = nom, Telephone = telephone, Email = email };
+
+        var creation = await _referentiels.EnregistrerTiers(SorteTiers.Fournisseur, null, new SaisieTiers("Acier Centre", null,
+            [Contact("Service commercial", "02 47 00 00 10"), Contact("  ", " "), Contact("Mme Roux", null, " roux@acier.fr ")]));
+        Assert.True(creation.Reussi, creation.Erreur);
+        var fiche = (await _referentiels.ObtenirTiers(SorteTiers.Fournisseur, creation.Valeur))!;
+        Assert.Equal([new ContactTiers("Service commercial", "02 47 00 00 10", null), new ContactTiers("Mme Roux", null, "roux@acier.fr")], fiche.Contacts);
+        Assert.Equal("Service commercial", fiche.PremierContact?.Nom);
+
+        // Modification : un contact retiré, un ajouté, l'ordre de saisie est conservé.
+        var saisie = fiche.Contacts.Select(SaisieContact.Depuis).ToList();
+        saisie.RemoveAt(0);
+        saisie.Add(Contact("Atelier", "02 47 00 00 11"));
+        Assert.True((await _referentiels.EnregistrerTiers(SorteTiers.Fournisseur, creation.Valeur, new SaisieTiers("Acier Centre", null, saisie))).Reussi);
+        fiche = (await _referentiels.ObtenirTiers(SorteTiers.Fournisseur, creation.Valeur))!;
+        Assert.Equal(["Mme Roux", "Atelier"], fiche.Contacts.Select(c => c.Nom));
+        await using (var db = await _annuaire.CreateDbContextAsync())
+        {
+            Assert.Equal(2, db.Contacts.Count());
+        }
+
+        // Les contacts d'un fournisseur ne sont pas ceux d'un client.
+        Assert.Empty((await _referentiels.ObtenirTiers(SorteTiers.Client, await Client()))!.Contacts);
+
+        var invalide = await _referentiels.EnregistrerTiers(SorteTiers.Fournisseur, creation.Valeur, new SaisieTiers("Acier Centre", null, [Contact("X", null, "pas-un-mail")]));
+        Assert.False(invalide.Reussi);
+        Assert.Contains("pas-un-mail", invalide.Erreur, StringComparison.Ordinal);
     }
 
     [Fact]

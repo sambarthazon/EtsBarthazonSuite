@@ -110,10 +110,10 @@ internal sealed class RechercheAnnuaire(ServicePiecesFinies pieces, ServiceBruts
             .Select(p => new ResultatRecherche("Pièces finies", 1, TypesObjet.PieceFinie, p.Id, $"{p.Reference} · {p.Designation}", p.Client)));
         resultats.AddRange((await bruts.Lister()).Where(b => Recherche.Correspond(texte, b.TexteRecherche)).Take(maximumParGroupe)
             .Select(b => new ResultatRecherche("Bruts", 2, TypesObjet.Brut, b.Id, $"{b.Reference} · {b.Libelle}", b.FournisseurPrincipal)));
-        resultats.AddRange((await referentiels.ListerTiers(SorteTiers.Client)).Where(c => Recherche.Correspond(texte, c.Nom, c.Contact)).Take(maximumParGroupe)
-            .Select(c => new ResultatRecherche("Clients", 3, TypesObjet.Client, c.Id, c.Nom, c.Contact)));
-        resultats.AddRange((await referentiels.ListerTiers(SorteTiers.Fournisseur)).Where(f => Recherche.Correspond(texte, f.Nom, f.Contact)).Take(maximumParGroupe)
-            .Select(f => new ResultatRecherche("Fournisseurs", 4, TypesObjet.Fournisseur, f.Id, f.Nom, f.Contact)));
+        resultats.AddRange((await referentiels.ListerTiers(SorteTiers.Client)).Where(c => Recherche.Correspond(texte, c.Nom, c.TexteContacts)).Take(maximumParGroupe)
+            .Select(c => new ResultatRecherche("Clients", 3, TypesObjet.Client, c.Id, c.Nom, c.PremierContact?.Nom)));
+        resultats.AddRange((await referentiels.ListerTiers(SorteTiers.Fournisseur)).Where(f => Recherche.Correspond(texte, f.Nom, f.TexteContacts)).Take(maximumParGroupe)
+            .Select(f => new ResultatRecherche("Fournisseurs", 4, TypesObjet.Fournisseur, f.Id, f.Nom, f.PremierContact?.Nom)));
         return resultats;
     }
 }

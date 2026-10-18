@@ -51,13 +51,14 @@ internal sealed class DonneesDemonstration(IServiceProvider services, ILogger<Do
         var bruts = services.GetRequiredService<ServiceBruts>();
         var pieces = services.GetRequiredService<ServicePiecesFinies>();
 
-        async Task<int> Tiers(SorteTiers sorte, string nom, string? contact = null, string? telephone = null) =>
-            (await referentiels.EnregistrerTiers(sorte, null, new SaisieTiers(nom, contact, telephone, null, null))).Valeur;
+        async Task<int> Tiers(SorteTiers sorte, string nom, params (string Nom, string? Telephone, string? Email)[] contacts) =>
+            (await referentiels.EnregistrerTiers(sorte, null, new SaisieTiers(nom, null,
+                contacts.Select(c => new SaisieContact { Nom = c.Nom, Telephone = c.Telephone, Email = c.Email }).ToList()))).Valeur;
 
-        var dupont = await Tiers(SorteTiers.Client, "Dupont SA", "M. Dupont", "02 41 00 00 01");
-        var martin = await Tiers(SorteTiers.Client, "Martin Hydraulique", "Mme Martin", "02 41 00 00 02");
+        var dupont = await Tiers(SorteTiers.Client, "Dupont SA", ("M. Dupont", "02 41 00 00 01", null), ("Service achats", "02 41 00 00 09", "achats@dupont.example"));
+        var martin = await Tiers(SorteTiers.Client, "Martin Hydraulique", ("Mme Martin", "02 41 00 00 02", null));
         var lebrun = await Tiers(SorteTiers.Client, "Lebrun Agricole");
-        var acier = await Tiers(SorteTiers.Fournisseur, "Acier Centre", "Service commercial", "02 47 00 00 10");
+        var acier = await Tiers(SorteTiers.Fournisseur, "Acier Centre", ("Service commercial", "02 47 00 00 10", null));
         var metaux = await Tiers(SorteTiers.Fournisseur, "Métaux Ouest");
         var inox = await Tiers(SorteTiers.Fournisseur, "Inox Service");
 

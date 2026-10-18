@@ -44,3 +44,19 @@
     .ligne-specification > input:first-child { grid-column: 1 / -1; }
     .ligne-specification--entete { display: none; }
 }
+.contacts-tiers { list-style: none; margin: 0 0 .75rem; padding: 0; display: flex; flex-direction: column; }
+.contacts-tiers > li { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1rem; padding: .55rem 0; border-bottom: 1px solid var(--bordure); }
+.contacts-tiers > li:last-child { border-bottom: 0; }
+.contacts-tiers > li > strong { flex: 1 0 100%; }
+.contacts-tiers a { display: inline-flex; align-items: center; gap: .35rem; min-height: var(--cible); overflow-wrap: anywhere; }
+.ligne-contact { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(9.5rem, 1fr) minmax(0, 1.4fr) auto; gap: .4rem; align-items: center; }
+.ligne-contact--entete { font-size: .85rem; font-weight: 600; color: var(--texte-doux); }
+.ligne-contact + .ligne-contact { margin-top: .1rem; }
+@media (max-width: 600px) {
+    /* Téléphone : nom sur toute la largeur, puis téléphone et e-mail, « × » à droite du nom. */
+    .ligne-contact { grid-template-columns: minmax(0, 1fr) auto; padding-bottom: .5rem; border-bottom: 1px solid var(--bordure); }
+    .ligne-contact > input:nth-child(1) { grid-column: 1; grid-row: 1; }
+    .ligne-contact > button { grid-column: 2; grid-row: 1; }
+    .ligne-contact > input:nth-child(2), .ligne-contact > input:nth-child(3) { grid-column: 1 / -1; }
+    .ligne-contact--entete { display: none; }
+}

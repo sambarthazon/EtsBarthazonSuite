@@ -27,16 +27,33 @@ else if (_tiers is not null)
     </EntetePage>
     <div class="grille-blocs">
         <section class="bloc">
-            <h2 class="bloc__titre">Coordonnées</h2>
-            <dl class="proprietes">
-                <dt>Contact</dt><dd>@(_tiers.Contact ?? "—")</dd>
-                <dt>Téléphone</dt><dd>@if (_tiers.Telephone is not null) { <a href="tel:@_tiers.Telephone">@_tiers.Telephone</a> } else { <text>—</text> }</dd>
-                <dt>E-mail</dt><dd>@if (_tiers.Email is not null) { <a href="mailto:@_tiers.Email">@_tiers.Email</a> } else { <text>—</text> }</dd>
-                @if (_tiers.Remarques is not null)
+            <h2 class="bloc__titre">@(_tiers.Contacts.Count > 1 ? $"Contacts ({_tiers.Contacts.Count})" : "Contact")</h2>
+            @if (_tiers.Contacts.Count == 0)
+            {
+                <p class="doux">Aucun contact enregistré.</p>
+            }
+            <ul class="contacts-tiers">
+                @foreach (var contact in _tiers.Contacts)
                 {
-                    <dt>Remarques</dt><dd style="white-space: pre-line">@_tiers.Remarques</dd>
+                    <li>
+                        <strong>@(contact.Nom ?? "Sans nom")</strong>
+                        @if (contact.Telephone is not null)
+                        {
+                            <a href="tel:@contact.Telephone"><Icone Nom="telephone" /> @contact.Telephone</a>
+                        }
+                        @if (contact.Email is not null)
+                        {
+                            <a href="mailto:@contact.Email"><Icone Nom="email" /> @contact.Email</a>
+                        }
+                    </li>
                 }
-            </dl>
+            </ul>
+            @if (_tiers.Remarques is not null)
+            {
+                <dl class="proprietes">
+                    <dt>Remarques</dt><dd style="white-space: pre-line">@_tiers.Remarques</dd>
+                </dl>
+            }
         </section>
         <section class="bloc">
             @if (Sorte == SorteTiers.Client)

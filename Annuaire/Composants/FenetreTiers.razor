@@ -1,17 +1,33 @@
 @inject ServiceReferentiels Referentiels
 @inject ServiceToast Toast
 @* Création ou modification d'un client / fournisseur : fiche volontairement minimale. *@
-<Fenetre Ouverte="Ouverte" OnFermer="Fermer" Titre="@TitreFenetre">
+<Fenetre Ouverte="Ouverte" OnFermer="Fermer" Titre="@TitreFenetre" Large="true">
     <ChildContent>
         <div class="champ">
             <label for="t-nom">Nom <span class="champ__obligatoire">*</span></label>
             <input id="t-nom" @bind="_nom" />
         </div>
-        <div class="grille-champs grille-champs--2">
-            <div class="champ"><label for="t-contact">Contact</label><input id="t-contact" @bind="_contact" /></div>
-            <div class="champ"><label for="t-tel">Téléphone</label><input id="t-tel" type="tel" inputmode="tel" @bind="_telephone" /></div>
+        <div class="champ" role="group" aria-labelledby="t-contacts">
+            <span class="champ__etiquette" id="t-contacts">Contacts</span>
+            @if (_contacts.Count > 0)
+            {
+                <div class="ligne-contact ligne-contact--entete" aria-hidden="true">
+                    <span>Nom du contact</span><span>Téléphone</span><span>E-mail</span><span></span>
+                </div>
+            }
+            @foreach (var contact in _contacts)
+            {
+                <div class="ligne-contact">
+                    <input class="saisie" placeholder="Nom du contact" aria-label="Nom du contact" @bind="contact.Nom" />
+                    <input class="saisie" type="tel" inputmode="tel" placeholder="Téléphone" aria-label="Téléphone" @bind="contact.Telephone" />
+                    <input class="saisie" type="email" inputmode="email" placeholder="E-mail" aria-label="E-mail" @bind="contact.Email" />
+                    <button type="button" class="bouton bouton--discret bouton--icone" aria-label="Retirer ce contact" title="Retirer" @onclick="() => _contacts.Remove(contact)"><Icone Nom="fermer" /></button>
+                </div>
+            }
+            <div>
+                <button type="button" class="bouton bouton--secondaire" @onclick="() => _contacts.Add(new())"><Icone Nom="plus" /> Ajouter un contact</button>
+            </div>
         </div>
-        <div class="champ"><label for="t-mail">E-mail</label><input id="t-mail" type="email" inputmode="email" @bind="_email" /></div>
         <div class="champ"><label for="t-rem">Remarques</label><textarea id="t-rem" @bind="_remarques"></textarea></div>
         @if (_erreur is not null)
         {
@@ -26,9 +42,7 @@
 
 @code {
     private string _nom = string.Empty;
-    private string? _contact;
-    private string? _telephone;
-    private string? _email;
+    private List<SaisieContact> _contacts = [];
     private string? _remarques;
     private string? _erreur;
     private bool _etaitOuverte;
@@ -53,7 +67,12 @@
         // À chaque ouverture : champs remplis avec la fiche (ou vides pour une création).
         if (Ouverte && !_etaitOuverte)
         {
-            (_nom, _contact, _telephone, _email, _remarques, _erreur) = (Tiers?.Nom ?? string.Empty, Tiers?.Contact, Tiers?.Telephone, Tiers?.Email, Tiers?.Remarques, null);
+            (_nom, _remarques, _erreur) = (Tiers?.Nom ?? string.Empty, Tiers?.Remarques, null);
+            _contacts = Tiers?.Contacts.Select(SaisieContact.Depuis).ToList() ?? [];
+            if (_contacts.Count == 0)
+            {
+                _contacts.Add(new());
+            }
         }
 
         _etaitOuverte = Ouverte;
@@ -63,7 +82,7 @@
 
     private async Task Enregistrer()
     {
-        var resultat = await Referentiels.EnregistrerTiers(Sorte, Tiers?.Id, new SaisieTiers(_nom, _contact, _telephone, _email, _remarques));
+        var resultat = await Referentiels.EnregistrerTiers(Sorte, Tiers?.Id, new SaisieTiers(_nom, _remarques, _contacts));
         if (!resultat.Reussi)
         {
             _erreur = resultat.Erreur;

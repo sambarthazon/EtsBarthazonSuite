@@ -162,7 +162,7 @@ else if (_fiche is not null)
 
     private async Task<int?> CreerClient(string nom)
     {
-        var resultat = await Referentiels.EnregistrerTiers(SorteTiers.Client, null, new SaisieTiers(nom, null, null, null, null));
+        var resultat = await Referentiels.EnregistrerTiers(SorteTiers.Client, null, new SaisieTiers(nom));
         if (!resultat.Reussi)
         {
             Toast.Erreur(resultat.Erreur!);

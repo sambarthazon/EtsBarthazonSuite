@@ -113,12 +113,6 @@ namespace Barthazon.Annuaire.Donnees.Migrations
                     b.Property<bool>("Archive")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Contact")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Nom")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -127,12 +121,45 @@ namespace Barthazon.Annuaire.Donnees.Migrations
                     b.Property<string>("Remarques")
                         .HasColumnType("TEXT");
 
+                    b.HasKey("Id");
+
+                    b.ToTable("ann_Client", (string)null);
+                });
+
+            modelBuilder.Entity("Barthazon.Annuaire.Donnees.Contact", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("FournisseurId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Nom")
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Ordre")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Telephone")
+                        .HasMaxLength(40)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.ToTable("ann_Client", (string)null);
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("FournisseurId");
+
+                    b.ToTable("ann_Contact", (string)null);
                 });
 
             modelBuilder.Entity("Barthazon.Annuaire.Donnees.Fournisseur", b =>
@@ -144,21 +171,12 @@ namespace Barthazon.Annuaire.Donnees.Migrations
                     b.Property<bool>("Archive")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Contact")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Nom")
                         .IsRequired()
                         .HasMaxLength(120)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Remarques")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Telephone")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -617,6 +635,19 @@ namespace Barthazon.Annuaire.Donnees.Migrations
                     b.Navigation("Fournisseur");
                 });
 
+            modelBuilder.Entity("Barthazon.Annuaire.Donnees.Contact", b =>
+                {
+                    b.HasOne("Barthazon.Annuaire.Donnees.Client", null)
+                        .WithMany("Contacts")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Barthazon.Annuaire.Donnees.Fournisseur", null)
+                        .WithMany("Contacts")
+                        .HasForeignKey("FournisseurId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
             modelBuilder.Entity("Barthazon.Annuaire.Donnees.Indice", b =>
                 {
                     b.HasOne("Barthazon.Annuaire.Donnees.PieceFinie", null)
@@ -700,6 +731,16 @@ namespace Barthazon.Annuaire.Donnees.Migrations
             modelBuilder.Entity("Barthazon.Annuaire.Donnees.Brut", b =>
                 {
                     b.Navigation("Fournisseurs");
+                });
+
+            modelBuilder.Entity("Barthazon.Annuaire.Donnees.Client", b =>
+                {
+                    b.Navigation("Contacts");
+                });
+
+            modelBuilder.Entity("Barthazon.Annuaire.Donnees.Fournisseur", b =>
+                {
+                    b.Navigation("Contacts");
                 });
 
             modelBuilder.Entity("Barthazon.Annuaire.Donnees.Indice", b =>

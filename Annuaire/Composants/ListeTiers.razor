@@ -12,7 +12,7 @@
     </Actions>
 </EntetePage>
 
-<ListeRecherchable T="LigneTiers" Elements="_liste" TexteRecherche="@(t => $"{t.Nom} {t.Contact} {t.Telephone} {t.Email}")" Lien="@(t => $"{Chemin}/{t.Id}")"
+<ListeRecherchable T="LigneTiers" Elements="_liste" TexteRecherche="@(t => $"{t.Nom} {t.TexteContacts}")" Lien="@(t => $"{Chemin}/{t.Id}")"
                    Placeholder="@($"Rechercher un {Nature}…")" Singulier="@Nature" Pluriel="@(Nature + "s")" MessageVide="@($"Aucun {Nature} pour l'instant")">
     <Filtres>
         <label class="case"><input type="checkbox" @bind="_archives" @bind:after="Charger" /> Afficher les archivés</label>
@@ -22,13 +22,13 @@
     </Entetes>
     <Ligne Context="t">
         <td><a class="lien-ligne" href="@Chemin/@t.Id">@t.Nom</a> @if (t.Archive) { <span class="etiquette">archivé</span> }</td>
-        <td>@t.Contact</td>
-        <td>@t.Telephone</td>
+        <td>@t.PremierContact?.Nom<span class="doux">@(t.Contacts.Count > 1 ? $" (+{t.Contacts.Count - 1})" : null)</span></td>
+        <td>@t.PremierContact?.Telephone</td>
         <td class="droite nombre">@t.Utilisations</td>
     </Ligne>
     <Carte Context="t">
         <div class="carte__titre">@t.Nom @if (t.Archive) { <span class="etiquette">archivé</span> }</div>
-        <div class="carte__ligne"><span>@t.Contact</span><span>@t.Telephone</span><span>@t.Utilisations @Utilisations.ToLowerInvariant()</span></div>
+        <div class="carte__ligne"><span>@t.PremierContact?.Nom@(t.Contacts.Count > 1 ? $" (+{t.Contacts.Count - 1})" : null)</span><span>@t.PremierContact?.Telephone</span><span>@t.Utilisations @Utilisations.ToLowerInvariant()</span></div>
     </Carte>
 </ListeRecherchable>
 

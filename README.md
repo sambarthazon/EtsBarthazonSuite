@@ -304,7 +304,7 @@ Liens entre pièces finies ou vers l'extérieur, chacun avec un type :
 
 ### 5.8 Clients et fournisseurs
 
-Fiches volontairement minimales : nom (obligatoire), contact, téléphone, e-mail, remarques. La fiche client liste ses pièces finies ; la fiche fournisseur liste les bruts qu'il fournit.
+Fiches volontairement minimales : nom (obligatoire), contacts, remarques. Autant de **contacts** que nécessaire, chacun avec un nom, un téléphone et un e-mail (tous facultatifs), à la manière des spécifications : « + Ajouter un contact » ajoute une ligne, « × » la retire ; une ligne laissée vide est ignorée. La liste affiche le premier contact (et « +N » s'il y en a d'autres) ; la recherche porte sur tous les contacts ; sur la fiche, téléphones et e-mails sont des liens (appel, courriel). La fiche client liste ses pièces finies ; la fiche fournisseur liste les bruts qu'il fournit.
 
 ### 5.9 Règles de gestion de l'Annuaire
 
@@ -459,8 +459,10 @@ Commun
   com_Parametre          Cle, Valeur                       (couleur principale, durées de session…)
 
 Annuaire
-  ann_Client             Id, Nom, Contact, Telephone, Email, Remarques, Archive
-  ann_Fournisseur        Id, Nom, Contact, Telephone, Email, Remarques, Archive
+  ann_Client             Id, Nom, Remarques, Archive
+  ann_Fournisseur        Id, Nom, Remarques, Archive
+  ann_Contact            Id, ClientId?, FournisseurId?, Nom, Telephone, Email, Ordre
+                                                           (contacts d'un client OU d'un fournisseur)
   ann_Matiere            Id, Libelle                       (liste paramétrable)
   ann_Brut               Id, Reference, Forme, Diametre, DiametreInterieur, Largeur, Epaisseur,
                          Cote, SurPlats, Longueur, DescriptionForme, MatiereId, Unite,

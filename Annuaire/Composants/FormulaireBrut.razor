@@ -177,7 +177,7 @@ else
 
     private async Task<int?> CreerFournisseur(string nom)
     {
-        var resultat = await Referentiels.EnregistrerTiers(SorteTiers.Fournisseur, null, new SaisieTiers(nom, null, null, null, null));
+        var resultat = await Referentiels.EnregistrerTiers(SorteTiers.Fournisseur, null, new SaisieTiers(nom));
         if (!resultat.Reussi)
         {
             Toast.Erreur(resultat.Erreur!);
