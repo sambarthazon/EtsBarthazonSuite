@@ -57,6 +57,7 @@ etape "Copie du programme dans ${PROGRAMME}"
 mkdir -p "${PROGRAMME}"
 rsync -a --delete --exclude 'appsettings.Production.json' "${PUBLICATION}/" "${PROGRAMME}/"
 chown -R root:root "${PROGRAMME}"
+chmod -R u=rwX,go=rX "${PROGRAMME}"
 
 etape "Service et sauvegarde quotidienne"
 install -m 644 "${ICI}/barthazon.service" /etc/systemd/system/barthazon.service
